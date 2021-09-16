@@ -3,4 +3,6 @@ module.exports = {
   ...require('./lazy'),
   ...require('./objects'),
   ...require('./properties'),
+  ...require('./references'),
+  serialization: require('./serialization'),
 }
