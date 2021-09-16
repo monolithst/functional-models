@@ -27,15 +27,29 @@ This library empowers the creation of pure JavaScript function based models that
 
     const myTruck = Truck({ make: 'Ford', model: 'F-150', color: 'White', year: '2013})
 
-    console.log(myTruck.getId())
-    console.log(myTruck.getMake())
-    console.log(myTruck.getModel())
-    console.log(myTruck.getColor())
-    console.log(myTruck.getYear())
+    console.log(myTruck.getId())     // a random uuid
+    console.log(myTruck.getMake())   // 'Ford'
+    console.log(myTruck.getModel())  // 'F-150'
+    console.log(myTruck.getColor())  // 'White'
+    console.log(myTruck.getYear())   // 2013
 
     const asJson = await myTruck.functions.toJson()
-    console.log("As pure Json")
     console.log(asJson)
+    /*
+    {
+      "id": "a-random-uuid",
+      "make": "Ford",
+      "model": "F-150",
+      "color": "White",
+      "year": 2013
+    }
+    */
 
-    const duplicateTruck = Truck(asJson)
+    const sameTruck = Truck(asJson)
+    console.log(sameTruck.getId())     // sam uuid as above
+    console.log(sameTruck.getMake())   // 'Ford'
+    console.log(sameTruck.getModel())  // 'F-150'
+    console.log(sameTruck.getColor())  // 'White'
+    console.log(sameTruck.getYear())   // 2013
+
 
