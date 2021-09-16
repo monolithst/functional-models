@@ -46,7 +46,7 @@ This library empowers the creation of pure JavaScript function based models that
     */
 
     const sameTruck = Truck(asJson)
-    console.log(sameTruck.getId())     // sam uuid as above
+    console.log(sameTruck.getId())     // same uuid as above
     console.log(sameTruck.getMake())   // 'Ford'
     console.log(sameTruck.getModel())  // 'F-150'
     console.log(sameTruck.getColor())  // 'White'
