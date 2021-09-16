@@ -25,7 +25,7 @@ This library empowers the creation of pure JavaScript function based models that
     ])
 
 
-    const myTruck = Truck({ make: 'Ford', model: 'F-150', color: 'White', year: '2013})
+    const myTruck = Truck({ make: 'Ford', model: 'F-150', color: 'White', year: 2013})
 
     console.log(myTruck.getId())     // a random uuid
     console.log(myTruck.getMake())   // 'Ford'
