@@ -2,15 +2,14 @@ const assert = require('chai').assert
 const flatMap = require('lodash/flatMap')
 const { Given, When, Then } = require('@cucumber/cucumber')
 
-const { smartObject, property, named, typed } = require('../../index')
+const { createModel, field } = require('../../index')
 
 const MODEL_DEFINITIONS = {
-  TestModel1: ({ name, type, flag }) =>
-    smartObject([
-      named({ required: true })(name),
-      typed({ required: true, isString: 'true' })(type),
-      property('flag', { required: true, isNumber: true })(flag),
-    ]),
+  TestModel1: createModel({
+    name: field({ required: true }),
+    type: field({ required: true, isString: true }),
+    flag: field({ required: true, isNumber: true }),
+  }),
 }
 
 const MODEL_INPUT_VALUES = {
@@ -24,6 +23,10 @@ const MODEL_INPUT_VALUES = {
     type: 'a-type',
     flag: 1,
   },
+}
+
+const EXPECTED_FIELDS = {
+  TestModel1b: ['getName', 'getType', 'getFlag', 'meta', 'functions'],
 }
 
 Given(
@@ -42,7 +45,7 @@ Given(
 )
 
 When('functions.validate is called', function () {
-  return this.instance.functions.validate.object().then(x => {
+  return this.instance.functions.validate.model().then(x => {
     this.errors = x
   })
 })
@@ -53,4 +56,32 @@ Then('an array of {int} errors is shown', function (errorCount) {
     console.error(this.errors)
   }
   assert.equal(errors.length, errorCount)
+})
+
+Given('{word} is used', function (modelDefinition) {
+  const def = MODEL_DEFINITIONS[modelDefinition]
+  if (!def) {
+    throw new Error(`${modelDefinition} did not result in a definition`)
+  }
+  this.modelDefinition = def
+})
+
+When('{word} data is inserted', function (modelInputValues) {
+  const input = MODEL_INPUT_VALUES[modelInputValues]
+  if (!input) {
+    throw new Error(`${modelInputValues} did not result in an input`)
+  }
+  this.instance = this.modelDefinition(input)
+})
+
+Then('{word} expected fields are found', function (fields) {
+  const propertyArray = EXPECTED_FIELDS[fields]
+  if (!propertyArray) {
+    throw new Error(`${fields} did not result in fields`)
+  }
+  propertyArray.forEach(key => {
+    if (!(key in this.instance)) {
+      throw new Error(`Did not find ${key} in model`)
+    }
+  })
 })

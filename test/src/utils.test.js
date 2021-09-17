@@ -1,18 +1,9 @@
 const assert = require('chai').assert
 const sinon = require('sinon')
 const proxyquire = require('proxyquire')
-const { loweredTitleCase, createUuid, lazyValue } = require('../../src/utils')
+const { loweredTitleCase, createUuid } = require('../../src/utils')
 
 describe('/src/utils.js', () => {
-  describe('#lazyValue()', () => {
-    it('should only call the method passed in once even after two calls', async () => {
-      const method = sinon.stub().returns('hello-world')
-      const instance = lazyValue(method)
-      await instance()
-      await instance()
-      sinon.assert.calledOnce(method)
-    })
-  })
   describe('#loweredTitleCase()', () => {
     it('should turn TitleCase into titleCase', () => {
       const actual = loweredTitleCase('TitleCase')

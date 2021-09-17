@@ -11,22 +11,6 @@ const createPropertyTitle = key => {
   return `get${goodName}`
 }
 
-const lazyValue = method => {
-  /* eslint-disable functional/no-let */
-  let value = undefined
-  let called = false
-  return async () => {
-    if (!called) {
-      value = await method()
-      // eslint-disable-next-line require-atomic-updates
-      called = true
-    }
-
-    return value
-  }
-  /* eslint-enable functional/no-let */
-}
-
 const getCryptoRandomValues = () => {
   if (typeof window !== 'undefined') {
     return (window.crypto || window.msCrypto).getRandomValues
@@ -53,7 +37,6 @@ const loweredTitleCase = string => {
 module.exports = {
   createUuid,
   loweredTitleCase,
-  lazyValue,
   createPropertyTitle,
   toTitleCase,
 }

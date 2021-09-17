@@ -1,16 +1,19 @@
-const { lazyValue, createPropertyTitle } = require('./utils')
+const lazyValue = method => {
+  /* eslint-disable functional/no-let */
+  let value = undefined
+  let called = false
+  return async (...args) => {
+    if (!called) {
+      value = await method(...args)
+      // eslint-disable-next-line require-atomic-updates
+      called = true
+    }
 
-const lazyProperty = (key, method, { selector = null } = {}) => {
-  const lazy = lazyValue(method)
-  const propertyKey = createPropertyTitle(key)
-  return {
-    [propertyKey]: async () => {
-      const value = await lazy()
-      return selector ? selector(value) : value
-    },
+    return value
   }
+  /* eslint-enable functional/no-let */
 }
 
 module.exports = {
-  lazyProperty,
+  lazyValue,
 }

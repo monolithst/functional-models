@@ -1,5 +1,6 @@
 const isEmpty = require('lodash/isEmpty')
 const flatMap = require('lodash/flatMap')
+const get = require('lodash/get')
 
 const _trueOrError = (method, error) => value => {
   if (method(value) === false) {
@@ -30,14 +31,12 @@ const isInteger = _trueOrError(v => {
 const isBoolean = isType('boolean')
 const isString = isType('string')
 
-const meetsRegex = (
-  regex,
-  flags,
-  errorMessage = 'Format was invalid'
-) => value => {
-  const reg = new RegExp(regex, flags)
-  return _trueOrError(v => reg.test(v), errorMessage)(value)
-}
+const meetsRegex =
+  (regex, flags, errorMessage = 'Format was invalid') =>
+  value => {
+    const reg = new RegExp(regex, flags)
+    return _trueOrError(v => reg.test(v), errorMessage)(value)
+  }
 
 const choices = choiceArray => value => {
   if (choiceArray.includes(value) === false) {
@@ -125,7 +124,7 @@ const CONFIG_TO_VALIDATE_METHOD = {
   isString: _boolChoice(isString),
 }
 
-const createPropertyValidate = (key, config) => value => {
+const createFieldValidator = config => {
   const validators = [
     ...Object.entries(config).map(([key, value]) => {
       return (CONFIG_TO_VALIDATE_METHOD[key] || (() => undefined))(value)
@@ -134,16 +133,24 @@ const createPropertyValidate = (key, config) => value => {
   ].filter(x => x)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
-  return {
-    functions: {
-      validate: {
-        [key]: async () => {
-          const errors = await validator(value)
-          return flatMap(errors)
-        },
-      },
-    },
+  return async value => {
+    const errors = await validator(value)
+    return flatMap(errors)
   }
+}
+
+const createModelValidator = fields => async () => {
+  const keysAndFunctions = Object.entries(get(fields, 'functions.validate', {}))
+  const data = await Promise.all(
+    keysAndFunctions.map(async ([key, validator]) => {
+      return [key, await validator()]
+    })
+  )
+  return data
+    .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
+    .reduce((acc, [key, errors]) => {
+      return { ...acc, [key]: errors }
+    }, {})
 }
 
 module.exports = {
@@ -161,5 +168,6 @@ module.exports = {
   meetsRegex,
   aggregateValidator,
   emptyValidator,
-  createPropertyValidate,
+  createFieldValidator,
+  createModelValidator,
 }
