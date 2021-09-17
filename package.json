@@ -1,6 +1,6 @@
 {
   "name": "functional-models",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A library for creating JavaScript function based models.",
   "main": "index.js",
   "scripts": {
