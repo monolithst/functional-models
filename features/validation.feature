@@ -9,3 +9,8 @@ Feature: Validation
     Given the TestModel1 has been created, with TestModel1b inputs provided
     When functions.validate is called
     Then an array of 0 errors is shown
+
+  Scenario: A failing test for checking github
+    Given the TestModel1 has been created, with TestModel1b inputs provided
+    When functions.validate is called
+    Then an array of 10 errors is shown
