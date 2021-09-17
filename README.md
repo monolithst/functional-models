@@ -1,5 +1,6 @@
 # Functional Models
-![CI](https://github.com/monolithst/functional-models/actions/workflows/ci.yml/badge.svg)
+![Unit Tests](https://github.com/monolithst/functional-models/actions/workflows/ut.yml/badge.svg?branch=master)
+![Feature Tests](https://github.com/monolithst/functional-models/actions/workflows/feature.yml/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/monolithst/functional-models/badge.svg?branch=master)](https://coveralls.io/github/monolithst/functional-models?branch=master)
 
 Love functional javascript but still like composing objects/models? This is the library for you. 

@@ -1,4 +1,4 @@
-name: CI
+name: Feature Tests
 
 on:
   push:
@@ -23,14 +23,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
         run: npm install
-      - name: Run Unit Tests
-        run: npm test
-      - run: npm run coverage 
       - name: Run Cucumber Tests 
         run: npm run feature-tests 
-
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
