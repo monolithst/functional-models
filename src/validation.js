@@ -28,13 +28,7 @@ const isType = type => value => {
   return _typeOrError(type, `Must be a ${type}`)(value)
 }
 const isNumber = isType('number')
-const isInteger = _trueOrError(v => {
-  const numberError = isNumber(v)
-  if (numberError) {
-    return false
-  }
-  return Number.isNaN(parseInt(v, 10)) === false
-}, 'Must be an integer')
+const isInteger = _trueOrError(Number.isInteger, 'Must be an integer')
 
 const isBoolean = isType('boolean')
 const isString = isType('string')

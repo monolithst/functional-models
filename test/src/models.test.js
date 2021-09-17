@@ -67,7 +67,6 @@ describe('/src/models.js', () => {
         }
         const model = createModel(input)
         const actual = model({ id: 'my-id', type: 'my-type' })
-        console.log(actual)
         assert.isOk(actual.getId)
         assert.isOk(actual.getType)
       })
@@ -80,7 +79,6 @@ describe('/src/models.js', () => {
         const instance = model({ type: 'my-type' })
         const actual = await instance.functions.validate.model()
         const expected = 1
-        console.log(actual)
         assert.equal(Object.values(actual).length, expected)
       })
     })
