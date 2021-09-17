@@ -21,6 +21,12 @@ const MODEL_DEFINITIONS = {
   ArrayModel3: createModel({
     arrayField: arrayField({}),
   }),
+  ArrayModel4: createModel({
+    arrayField: arrayField({
+      choices: [4, 5, 6],
+      validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
+    }),
+  }),
 }
 
 const MODEL_INPUT_VALUES = {
@@ -45,6 +51,12 @@ const MODEL_INPUT_VALUES = {
   },
   ArrayModelData4: {
     arrayField: ['a-string', 1, {}, true],
+  },
+  ArrayModelData5: {
+    arrayField: [4, 5, 5, 5, 6],
+  },
+  ArrayModelData6: {
+    arrayField: [4, 5, 5, 5, 6, 1],
   },
 }
 

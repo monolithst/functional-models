@@ -36,3 +36,17 @@ Feature: Array Fields
     Then the getArrayField field is called on the model
     Then functions.validate is called
     Then an array of 0 errors is shown
+
+  Scenario: A model that uses the arrayField with the choice validator should pass validation with no errors.
+    Given ArrayModel4 model is used
+    When ArrayModelData5 data is inserted
+    Then the getArrayField field is called on the model
+    Then functions.validate is called
+    Then an array of 0 errors is shown
+
+  Scenario: A model that uses the arrayField with the choice validator should fail validation when one value is outside the choices
+    Given ArrayModel4 model is used
+    When ArrayModelData6 data is inserted
+    Then the getArrayField field is called on the model
+    Then functions.validate is called
+    Then an array of 1 errors is shown
