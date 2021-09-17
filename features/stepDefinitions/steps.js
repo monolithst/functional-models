@@ -1,14 +1,25 @@
 const assert = require('chai').assert
 const flatMap = require('lodash/flatMap')
 const { Given, When, Then } = require('@cucumber/cucumber')
-
-const { createModel, field } = require('../../index')
+const { createModel, field, arrayField, validation } = require('../../index')
 
 const MODEL_DEFINITIONS = {
   TestModel1: createModel({
     name: field({ required: true }),
     type: field({ required: true, isString: true }),
     flag: field({ required: true, isNumber: true }),
+  }),
+  ArrayModel1: createModel({
+    arrayField: field({
+      isArray: true,
+      validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
+    }),
+  }),
+  ArrayModel2: createModel({
+    arrayField: field({ isArray: true }),
+  }),
+  ArrayModel3: createModel({
+    arrayField: arrayField({}),
   }),
 }
 
@@ -22,6 +33,18 @@ const MODEL_INPUT_VALUES = {
     name: 'my-name',
     type: 'a-type',
     flag: 1,
+  },
+  ArrayModelData1: {
+    arrayField: [1, 2, 3, 4, 5],
+  },
+  ArrayModelData2: {
+    arrayField: 'a-string',
+  },
+  ArrayModelData3: {
+    arrayField: ['a-string', 'a-string2'],
+  },
+  ArrayModelData4: {
+    arrayField: ['a-string', 1, {}, true],
   },
 }
 
@@ -58,7 +81,7 @@ Then('an array of {int} errors is shown', function (errorCount) {
   assert.equal(errors.length, errorCount)
 })
 
-Given('{word} is used', function (modelDefinition) {
+Given('{word} model is used', function (modelDefinition) {
   const def = MODEL_DEFINITIONS[modelDefinition]
   if (!def) {
     throw new Error(`${modelDefinition} did not result in a definition`)
@@ -84,4 +107,15 @@ Then('{word} expected fields are found', function (fields) {
       throw new Error(`Did not find ${key} in model`)
     }
   })
+})
+
+Then('the {word} field is called on the model', function (field) {
+  return this.instance[field]().then(result => {
+    this.results = result
+  })
+})
+
+Then('the array values match', function (table) {
+  const expected = JSON.parse(table.rowsHash().array)
+  assert.deepEqual(this.results, expected)
 })

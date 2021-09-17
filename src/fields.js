@@ -98,9 +98,17 @@ const referenceField = config => {
   })
 }
 
+const arrayField = (config = {}) =>
+  field({
+    defaultValue: [],
+    ...config,
+    isArray: true,
+  })
+
 module.exports = {
   field,
   uniqueId,
   dateField,
+  arrayField,
   referenceField,
 }

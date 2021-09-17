@@ -2,6 +2,14 @@ const isEmpty = require('lodash/isEmpty')
 const flatMap = require('lodash/flatMap')
 const get = require('lodash/get')
 
+const TYPE_PRIMATIVES = {
+  boolean: 'boolean',
+  string: 'string',
+  object: 'object',
+  number: 'number',
+  integer: 'integer',
+}
+
 const _trueOrError = (method, error) => value => {
   if (method(value) === false) {
     return error
@@ -30,6 +38,28 @@ const isInteger = _trueOrError(v => {
 
 const isBoolean = isType('boolean')
 const isString = isType('string')
+const isArray = _trueOrError(v => Array.isArray(v), 'Value is not an array')
+
+const PRIMATIVE_TO_SPECIAL_TYPE_VALIDATOR = {
+  [TYPE_PRIMATIVES.boolean]: isBoolean,
+  [TYPE_PRIMATIVES.string]: isString,
+  [TYPE_PRIMATIVES.integer]: isInteger,
+  [TYPE_PRIMATIVES.number]: isNumber,
+}
+
+const arrayType = type => value => {
+  const arrayError = isArray(value)
+  if (arrayError) {
+    return arrayError
+  }
+  const validator = PRIMATIVE_TO_SPECIAL_TYPE_VALIDATOR[type] || isType(type)
+  return value.reduce((acc, v) => {
+    if (acc) {
+      return acc
+    }
+    return validator(v)
+  }, undefined)
+}
 
 const meetsRegex =
   (regex, flags, errorMessage = 'Format was invalid') =>
@@ -122,6 +152,7 @@ const CONFIG_TO_VALIDATE_METHOD = {
   isInteger: _boolChoice(isInteger),
   isNumber: _boolChoice(isNumber),
   isString: _boolChoice(isString),
+  isArray: _boolChoice(isArray),
 }
 
 const createFieldValidator = config => {
@@ -135,7 +166,7 @@ const createFieldValidator = config => {
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
   return async value => {
     const errors = await validator(value)
-    return flatMap(errors)
+    return [...new Set(flatMap(errors))]
   }
 }
 
@@ -159,6 +190,7 @@ module.exports = {
   isString,
   isInteger,
   isType,
+  isArray,
   isRequired,
   maxNumber,
   minNumber,
@@ -170,4 +202,6 @@ module.exports = {
   emptyValidator,
   createFieldValidator,
   createModelValidator,
+  arrayType,
+  TYPE_PRIMATIVES,
 }

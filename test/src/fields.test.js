@@ -4,10 +4,53 @@ const {
   field,
   dateField,
   referenceField,
+  arrayField,
 } = require('../../src/fields')
 const { createModel } = require('../../src/models')
 
 describe('/src/fields.js', () => {
+  describe('#arrayField()', () => {
+    describe('#createGetter()', () => {
+      it('should return an array passed in without issue', async () => {
+        const theField = arrayField({})
+        const getter = theField.createGetter([1, 2, 3])
+        const actual = await getter()
+        const expected = [1, 2, 3]
+        assert.deepEqual(actual, expected)
+      })
+      it('should return an array passed in without issue, even if no config is passed', async () => {
+        const theField = arrayField()
+        const getter = theField.createGetter([1, 2, 3])
+        const actual = await getter()
+        const expected = [1, 2, 3]
+        assert.deepEqual(actual, expected)
+      })
+      it('should return an empty array if defaultValue is not changed in config and null is passed', async () => {
+        const theField = arrayField()
+        const getter = theField.createGetter(null)
+        const actual = await getter()
+        const expected = []
+        assert.deepEqual(actual, expected)
+      })
+      it('should return the passed in defaultValue if set in config and null is passed', async () => {
+        const theField = arrayField({ defaultValue: [1, 2, 3] })
+        const getter = theField.createGetter(null)
+        const actual = await getter()
+        const expected = [1, 2, 3]
+        assert.deepEqual(actual, expected)
+      })
+    })
+    describe('#getValidator()', () => {
+      it('should validate an array passed in without issue', async () => {
+        const theField = arrayField({})
+        const getter = theField.createGetter([1, 2, 3])
+        const validator = theField.getValidator(getter)
+        const actual = await validator()
+        const expected = []
+        assert.deepEqual(actual, expected)
+      })
+    })
+  })
   describe('#field()', () => {
     it('should throw an exception if config.valueSelector is not a function but is set', () => {
       assert.throws(() => {
