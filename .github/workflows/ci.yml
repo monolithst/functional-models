@@ -27,7 +27,7 @@ jobs:
         run: npm test
       - run: npm run coverage 
       - name: Run Cucumber Tests 
-        run: npm feature-tests 
+        run: npm run feature-tests 
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
