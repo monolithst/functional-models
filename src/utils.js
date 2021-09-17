@@ -55,4 +55,5 @@ module.exports = {
   loweredTitleCase,
   lazyValue,
   createPropertyTitle,
+  toTitleCase,
 }

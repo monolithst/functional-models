@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "nyc --all mocha --recursive ./test/**/*.test.js",
+    "feature-tests": "./node_modules/@cucumber/cucumber/bin/cucumber-js",
     "coverage": "nyc --all --reporter=lcov npm test"
   },
   "repository": {
@@ -26,11 +27,16 @@
   },
   "homepage": "https://github.com/monolithst/functional-models#readme",
   "nyc": {
-    "all": true
+    "all": true,
+    "exclude": [
+      "features/stepDefinitions/*",
+      "test/*"
+    ]
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "chai": "^4.3.0",
+    "cucumber": "^7.0.0-rc.0",
     "eslint": "^7.19.0",
     "eslint-config-prettier": "^7.2.0",
     "eslint-plugin-functional": "^3.2.1",

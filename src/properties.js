@@ -1,27 +1,18 @@
 const { createPropertyTitle, createUuid } = require('./utils')
+const { createPropertyValidate } = require('./validation')
 
-const property = (key, arg) => {
-  if (typeof key === 'object') {
-    return Object.entries(key).reduce((acc, [keyName, realValue]) => {
-      const propertyKey = createPropertyTitle(keyName)
-      return {
-        ...acc,
-        [propertyKey]: () => realValue,
-      }
-    }, {})
-  }
+const property = (key, config={}) => (arg) => {
   const method = typeof arg === 'function' ? arg : () => arg
   const propertyKey = createPropertyTitle(key)
   return {
     [propertyKey]: method,
+    ...createPropertyValidate(key, config)(arg)
   }
 }
 
-const named = name => property('Name', name)
-const typed = type => property('Type', type)
-const uniqueId = (id = null) => {
-  return property('id', id || createUuid())
-}
+const named = (config) => property('Name', config)
+const typed = (config) => property('Type', config)
+const uniqueId = (config) => (id = null) => property('id', config)(id || createUuid(), config)
 
 module.exports = {
   property,

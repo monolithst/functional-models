@@ -3,6 +3,14 @@ const { smartObject } = require('../../src/objects')
 
 describe('/src/objects.js', () => {
   describe('#smartObject()', () => {
+    it('should combine functions.validation of two objects correctly', () => {
+      const instance = smartObject([
+        { functions: { validateProperty1: () => {}}},
+        { functions: { validateProperty2: () => {}}},
+      ])
+      assert.isOk(instance.functions.validateProperty1)
+      assert.isOk(instance.functions.validateProperty2)
+    })
     it('should allow a single value for internals', async () => {
       const instance = smartObject({
         key: 'value',

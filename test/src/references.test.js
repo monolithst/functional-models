@@ -55,7 +55,7 @@ describe('/src/references.js', () => {
       assert.deepEqual(actual, expected)
     })
     it('should take the smartObject as a value', async () => {
-      const input = ['MyObject', smartObject([uniqueId('obj-id')])]
+      const input = ['MyObject', smartObject([uniqueId()('obj-id')])]
       const instance = smartObjectReference({})(...input)
       const classThing = await instance.getMyObject()
       const actual = await (await instance.getMyObject()).getId()
@@ -64,7 +64,7 @@ describe('/src/references.js', () => {
     })
     describe('#functions.toJson()', () => {
       it('should use the getId of the smartObject passed in when toJson is called', async () => {
-        const input = ['MyObject', smartObject([uniqueId('obj-id')])]
+        const input = ['MyObject', smartObject([uniqueId()('obj-id')])]
         const instance = smartObjectReference({})(...input)
         const actual = await (await instance.getMyObject()).functions.toJson()
         const expected = 'obj-id'
