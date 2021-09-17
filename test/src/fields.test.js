@@ -5,11 +5,270 @@ const {
   dateField,
   referenceField,
   arrayField,
+  constantValueField,
+  objectField,
+  numberField,
+  textField,
+  integerField,
 } = require('../../src/fields')
 const { TYPE_PRIMATIVES, arrayType } = require('../../src/validation')
 const { createModel } = require('../../src/models')
 
 describe('/src/fields.js', () => {
+  describe('#constantValueField()', () => {
+    describe('#createGetter()', () => {
+      it('should always have the value passed in', async () => {
+        const fieldInstance = constantValueField('constant')
+        const getter = fieldInstance.createGetter('changed')
+        const actual = await getter()
+        const expected = 'constant'
+        assert.deepEqual(actual, expected)
+      })
+    })
+    describe('#getValidator()', () => {
+      it('should return and validate successful with basic input', async () => {
+        const fieldInstance = constantValueField('constant')
+        const getter = fieldInstance.createGetter('changed')
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+    })
+  })
+  describe('#objectField()', () => {
+    describe('#createGetter()', () => {
+      it('should be able to create without a config', () => {
+        assert.doesNotThrow(() => {
+          objectField()
+        })
+      })
+      it('should be able to get the object passed in', async () => {
+        const fieldInstance = objectField({})
+        const getter = fieldInstance.createGetter({
+          my: 'object',
+          complex: { it: 'is' },
+        })
+        const actual = await getter()
+        const expected = { my: 'object', complex: { it: 'is' } }
+        assert.deepEqual(actual, expected)
+      })
+    })
+    describe('#getValidator()', () => {
+      it('should return and validate successful with basic input', async () => {
+        const fieldInstance = objectField({})
+        const getter = fieldInstance.createGetter({
+          my: 'object',
+          complex: { it: 'is' },
+        })
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+    })
+  })
+
+  describe('#numberField()', () => {
+    describe('#createGetter()', () => {
+      it('should be able to create without a config', () => {
+        assert.doesNotThrow(() => {
+          numberField()
+        })
+      })
+      it('should be able to get the number passed in', async () => {
+        const fieldInstance = numberField({})
+        const getter = fieldInstance.createGetter(5)
+        const actual = await getter()
+        const expected = 5
+        assert.equal(actual, expected)
+      })
+      it('should be able to get float passed in', async () => {
+        const fieldInstance = numberField({})
+        const getter = fieldInstance.createGetter(5.123)
+        const actual = await getter()
+        const expected = 5.123
+        assert.equal(actual, expected)
+      })
+    })
+    describe('#getValidator()', () => {
+      it('should return and validate successful with basic input', async () => {
+        const fieldInstance = numberField({})
+        const getter = fieldInstance.createGetter(5)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+      it('should return and validate successful with a basic float', async () => {
+        const fieldInstance = numberField({})
+        const getter = fieldInstance.createGetter(5.123)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a non integer input', async () => {
+        const fieldInstance = numberField({})
+        const getter = fieldInstance.createGetter('string')
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a value=5 and maxValue=3', async () => {
+        const fieldInstance = numberField({ maxValue: 3 })
+        const getter = fieldInstance.createGetter(5)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a value=2 and minValue=3', async () => {
+        const fieldInstance = numberField({ minValue: 3 })
+        const getter = fieldInstance.createGetter(2)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with no errors with a value=3 and minValue=3 and maxValue=3', async () => {
+        const fieldInstance = numberField({ minValue: 3, maxValue: 3 })
+        const getter = fieldInstance.createGetter(3)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+    })
+  })
+
+  describe('#integerField()', () => {
+    describe('#createGetter()', () => {
+      it('should be able to create without a config', () => {
+        assert.doesNotThrow(() => {
+          integerField()
+        })
+      })
+      it('should be able to get the number passed in', async () => {
+        const fieldInstance = integerField({})
+        const getter = fieldInstance.createGetter(5)
+        const actual = await getter()
+        const expected = 5
+        assert.equal(actual, expected)
+      })
+    })
+    describe('#getValidator()', () => {
+      it('should return and validate successful with basic input', async () => {
+        const fieldInstance = integerField({})
+        const getter = fieldInstance.createGetter(5)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+      it('should return errors with a basic float', async () => {
+        const fieldInstance = integerField({})
+        const getter = fieldInstance.createGetter(5.123)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a non integer input', async () => {
+        const fieldInstance = integerField({})
+        const getter = fieldInstance.createGetter('string')
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a value=5 and maxValue=3', async () => {
+        const fieldInstance = integerField({ maxValue: 3 })
+        const getter = fieldInstance.createGetter(5)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a value=2 and minValue=3', async () => {
+        const fieldInstance = integerField({ minValue: 3 })
+        const getter = fieldInstance.createGetter(2)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with no errors with a value=3 and minValue=3 and maxValue=3', async () => {
+        const fieldInstance = integerField({ minValue: 3, maxValue: 3 })
+        const getter = fieldInstance.createGetter(3)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+    })
+  })
+
+  describe('#textField()', () => {
+    describe('#createGetter()', () => {
+      it('should be able to create without a config', () => {
+        assert.doesNotThrow(() => {
+          textField()
+        })
+      })
+      it('should be able to get the value passed in', async () => {
+        const fieldInstance = textField({})
+        const getter = fieldInstance.createGetter('basic input')
+        const actual = await getter()
+        const expected = 'basic input'
+        assert.equal(actual, expected)
+      })
+    })
+    describe('#getValidator()', () => {
+      it('should return and validate successful with basic input', async () => {
+        const fieldInstance = textField({})
+        const getter = fieldInstance.createGetter('basic input')
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a value=5', async () => {
+        const fieldInstance = textField({})
+        const getter = fieldInstance.createGetter(5)
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a value="hello" and maxLength=3', async () => {
+        const fieldInstance = textField({ maxLength: 3 })
+        const getter = fieldInstance.createGetter('hello')
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with errors with a value="hello" and minLength=10', async () => {
+        const fieldInstance = textField({ minLength: 10 })
+        const getter = fieldInstance.createGetter('hello')
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
+      })
+      it('should return with no errors with a value="hello" and minLength=5 and maxLength=5', async () => {
+        const fieldInstance = textField({ minLength: 5, maxLength: 5 })
+        const getter = fieldInstance.createGetter('hello')
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+    })
+  })
+
   describe('#arrayField()', () => {
     describe('#createGetter()', () => {
       it('should return an array passed in without issue', async () => {
