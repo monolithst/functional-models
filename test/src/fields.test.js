@@ -10,11 +10,38 @@ const {
   numberField,
   textField,
   integerField,
+  emailField,
 } = require('../../src/fields')
 const { TYPE_PRIMATIVES, arrayType } = require('../../src/validation')
 const { createModel } = require('../../src/models')
 
 describe('/src/fields.js', () => {
+  describe('#emailField()', () => {
+    describe('#createGetter()', () => {
+      it('should be able to create without a config', () => {
+        assert.doesNotThrow(() => {
+          emailField()
+        })
+      })
+      it('should always have the value passed in', async () => {
+        const fieldInstance = emailField({})
+        const getter = fieldInstance.createGetter('testme@email.com')
+        const actual = await getter()
+        const expected = 'testme@email.com'
+        assert.deepEqual(actual, expected)
+      })
+    })
+    describe('#getValidator()', () => {
+      it('should return and validate successful with basic input', async () => {
+        const fieldInstance = emailField({})
+        const getter = fieldInstance.createGetter('testme@email.com')
+        const validator = fieldInstance.getValidator(getter)
+        const actual = await validator()
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+    })
+  })
   describe('#constantValueField()', () => {
     describe('#createGetter()', () => {
       it('should always have the value passed in', async () => {

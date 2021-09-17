@@ -8,9 +8,13 @@ const {
   minNumber,
   maxNumber,
   isType,
+  meetsRegex,
 } = require('./validation')
 const { createUuid } = require('./utils')
 const { lazyValue } = require('./lazy')
+
+const EMAIL_REGEX =
+  /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
 
 const _getValidatorFromConfigElseEmpty = (config, key, validatorGetter) => {
   if (key in config) {
@@ -180,6 +184,13 @@ const constantValueField = (value, config = {}) =>
     })
   )
 
+const emailField = (config = {}) =>
+  textField(
+    merge(config, {
+      validators: [meetsRegex(EMAIL_REGEX)],
+    })
+  )
+
 module.exports = {
   field,
   uniqueId,
@@ -191,4 +202,5 @@ module.exports = {
   constantValueField,
   numberField,
   objectField,
+  emailField,
 }
