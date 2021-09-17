@@ -5,6 +5,8 @@ const {
   isBoolean,
   isInteger,
   isString,
+  isArray,
+  arrayType,
   isRequired,
   maxNumber,
   minNumber,
@@ -16,6 +18,7 @@ const {
   emptyValidator,
   createModelValidator,
   createFieldValidator,
+  TYPE_PRIMATIVES,
 } = require('../../src/validation')
 
 describe('/src/validation.js', () => {
@@ -313,6 +316,74 @@ describe('/src/validation.js', () => {
       const actual = await validator(null)
       const expected = 1
       assert.equal(actual.length, expected)
+    })
+  })
+  describe('#isArray()', () => {
+    it('should return an error for null', () => {
+      const actual = isArray(null)
+      assert.isOk(actual)
+    })
+    it('should return an error for undefined', () => {
+      const actual = isArray(undefined)
+      assert.isOk(actual)
+    })
+    it('should return an error for 1', () => {
+      const actual = isArray(1)
+      assert.isOk(actual)
+    })
+    it('should return an error for "1"', () => {
+      const actual = isArray('1')
+      assert.isOk(actual)
+    })
+    it('should return undefined for [1,2,3]', () => {
+      const actual = isArray([1, 2, 3])
+      assert.isUndefined(actual)
+    })
+    it('should return undefined for []', () => {
+      const actual = isArray([])
+      assert.isUndefined(actual)
+    })
+  })
+  describe('#arrayType()', () => {
+    describe('#(object)()', () => {
+      it('should return an error for null, even though its an object, its not an array', () => {
+        const actual = arrayType('object')(null)
+        assert.isOk(actual)
+      })
+      it('should return an error for 1', () => {
+        const actual = arrayType('object')(1)
+        assert.isOk(actual)
+      })
+      it('should return undefined for [{}]', () => {
+        const actual = arrayType('object')([{}])
+        assert.isUndefined(actual)
+      })
+    })
+    describe('#(integer)()', () => {
+      it('should return an error for null', () => {
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(null)
+        assert.isOk(actual)
+      })
+      it('should return an error for undefined', () => {
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(undefined)
+        assert.isOk(actual)
+      })
+      it('should return an error for 1', () => {
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(1)
+        assert.isOk(actual)
+      })
+      it('should return an error for "1"', () => {
+        const actual = arrayType(TYPE_PRIMATIVES.integer)('1')
+        assert.isOk(actual)
+      })
+      it('should return undefined for [1,2,3]', () => {
+        const actual = arrayType(TYPE_PRIMATIVES.integer)([1, 2, 3])
+        assert.isUndefined(actual)
+      })
+      it('should return an error for [1,"2",3]', () => {
+        const actual = arrayType(TYPE_PRIMATIVES.integer)([1, '2', 3])
+        assert.isOk(actual)
+      })
     })
   })
 })
