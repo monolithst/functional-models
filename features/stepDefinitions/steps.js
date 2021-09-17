@@ -2,15 +2,14 @@ const assert = require('chai').assert
 const flatMap = require('lodash/flatMap')
 const { Given, When, Then } = require('@cucumber/cucumber')
 
-const { smartObject, property, named, typed } = require('../../index')
+const { createModel, field } = require('../../index')
 
 const MODEL_DEFINITIONS = {
-  TestModel1: ({ name, type, flag }) =>
-    smartObject([
-      named({ required: true })(name),
-      typed({ required: true, isString: 'true' })(type),
-      property('flag', { required: true, isNumber: true })(flag),
-    ]),
+  TestModel1: createModel({
+    name: field({ required: true }),
+    type: field({ required: true, isString: true }),
+    flag: field({ required: true, isNumber: true }),
+  }),
 }
 
 const MODEL_INPUT_VALUES = {
@@ -26,7 +25,7 @@ const MODEL_INPUT_VALUES = {
   },
 }
 
-const EXPECTED_PROPERTIES = {
+const EXPECTED_FIELDS = {
   TestModel1b: ['getName', 'getType', 'getFlag', 'meta', 'functions'],
 }
 
@@ -46,7 +45,7 @@ Given(
 )
 
 When('functions.validate is called', function () {
-  return this.instance.functions.validate.object().then(x => {
+  return this.instance.functions.validate.model().then(x => {
     this.errors = x
   })
 })
@@ -75,10 +74,10 @@ When('{word} data is inserted', function (modelInputValues) {
   this.instance = this.modelDefinition(input)
 })
 
-Then('{word} expected properties are found', function (properties) {
-  const propertyArray = EXPECTED_PROPERTIES[properties]
+Then('{word} expected fields are found', function (fields) {
+  const propertyArray = EXPECTED_FIELDS[fields]
   if (!propertyArray) {
-    throw new Error(`${properties} did not result in properties`)
+    throw new Error(`${fields} did not result in fields`)
   }
   propertyArray.forEach(key => {
     if (!(key in this.instance)) {

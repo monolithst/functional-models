@@ -31,14 +31,12 @@ const isInteger = _trueOrError(v => {
 const isBoolean = isType('boolean')
 const isString = isType('string')
 
-const meetsRegex = (
-  regex,
-  flags,
-  errorMessage = 'Format was invalid'
-) => value => {
-  const reg = new RegExp(regex, flags)
-  return _trueOrError(v => reg.test(v), errorMessage)(value)
-}
+const meetsRegex =
+  (regex, flags, errorMessage = 'Format was invalid') =>
+  value => {
+    const reg = new RegExp(regex, flags)
+    return _trueOrError(v => reg.test(v), errorMessage)(value)
+  }
 
 const choices = choiceArray => value => {
   if (choiceArray.includes(value) === false) {
