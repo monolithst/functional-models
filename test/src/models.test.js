@@ -10,6 +10,15 @@ describe('/src/models.js', () => {
       assert.isFunction(actual)
     })
     describe('#()', () => {
+      it('should not throw an exception if nothing is passed into function', () => {
+        const input = {
+          myField: field({ required: true }),
+        }
+        const model = createModel(input)
+        assert.doesNotThrow(() => {
+          model()
+        })
+      })
       it('should use the value passed in when field.defaultValue and field.value are not set', async () => {
         const input = {
           myField: field({ required: true }),

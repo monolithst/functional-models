@@ -22,7 +22,7 @@ const createModel = keyToField => {
     ([key, _]) => !(key in SYSTEM_KEYS)
   )
 
-  return instanceValues => {
+  return (instanceValues={}) => {
     const loadedInternals = nonSystemProperties.reduce((acc, [key, field]) => {
       const fieldGetter = field.createGetter(instanceValues[key])
       const fieldValidator = field.getValidator(fieldGetter)
