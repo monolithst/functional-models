@@ -23,8 +23,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
         run: npm install
-      - run: npm test
+      - name: Run Unit Tests
+        run: npm test
       - run: npm run coverage 
+      - name: Run Cucumber Tests 
+        run: npm feature-tests 
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
