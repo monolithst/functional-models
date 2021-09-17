@@ -125,7 +125,7 @@ const CONFIG_TO_VALIDATE_METHOD = {
   isString: _boolChoice(isString),
 }
 
-const createPropertyValidate = (key, config) => value => {
+const createPropertyValidator = (config) => {
   const validators = [
     ...Object.entries(config).map(([key, value]) => {
       return (CONFIG_TO_VALIDATE_METHOD[key] || (() => undefined))(value)
@@ -134,13 +134,18 @@ const createPropertyValidate = (key, config) => value => {
   ].filter(x => x)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
+  return (value) => async () => {
+    const errors = await validator(value)
+    return flatMap(errors)
+  }
+}
+
+const createPropertyValidate = (key, config) => value => {
+  const validate = createPropertyValidator(config)(value)
   return {
     functions: {
       validate: {
-        [key]: async () => {
-          const errors = await validator(value)
-          return flatMap(errors)
-        },
+        [key]: () => validate()
       },
     },
   }
@@ -162,4 +167,5 @@ module.exports = {
   aggregateValidator,
   emptyValidator,
   createPropertyValidate,
+  createPropertyValidator,
 }

@@ -1,7 +1,45 @@
 const assert = require('chai').assert
-const { smartObject } = require('../../src/objects')
+const { smartObject, smartObjectPrototype } = require('../../src/objects')
+const { field } = require('../../src/fields')
 
 describe('/src/objects.js', () => {
+  describe('#smartObjectPrototype()', () => {
+    it('should return a function when called once with valid data', () => {
+      const actual = smartObjectPrototype({})
+      const expected = 'function'
+      assert.isFunction(actual)
+    })
+    describe('#()', () => {
+      it('should return an object with getId and getType for the provided valid keyToField', () => {
+        const input = {
+          id: field({ required: true}),
+          type: field(),
+        }
+        const proto = smartObjectPrototype(input)
+        const actual = proto({id: 'my-id', type: 'my-type'})
+        console.log(actual)
+        assert.isOk(actual.getId)
+        assert.isOk(actual.getType)
+      })
+      it('should return an object where validate returns one error for id', async () => {
+        const input = {
+          id: field({ required: true}),
+          type: field(),
+        }
+        const proto = smartObjectPrototype(input)
+        const instance = proto({type: 'my-type'})
+        const actual = await instance.functions.validate.object()
+        const expected = 1
+        console.log(actual)
+        assert.equal(Object.values(actual).length, 1)
+      })
+    })
+    it('should return a function when called once with valid data', () => {
+      const actual = smartObjectPrototype({})
+      const expected = 'function'
+      assert.isFunction(actual)
+    })
+  })
   describe('#smartObject()', () => {
     it('should use the functions.validation of two objects correctly', async () => {
       const instance = smartObject([
