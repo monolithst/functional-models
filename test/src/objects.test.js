@@ -3,13 +3,25 @@ const { smartObject } = require('../../src/objects')
 
 describe('/src/objects.js', () => {
   describe('#smartObject()', () => {
-    it('should combine functions.validation of two objects correctly', () => {
+    it('should use the functions.validation of two objects correctly', async () => {
       const instance = smartObject([
-        { functions: { validateProperty1: () => {}}},
-        { functions: { validateProperty2: () => {}}},
+        { functions: { validate: { property1: () => ['failed1'] } } },
+        { functions: { validate: { property2: () => ['failed2'] } } },
       ])
-      assert.isOk(instance.functions.validateProperty1)
-      assert.isOk(instance.functions.validateProperty2)
+      const actual = await instance.functions.validate.object()
+      const expected = {
+        property1: ['failed1'],
+        property2: ['failed2'],
+      }
+      assert.deepEqual(actual, expected)
+    })
+    it('should combine functions.validate of two objects correctly', () => {
+      const instance = smartObject([
+        { functions: { validate: { property1: () => {} } } },
+        { functions: { validate: { property2: () => {} } } },
+      ])
+      assert.isOk(instance.functions.validate.property1)
+      assert.isOk(instance.functions.validate.property2)
     })
     it('should allow a single value for internals', async () => {
       const instance = smartObject({

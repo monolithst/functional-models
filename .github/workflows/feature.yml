@@ -2,13 +2,12 @@ name: Feature Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -23,5 +22,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
         run: npm install
-      - name: Run Cucumber Tests 
-        run: npm run feature-tests 
+      - name: Run Cucumber Tests
+        run: npm run feature-tests

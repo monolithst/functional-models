@@ -1,9 +1,7 @@
-const isNumberLodash = require('lodash/isNumber')
 const isEmpty = require('lodash/isEmpty')
 const flatMap = require('lodash/flatMap')
-const { toTitleCase } = require('./utils')
 
-const _trueOrError = (method, error) => (value) => {
+const _trueOrError = (method, error) => value => {
   if (method(value) === false) {
     return error
   }
@@ -17,7 +15,7 @@ const _typeOrError = (type, errorMessage) => value => {
   return undefined
 }
 
-const isType = (type) => value => {
+const isType = type => value => {
   return _typeOrError(type, `Must be a ${type}`)(value)
 }
 const isNumber = isType('number')
@@ -32,12 +30,16 @@ const isInteger = _trueOrError(v => {
 const isBoolean = isType('boolean')
 const isString = isType('string')
 
-const meetsRegex = (regex, flags, errorMessage='Format was invalid') => value => {
+const meetsRegex = (
+  regex,
+  flags,
+  errorMessage = 'Format was invalid'
+) => value => {
   const reg = new RegExp(regex, flags)
   return _trueOrError(v => reg.test(v), errorMessage)(value)
 }
 
-const choices = (choiceArray) => value => {
+const choices = choiceArray => value => {
   if (choiceArray.includes(value) === false) {
     return 'Not a valid choice'
   }
@@ -51,12 +53,10 @@ const isRequired = value => {
   if (isNumber(value) === undefined) {
     return undefined
   }
-  return isEmpty(value)
-    ? 'A value is required'
-    : undefined
+  return isEmpty(value) ? 'A value is required' : undefined
 }
 
-const maxNumber = (max) => value => {
+const maxNumber = max => value => {
   const numberError = isNumber(value)
   if (numberError) {
     return numberError
@@ -67,7 +67,7 @@ const maxNumber = (max) => value => {
   return undefined
 }
 
-const minNumber = (min) => value => {
+const minNumber = min => value => {
   const numberError = isNumber(value)
   if (numberError) {
     return numberError
@@ -78,7 +78,7 @@ const minNumber = (min) => value => {
   return undefined
 }
 
-const maxTextLength = (max) => value => {
+const maxTextLength = max => value => {
   const stringError = isString(value)
   if (stringError) {
     return stringError
@@ -89,7 +89,7 @@ const maxTextLength = (max) => value => {
   return undefined
 }
 
-const minTextLength = (min) => value => {
+const minTextLength = min => value => {
   const stringError = isString(value)
   if (stringError) {
     return stringError
@@ -100,28 +100,22 @@ const minTextLength = (min) => value => {
   return undefined
 }
 
-const aggregateValidator = (methodOrMethods) => async value => {
+const aggregateValidator = methodOrMethods => async value => {
   const toDo = Array.isArray(methodOrMethods)
     ? methodOrMethods
     : [methodOrMethods]
-  const values = await Promise.all(toDo.map(method => {
-    return method(value)
-  }))
-  return values
-    .filter(x=>x)
+  const values = await Promise.all(
+    toDo.map(method => {
+      return method(value)
+    })
+  )
+  return values.filter(x => x)
 }
 
 const emptyValidator = () => []
 
-const createValidateKey = key => {
-  const goodName = toTitleCase(key)
-  return `validate${goodName}`
-}
-
 const _boolChoice = method => value => {
-  return value
-    ? method
-    : undefined
+  return value ? method : undefined
 }
 
 const CONFIG_TO_VALIDATE_METHOD = {
@@ -134,19 +128,21 @@ const CONFIG_TO_VALIDATE_METHOD = {
 const createPropertyValidate = (key, config) => value => {
   const validators = [
     ...Object.entries(config).map(([key, value]) => {
-      return (CONFIG_TO_VALIDATE_METHOD[key] || (() => undefined ))(value)
+      return (CONFIG_TO_VALIDATE_METHOD[key] || (() => undefined))(value)
     }),
-    ...(config.validators ? config.validators : [])
-  ].filter(x=>x)
-  const validateKey = createValidateKey(key)
-  const validator = validators.length > 0 ? aggregateValidator(validators) : emptyValidator
+    ...(config.validators ? config.validators : []),
+  ].filter(x => x)
+  const validator =
+    validators.length > 0 ? aggregateValidator(validators) : emptyValidator
   return {
     functions: {
-      [validateKey]: async () => {
-        const errors = await validator(value)
-        return flatMap(errors)
-      }
-    }
+      validate: {
+        [key]: async () => {
+          const errors = await validator(value)
+          return flatMap(errors)
+        },
+      },
+    },
   }
 }
 

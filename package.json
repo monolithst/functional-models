@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "get-random-values": "^1.2.2",
-    "lazy-property": "^1.0.0"
+    "lazy-property": "^1.0.0",
+    "lodash": "^4.17.21"
   }
 }
