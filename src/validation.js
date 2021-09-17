@@ -1,5 +1,6 @@
 const isEmpty = require('lodash/isEmpty')
 const flatMap = require('lodash/flatMap')
+const get = require('lodash/get')
 
 const _trueOrError = (method, error) => value => {
   if (method(value) === false) {
@@ -125,7 +126,7 @@ const CONFIG_TO_VALIDATE_METHOD = {
   isString: _boolChoice(isString),
 }
 
-const createPropertyValidator = (config) => {
+const createFieldValidator = config => {
   const validators = [
     ...Object.entries(config).map(([key, value]) => {
       return (CONFIG_TO_VALIDATE_METHOD[key] || (() => undefined))(value)
@@ -134,21 +135,24 @@ const createPropertyValidator = (config) => {
   ].filter(x => x)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
-  return (value) => async () => {
+  return async value => {
     const errors = await validator(value)
     return flatMap(errors)
   }
 }
 
-const createPropertyValidate = (key, config) => value => {
-  const validate = createPropertyValidator(config)(value)
-  return {
-    functions: {
-      validate: {
-        [key]: () => validate()
-      },
-    },
-  }
+const createModelValidator = fields => async () => {
+  const keysAndFunctions = Object.entries(get(fields, 'functions.validate', {}))
+  const data = await Promise.all(
+    keysAndFunctions.map(async ([key, validator]) => {
+      return [key, await validator()]
+    })
+  )
+  return data
+    .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
+    .reduce((acc, [key, errors]) => {
+      return { ...acc, [key]: errors }
+    }, {})
 }
 
 module.exports = {
@@ -166,6 +170,6 @@ module.exports = {
   meetsRegex,
   aggregateValidator,
   emptyValidator,
-  createPropertyValidate,
-  createPropertyValidator,
+  createFieldValidator,
+  createModelValidator,
 }

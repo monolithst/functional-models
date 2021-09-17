@@ -27,7 +27,7 @@ const MODEL_INPUT_VALUES = {
 }
 
 const EXPECTED_PROPERTIES = {
-  TestModel1b: ['getName', 'getType', 'getFlag', 'meta', 'functions']
+  TestModel1b: ['getName', 'getType', 'getFlag', 'meta', 'functions'],
 }
 
 Given(
