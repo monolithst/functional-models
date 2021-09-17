@@ -69,8 +69,15 @@ const meetsRegex =
   }
 
 const choices = choiceArray => value => {
-  if (choiceArray.includes(value) === false) {
-    return 'Not a valid choice'
+  if (Array.isArray(value)) {
+    const bad = value.find(v => !choiceArray.includes(v))
+    if (bad) {
+      return `${bad} is not a valid choice`
+    }
+  } else {
+    if (choiceArray.includes(value) === false) {
+      return `${value} is not a valid choice`
+    }
   }
   return undefined
 }
@@ -153,6 +160,7 @@ const CONFIG_TO_VALIDATE_METHOD = {
   isNumber: _boolChoice(isNumber),
   isString: _boolChoice(isString),
   isArray: _boolChoice(isArray),
+  choices,
 }
 
 const createFieldValidator = config => {

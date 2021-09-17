@@ -6,6 +6,7 @@ const {
   referenceField,
   arrayField,
 } = require('../../src/fields')
+const { TYPE_PRIMATIVES, arrayType } = require('../../src/validation')
 const { createModel } = require('../../src/models')
 
 describe('/src/fields.js', () => {
@@ -48,6 +49,32 @@ describe('/src/fields.js', () => {
         const actual = await validator()
         const expected = []
         assert.deepEqual(actual, expected)
+      })
+      it('should error an array passed in when it doesnt have the right types', async () => {
+        const theField = arrayField({
+          validators: [arrayType(TYPE_PRIMATIVES.integer)],
+        })
+        const getter = theField.createGetter([1, 'string', 3])
+        const validator = theField.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.deepEqual(actual.length, expected)
+      })
+      it('should validate an array with [4,4,5,5,6,6] when choices are [4,5,6]', async () => {
+        const theField = arrayField({ choices: [4, 5, 6] })
+        const getter = theField.createGetter([4, 4, 5, 5, 6, 6])
+        const validator = theField.getValidator(getter)
+        const actual = await validator()
+        const expected = []
+        assert.deepEqual(actual, expected)
+      })
+      it('should return errors when an array with [4,4,3,5,5,6,6] when choices are [4,5,6]', async () => {
+        const theField = arrayField({ choices: [4, 5, 6] })
+        const getter = theField.createGetter([4, 4, 3, 5, 5, 6, 6])
+        const validator = theField.getValidator(getter)
+        const actual = await validator()
+        const expected = 1
+        assert.equal(actual.length, expected)
       })
     })
   })
