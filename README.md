@@ -10,29 +10,36 @@ This library empowers the creation of pure JavaScript function based models that
 ## Example Usage
 
     const {
-      smartObject,
-      property,
-      typed,
+      field,
+      constantValueField,
+      textField,
+      dateField,
+      integerField,
       uniqueId,
+      createModel,
+      validation,
     }= require('functional-models')
 
-    const Truck = ({ id, make, model, color, year }) => smartObject([
-      uniqueId(id),
-      typed('truck'),
-      property('make', make),
-      property('model', model),
-      property('color', color),
-      property('year', year),
-    ])
+    const Truck = createModel({
+      type: constantValueField('truck'),
+      id: uniqueId({required: true}),
+      make: textField({ maxLength: 20, minLength: 3, required: true}),
+      model: textField({ maxLength: 20, minLength: 3, required: true}),
+      color: textField({ maxLength: 10, minLength: 3, validators: [
+        validation.meetsRegex(/Red/),
+      ]}),
+      year: integerField({ maxValue: 2500, minValue: 1900}),
+      lastModified: dateField({ autoNow: true}),
+    })
 
 
     const myTruck = Truck({ make: 'Ford', model: 'F-150', color: 'White', year: 2013})
 
-    console.log(myTruck.getId())     // a random uuid
-    console.log(myTruck.getMake())   // 'Ford'
-    console.log(myTruck.getModel())  // 'F-150'
-    console.log(myTruck.getColor())  // 'White'
-    console.log(myTruck.getYear())   // 2013
+    console.log(await myTruck.getId())     // a random uuid
+    console.log(await myTruck.getMake())   // 'Ford'
+    console.log(await myTruck.getModel())  // 'F-150'
+    console.log(await myTruck.getColor())  // 'White'
+    console.log(await myTruck.getYear())   // 2013
 
     const asJson = await myTruck.functions.toJson()
     console.log(asJson)
@@ -47,8 +54,8 @@ This library empowers the creation of pure JavaScript function based models that
     */
 
     const sameTruck = Truck(asJson)
-    console.log(sameTruck.getId())     // same uuid as above
-    console.log(sameTruck.getMake())   // 'Ford'
-    console.log(sameTruck.getModel())  // 'F-150'
-    console.log(sameTruck.getColor())  // 'White'
-    console.log(sameTruck.getYear())   // 2013
+    console.log(await sameTruck.getId())     // same uuid as above
+    console.log(await sameTruck.getMake())   // 'Ford'
+    console.log(await sameTruck.getModel())  // 'F-150'
+    console.log(await sameTruck.getColor())  // 'White'
+    console.log(await sameTruck.getYear())   // 2013
