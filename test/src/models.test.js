@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const assert = require('chai').assert
 const { createModel } = require('../../src/models')
 const { field } = require('../../src/fields')
@@ -5,7 +6,7 @@ const { field } = require('../../src/fields')
 describe('/src/models.js', () => {
   describe('#createModel()', () => {
     it('should return a function when called once with valid data', () => {
-      const actual = createModel({})
+      const actual = createModel('name', {})
       const expected = 'function'
       assert.isFunction(actual)
     })
@@ -14,16 +15,44 @@ describe('/src/models.js', () => {
         const input = {
           myField: field({ required: true }),
         }
-        const model = createModel(input)
+        const model = createModel('name', input)
         assert.doesNotThrow(() => {
           model()
         })
+      })
+      it('should return an object that contains meta.fields.myField', () => {
+        const input = {
+          myField: field({ required: true }),
+        }
+        const model = createModel('name', input)
+        const instance = model({ myField: 'value' })
+        const actual = _.get(instance, 'meta.fields.myField')
+        assert.isOk(actual)
+      })
+      it('should return an object that contains meta.modelName===test-the-name', () => {
+        const input = {
+          myField: field({ required: true }),
+        }
+        const model = createModel('test-the-name', input)
+        const instance = model({ myField: 'value' })
+        const actual = _.get(instance, 'meta.modelName')
+        const expected = 'test-the-name'
+        assert.deepEqual(actual, expected)
+      })
+      it('should return an object that contains meta.fields.myField', () => {
+        const input = {
+          myField: field({ required: true }),
+        }
+        const model = createModel('name', input)
+        const instance = model({ myField: 'value' })
+        const actual = _.get(instance, 'meta.fields.myField')
+        assert.isOk(actual)
       })
       it('should use the value passed in when field.defaultValue and field.value are not set', async () => {
         const input = {
           myField: field({ required: true }),
         }
-        const model = createModel(input)
+        const model = createModel('name', input)
         const instance = model({ myField: 'passed-in' })
         const actual = await instance.getMyField()
         const expected = 'passed-in'
@@ -33,7 +62,7 @@ describe('/src/models.js', () => {
         const input = {
           myField: field({ value: 'value', defaultValue: 'default-value' }),
         }
-        const model = createModel(input)
+        const model = createModel('name', input)
         const instance = model({ myField: 'passed-in' })
         const actual = await instance.getMyField()
         const expected = 'value'
@@ -43,7 +72,7 @@ describe('/src/models.js', () => {
         const input = {
           myField: field({ value: 'value' }),
         }
-        const model = createModel(input)
+        const model = createModel('name', input)
         const instance = model({ myField: 'passed-in' })
         const actual = await instance.getMyField()
         const expected = 'value'
@@ -53,7 +82,7 @@ describe('/src/models.js', () => {
         const input = {
           myField: field({ defaultValue: 'defaultValue' }),
         }
-        const model = createModel(input)
+        const model = createModel('name', input)
         const instance = model({})
         const actual = await instance.getMyField()
         const expected = 'defaultValue'
@@ -63,7 +92,7 @@ describe('/src/models.js', () => {
         const input = {
           myField: field({ defaultValue: 'defaultValue' }),
         }
-        const model = createModel(input)
+        const model = createModel('name', input)
         const instance = model({ myField: null })
         const actual = await instance.getMyField()
         const expected = 'defaultValue'
@@ -74,7 +103,7 @@ describe('/src/models.js', () => {
           id: field({ required: true }),
           type: field(),
         }
-        const model = createModel(input)
+        const model = createModel('name', input)
         const actual = model({ id: 'my-id', type: 'my-type' })
         assert.isOk(actual.getId)
         assert.isOk(actual.getType)
@@ -84,7 +113,7 @@ describe('/src/models.js', () => {
           id: field({ required: true }),
           type: field(),
         }
-        const model = createModel(input)
+        const model = createModel('name', input)
         const instance = model({ type: 'my-type' })
         const actual = await instance.functions.validate.model()
         const expected = 1
@@ -92,12 +121,12 @@ describe('/src/models.js', () => {
       })
     })
     it('should return a function when called once with valid data', () => {
-      const actual = createModel({})
+      const actual = createModel('name', {})
       assert.isFunction(actual)
     })
     it('should throw an exception if a key "model" is passed in', () => {
       assert.throws(() => {
-        createModel({ model: 'weeee' })
+        createModel('name', { model: 'weeee' })
       })
     })
   })

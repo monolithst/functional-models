@@ -481,7 +481,7 @@ describe('/src/fields.js', () => {
         assert.deepEqual(actual, expected)
       })
       it('should take the smartObject as a value', async () => {
-        const proto = createModel({
+        const proto = createModel('name', {
           id: uniqueId({ value: 'obj-id' }),
         })
         const input = [proto({ id: 'obj-id' })]
@@ -490,23 +490,23 @@ describe('/src/fields.js', () => {
         const expected = 'obj-id'
         assert.deepEqual(actual, expected)
       })
-      describe('#functions.toJson()', () => {
-        it('should use the getId of the smartObject passed in when toJson is called', async () => {
-          const proto = createModel({
+      describe('#functions.toObj()', () => {
+        it('should use the getId of the smartObject passed in when toObj is called', async () => {
+          const proto = createModel('name', {
             id: uniqueId({ value: 'obj-id' }),
           })
           const input = [proto({ id: 'obj-id' })]
           const instance = await referenceField({}).createGetter(...input)()
-          const actual = await instance.functions.toJson()
+          const actual = await instance.functions.toObj()
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)
         })
-        it('should return "obj-id" when switch-a-roo fetcher is used and toJson is called', async () => {
+        it('should return "obj-id" when switch-a-roo fetcher is used and toObj is called', async () => {
           const input = ['obj-id']
           const instance = await referenceField({
             fetcher: () => ({ id: 'obj-id', prop: 'switch-a-roo' }),
           }).createGetter(...input)()
-          const actual = await instance.functions.toJson()
+          const actual = await instance.functions.toObj()
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)
         })
