@@ -53,9 +53,11 @@ const field = (config = {}) => {
       }
     },
     getValidator: valueGetter => {
-      return async () => {
-        return createFieldValidator(config)(await valueGetter())
+      const validator = createFieldValidator(config)
+      const _fieldValidatorWrapper = async () => {
+        return validator(await valueGetter())
       }
+      return _fieldValidatorWrapper
     },
   }
 }
@@ -101,7 +103,7 @@ const referenceField = config => {
           ...objToUse,
           functions: {
             ...(objToUse.functions ? objToUse.functions : {}),
-            toJson: _getId,
+            toObj: _getId,
           },
         }
       }

@@ -130,16 +130,20 @@ const minTextLength = min => value => {
   return undefined
 }
 
-const aggregateValidator = methodOrMethods => async value => {
+const aggregateValidator = methodOrMethods => {
   const toDo = Array.isArray(methodOrMethods)
     ? methodOrMethods
     : [methodOrMethods]
-  const values = await Promise.all(
-    toDo.map(method => {
-      return method(value)
-    })
-  )
-  return values.filter(x => x)
+
+  const _aggregativeValidator = async value => {
+    const values = await Promise.all(
+      toDo.map(method => {
+        return method(value)
+      })
+    )
+    return values.filter(x => x)
+  }
+  return _aggregativeValidator
 }
 
 const emptyValidator = () => []
@@ -166,24 +170,33 @@ const createFieldValidator = config => {
   ].filter(x => x)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
-  return async value => {
+  const _fieldValidator = async value => {
     const errors = await validator(value)
     return [...new Set(flatMap(errors))]
   }
+  return _fieldValidator
 }
 
-const createModelValidator = fields => async () => {
-  const keysAndFunctions = Object.entries(get(fields, 'functions.validate', {}))
-  const data = await Promise.all(
-    keysAndFunctions.map(async ([key, validator]) => {
-      return [key, await validator()]
-    })
-  )
-  return data
-    .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
-    .reduce((acc, [key, errors]) => {
-      return { ...acc, [key]: errors }
-    }, {})
+const createModelValidator = fields => {
+  const _modelValidator = async () => {
+    const keysAndFunctions = Object.entries(
+      get(fields, 'functions.validate', {})
+    )
+    const data = await Promise.all(
+      keysAndFunctions.map(async ([key, validator]) => {
+        if (key === 'model') {
+          return [key, []]
+        }
+        return [key, await validator()]
+      })
+    )
+    return data
+      .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
+      .reduce((acc, [key, errors]) => {
+        return { ...acc, [key]: errors }
+      }, {})
+  }
+  return _modelValidator
 }
 
 module.exports = {

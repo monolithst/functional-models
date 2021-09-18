@@ -258,6 +258,20 @@ describe('/src/validation.js', () => {
       sinon.assert.calledOnce(fields.functions.validate.id)
       sinon.assert.calledOnce(fields.functions.validate.type)
     })
+    it('should not run a validate.model function', async () => {
+      const fields = {
+        functions: {
+          validate: {
+            id: sinon.stub().returns(undefined),
+            type: sinon.stub().returns(undefined),
+            model: sinon.stub().returns(undefined),
+          },
+        },
+      }
+      const validator = createModelValidator(fields)
+      await validator()
+      sinon.assert.notCalled(fields.functions.validate.model)
+    })
     it('should combine results for both functions.validate for two objects that error', async () => {
       const fields = {
         functions: {

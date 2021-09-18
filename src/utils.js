@@ -6,7 +6,7 @@ const toTitleCase = string => {
   return `${string.slice(0, 1).toUpperCase()}${string.slice(1)}`
 }
 
-const createPropertyTitle = key => {
+const createFieldTitle = key => {
   const goodName = toTitleCase(key)
   return `get${goodName}`
 }
@@ -37,6 +37,6 @@ const loweredTitleCase = string => {
 module.exports = {
   createUuid,
   loweredTitleCase,
-  createPropertyTitle,
+  createPropertyTitle: createFieldTitle,
   toTitleCase,
 }

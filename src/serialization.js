@@ -12,8 +12,8 @@ const _getValue = async value => {
     return _getValue(await value())
   }
   // Nested Json
-  if (type === 'object' && value.functions && value.functions.toJson) {
-    return _getValue(await value.functions.toJson())
+  if (type === 'object' && value.functions && value.functions.toObj) {
+    return _getValue(await value.functions.toObj())
   }
   // Dates
   if (type === 'object' && value.toISOString) {
@@ -30,7 +30,7 @@ const _shouldIgnoreKey = key => {
   return IGNORABLE_KEYS.includes(key)
 }
 
-const toJson = keyToFunc => async () => {
+const toObj = keyToFunc => async () => {
   return Object.entries(keyToFunc).reduce(async (acc, [key, value]) => {
     const realAcc = await acc
     if (_shouldIgnoreKey(key)) {
@@ -43,5 +43,5 @@ const toJson = keyToFunc => async () => {
 }
 
 module.exports = {
-  toJson,
+  toObj,
 }

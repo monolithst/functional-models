@@ -1,29 +1,36 @@
 const merge = require('lodash/merge')
-const get = require('lodash/get')
-const { toJson } = require('./serialization')
+const pickBy = require('lodash/pickBy')
+const { toObj } = require('./serialization')
 const { createPropertyTitle } = require('./utils')
 const { createModelValidator } = require('./validation')
 
-const SYSTEM_KEYS = ['meta', 'functions']
-
+const MODEL_DEF_KEYS = ['meta', 'functions']
 const PROTECTED_KEYS = ['model']
 
-const createModel = keyToField => {
+const createModel = (modelName, keyToField) => {
   PROTECTED_KEYS.forEach(key => {
     if (key in keyToField) {
       throw new Error(`Cannot use ${key}. This is a protected value.`)
     }
   })
-  const systemProperties = SYSTEM_KEYS.reduce((acc, key) => {
-    const value = get(keyToField, key, {})
-    return { ...acc, [key]: value }
+  const fieldProperties = Object.entries(keyToField).filter(
+    ([key, _]) => !(key in MODEL_DEF_KEYS)
+  )
+  const fields = fieldProperties.reduce((acc, [key, field]) => {
+    return { ...acc, [key]: field }
   }, {})
-  const nonSystemProperties = Object.entries(keyToField).filter(
-    ([key, _]) => !(key in SYSTEM_KEYS)
+  const modelDefProperties = merge(
+    pickBy(keyToField, (value, key) => MODEL_DEF_KEYS.includes(key)),
+    {
+      meta: {
+        fields,
+        modelName,
+      },
+    }
   )
 
-  return (instanceValues={}) => {
-    const loadedInternals = nonSystemProperties.reduce((acc, [key, field]) => {
+  return (instanceValues = {}) => {
+    const loadedInternals = fieldProperties.reduce((acc, [key, field]) => {
       const fieldGetter = field.createGetter(instanceValues[key])
       const fieldValidator = field.getValidator(fieldGetter)
       const getFieldKey = createPropertyTitle(key)
@@ -37,16 +44,15 @@ const createModel = keyToField => {
       }
       return merge(acc, fleshedOutField)
     }, {})
-    const allUserData = merge(systemProperties, loadedInternals)
-    const internalFunctions = {
+    const frameworkProperties = {
       functions: {
-        toJson: toJson(loadedInternals),
+        toObj: toObj(loadedInternals),
         validate: {
           model: createModelValidator(loadedInternals),
         },
       },
     }
-    return merge(allUserData, internalFunctions)
+    return merge(loadedInternals, modelDefProperties, frameworkProperties)
   }
 }
 
