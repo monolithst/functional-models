@@ -1,5 +1,5 @@
 module.exports = {
-  ...require('./fields'),
+  ...require('./properties'),
   ...require('./models'),
   validation: require('./validation'),
   serialization: require('./serialization'),

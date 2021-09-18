@@ -161,7 +161,7 @@ const CONFIG_TO_VALIDATE_METHOD = {
   choices,
 }
 
-const createFieldValidator = config => {
+const createPropertyValidator = config => {
   const validators = [
     ...Object.entries(config).map(([key, value]) => {
       return (CONFIG_TO_VALIDATE_METHOD[key] || (() => undefined))(value)
@@ -170,17 +170,17 @@ const createFieldValidator = config => {
   ].filter(x => x)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
-  const _fieldValidator = async value => {
+  const _propertyValidator = async value => {
     const errors = await validator(value)
     return [...new Set(flatMap(errors))]
   }
-  return _fieldValidator
+  return _propertyValidator
 }
 
-const createModelValidator = fields => {
+const createModelValidator = properties => {
   const _modelValidator = async () => {
     const keysAndFunctions = Object.entries(
-      get(fields, 'functions.validate', {})
+      get(properties, 'functions.validate', {})
     )
     const data = await Promise.all(
       keysAndFunctions.map(async ([key, validator]) => {
@@ -215,7 +215,7 @@ module.exports = {
   meetsRegex,
   aggregateValidator,
   emptyValidator,
-  createFieldValidator,
+  createPropertyValidator,
   createModelValidator,
   arrayType,
   TYPE_PRIMATIVES,

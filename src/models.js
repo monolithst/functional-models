@@ -7,42 +7,42 @@ const { createModelValidator } = require('./validation')
 const MODEL_DEF_KEYS = ['meta', 'functions']
 const PROTECTED_KEYS = ['model']
 
-const createModel = (modelName, keyToField) => {
+const Model = (modelName, keyToProperty, modelExtensions={}, {instanceCreatedCallback=null}={}) => {
   PROTECTED_KEYS.forEach(key => {
-    if (key in keyToField) {
+    if (key in keyToProperty) {
       throw new Error(`Cannot use ${key}. This is a protected value.`)
     }
   })
-  const fieldProperties = Object.entries(keyToField).filter(
+  const instanceProperties = Object.entries(keyToProperty).filter(
     ([key, _]) => !(key in MODEL_DEF_KEYS)
   )
-  const fields = fieldProperties.reduce((acc, [key, field]) => {
-    return { ...acc, [key]: field }
+  const properties = instanceProperties.reduce((acc, [key, property]) => {
+    return { ...acc, [key]: property }
   }, {})
-  const modelDefProperties = merge(
-    pickBy(keyToField, (value, key) => MODEL_DEF_KEYS.includes(key)),
+  const modelProperties = merge(
+    pickBy(keyToProperty, (value, key) => MODEL_DEF_KEYS.includes(key)),
     {
       meta: {
-        fields,
+        properties,
         modelName,
       },
     }
   )
 
-  return (instanceValues = {}) => {
-    const loadedInternals = fieldProperties.reduce((acc, [key, field]) => {
-      const fieldGetter = field.createGetter(instanceValues[key])
-      const fieldValidator = field.getValidator(fieldGetter)
-      const getFieldKey = createPropertyTitle(key)
-      const fleshedOutField = {
-        [getFieldKey]: fieldGetter,
+  const create = (instanceValues = {}) => {
+    const loadedInternals = instanceProperties.reduce((acc, [key, property]) => {
+      const propertyGetter = property.createGetter(instanceValues[key])
+      const propertyValidator = property.getValidator(propertyGetter)
+      const getPropertyKey = createPropertyTitle(key)
+      const fleshedOutInstanceProperties = {
+        [getPropertyKey]: propertyGetter,
         functions: {
           validate: {
-            [key]: fieldValidator,
+            [key]: propertyValidator,
           },
         },
       }
-      return merge(acc, fleshedOutField)
+      return merge(acc, fleshedOutInstanceProperties)
     }, {})
     const frameworkProperties = {
       functions: {
@@ -52,10 +52,23 @@ const createModel = (modelName, keyToField) => {
         },
       },
     }
-    return merge(loadedInternals, modelDefProperties, frameworkProperties)
+    const instance = merge({}, loadedInternals, modelProperties, frameworkProperties)
+    if (instanceCreatedCallback) {
+      instanceCreatedCallback(instance)
+    }
+    return instance
   }
+
+  return merge(
+    {},
+    modelExtensions,
+    {
+      create,
+      name: modelName,
+    }
+  )
 }
 
 module.exports = {
-  createModel,
+  Model,
 }

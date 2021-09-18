@@ -1,7 +1,7 @@
 const identity = require('lodash/identity')
 const merge = require('lodash/merge')
 const {
-  createFieldValidator,
+  createPropertyValidator,
   emptyValidator,
   maxTextLength,
   minTextLength,
@@ -23,7 +23,7 @@ const _getValidatorFromConfigElseEmpty = (config, key, validatorGetter) => {
   return emptyValidator
 }
 
-const field = (config = {}) => {
+const Property = (config = {}) => {
   const value = config.value || undefined
   const defaultValue = config.defaultValue || undefined
   const lazyLoadMethod = config.lazyLoadMethod || false
@@ -53,17 +53,17 @@ const field = (config = {}) => {
       }
     },
     getValidator: valueGetter => {
-      const validator = createFieldValidator(config)
-      const _fieldValidatorWrapper = async () => {
+      const validator = createPropertyValidator(config)
+      const _propertyValidatorWrapper = async () => {
         return validator(await valueGetter())
       }
-      return _fieldValidatorWrapper
+      return _propertyValidatorWrapper
     },
   }
 }
 
 const uniqueId = config =>
-  field({
+  Property({
     ...config,
     lazyLoadMethod: value => {
       if (!value) {
@@ -73,8 +73,8 @@ const uniqueId = config =>
     },
   })
 
-const dateField = config =>
-  field({
+const dateProperty = config =>
+  Property({
     ...config,
     lazyLoadMethod: value => {
       if (!value && config.autoNow) {
@@ -84,8 +84,8 @@ const dateField = config =>
     },
   })
 
-const referenceField = config => {
-  return field({
+const referenceProperty = config => {
+  return Property({
     ...config,
     lazyLoadMethod: async smartObj => {
       const _getId = () => {
@@ -120,22 +120,22 @@ const referenceField = config => {
   })
 }
 
-const arrayField = (config = {}) =>
-  field({
+const arrayProperty = (config = {}) =>
+  Property({
     defaultValue: [],
     ...config,
     isArray: true,
   })
 
-const objectField = (config = {}) =>
-  field(
+const objectProperty = (config = {}) =>
+  Property(
     merge(config, {
       validators: [isType('object')],
     })
   )
 
-const textField = (config = {}) =>
-  field(
+const textProperty = (config = {}) =>
+  Property(
     merge(config, {
       isString: true,
       validators: [
@@ -149,8 +149,8 @@ const textField = (config = {}) =>
     })
   )
 
-const integerField = (config = {}) =>
-  field(
+const integerProperty = (config = {}) =>
+  Property(
     merge(config, {
       isInteger: true,
       validators: [
@@ -164,8 +164,8 @@ const integerField = (config = {}) =>
     })
   )
 
-const numberField = (config = {}) =>
-  field(
+const numberProperty = (config = {}) =>
+  Property(
     merge(config, {
       isNumber: true,
       validators: [
@@ -179,30 +179,30 @@ const numberField = (config = {}) =>
     })
   )
 
-const constantValueField = (value, config = {}) =>
-  textField(
+const constantValueProperty = (value, config = {}) =>
+  textProperty(
     merge(config, {
       value,
     })
   )
 
-const emailField = (config = {}) =>
-  textField(
+const emailProperty = (config = {}) =>
+  textProperty(
     merge(config, {
       validators: [meetsRegex(EMAIL_REGEX)],
     })
   )
 
 module.exports = {
-  field,
+  Property,
   uniqueId,
-  dateField,
-  arrayField,
-  referenceField,
-  integerField,
-  textField,
-  constantValueField,
-  numberField,
-  objectField,
-  emailField,
+  dateProperty,
+  arrayProperty,
+  referenceProperty,
+  integerProperty,
+  textProperty,
+  constantValueProperty,
+  numberProperty,
+  objectProperty,
+  emailProperty,
 }

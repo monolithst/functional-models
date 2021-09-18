@@ -17,7 +17,7 @@ const {
   aggregateValidator,
   emptyValidator,
   createModelValidator,
-  createFieldValidator,
+  createPropertyValidator,
   TYPE_PRIMATIVES,
 } = require('../../src/validation')
 
@@ -306,27 +306,27 @@ describe('/src/validation.js', () => {
       assert.deepEqual(actual, expected)
     })
   })
-  describe('#createFieldValidator()', () => {
+  describe('#createPropertyValidator()', () => {
     it('should not include isRequired if required=false, returning []', async () => {
-      const validator = createFieldValidator({ required: false })
+      const validator = createPropertyValidator({ required: false })
       const actual = await validator(null)
       const expected = []
       assert.deepEqual(actual, expected)
     })
     it('should return [] if no configs are provided', async () => {
-      const validator = createFieldValidator({})
+      const validator = createPropertyValidator({})
       const actual = await validator(null)
       const expected = []
       assert.deepEqual(actual, expected)
     })
     it('should use isRequired if required=false, returning one error', async () => {
-      const validator = createFieldValidator({ required: true })
+      const validator = createPropertyValidator({ required: true })
       const actual = await validator(null)
       const expected = 1
       assert.equal(actual.length, expected)
     })
     it('should use validators.isRequired returning one error', async () => {
-      const validator = createFieldValidator({ validators: [isRequired] })
+      const validator = createPropertyValidator({ validators: [isRequired] })
       const actual = await validator(null)
       const expected = 1
       assert.equal(actual.length, expected)
