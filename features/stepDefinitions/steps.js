@@ -4,24 +4,24 @@ const { Given, When, Then } = require('@cucumber/cucumber')
 const { createModel, field, arrayField, validation } = require('../../index')
 
 const MODEL_DEFINITIONS = {
-  TestModel1: createModel({
+  TestModel1: createModel("TestModel1", {
     name: field({ required: true }),
     type: field({ required: true, isString: true }),
     flag: field({ required: true, isNumber: true }),
   }),
-  ArrayModel1: createModel({
+  ArrayModel1: createModel("ArrayModel1", {
     arrayField: field({
       isArray: true,
       validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
     }),
   }),
-  ArrayModel2: createModel({
+  ArrayModel2: createModel("ArrayModel2", {
     arrayField: field({ isArray: true }),
   }),
-  ArrayModel3: createModel({
+  ArrayModel3: createModel("ArrayModel3", {
     arrayField: arrayField({}),
   }),
-  ArrayModel4: createModel({
+  ArrayModel4: createModel("ArrayModel4", {
     arrayField: arrayField({
       choices: [4, 5, 6],
       validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
