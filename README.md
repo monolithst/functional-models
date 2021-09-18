@@ -59,3 +59,14 @@ This library empowers the creation of pure JavaScript function based models that
     console.log(await sameTruck.getModel())  // 'F-150'
     console.log(await sameTruck.getColor())  // 'White'
     console.log(await sameTruck.getYear())   // 2013
+
+    // Validation
+    const errors = await sameTruck.functions.validate.model() // {}
+    
+    const newTruck = Truck({ make: 'Ford', model: 'F-150', color: 'White', year: 20130})
+    const errors2 = await newTruck.functions.validate.model()
+    console.log(errors2)
+    // {"year": 'Value is too long'}
+
+
+
