@@ -4,24 +4,24 @@ const { Given, When, Then } = require('@cucumber/cucumber')
 const { Model, Property, arrayProperty, validation } = require('../../index')
 
 const MODEL_DEFINITIONS = {
-  TestModel1: Model("TestModel1", {
+  TestModel1: Model('TestModel1', {
     name: Property({ required: true }),
     type: Property({ required: true, isString: true }),
     flag: Property({ required: true, isNumber: true }),
   }),
-  ArrayModel1: Model("ArrayModel1", {
+  ArrayModel1: Model('ArrayModel1', {
     arrayProperty: Property({
       isArray: true,
       validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
     }),
   }),
-  ArrayModel2: Model("ArrayModel2", {
+  ArrayModel2: Model('ArrayModel2', {
     arrayProperty: Property({ isArray: true }),
   }),
-  ArrayModel3: Model("ArrayModel3", {
+  ArrayModel3: Model('ArrayModel3', {
     arrayProperty: arrayProperty({}),
   }),
-  ArrayModel4: Model("ArrayModel4", {
+  ArrayModel4: Model('ArrayModel4', {
     arrayProperty: arrayProperty({
       choices: [4, 5, 6],
       validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],

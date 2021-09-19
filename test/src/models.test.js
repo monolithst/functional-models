@@ -12,7 +12,12 @@ describe('/src/models.js', () => {
           myField: Property({ required: true }),
         }
         const callback = sinon.stub()
-        const model = Model('name', input, {}, {instanceCreatedCallback: callback })
+        const model = Model(
+          'name',
+          input,
+          {},
+          { instanceCreatedCallback: callback }
+        )
         model.create({ myField: 'value' })
         sinon.assert.calledOnce(callback)
       })
