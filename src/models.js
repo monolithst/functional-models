@@ -19,7 +19,7 @@ const Model = (
     }
   })
   const instanceProperties = Object.entries(keyToProperty).filter(
-    ([key, _]) => !(key in MODEL_DEF_KEYS)
+    ([key, _]) => MODEL_DEF_KEYS.includes(key) === false
   )
   const properties = instanceProperties.reduce((acc, [key, property]) => {
     return { ...acc, [key]: property }
