@@ -1,28 +1,28 @@
 const assert = require('chai').assert
 const flatMap = require('lodash/flatMap')
 const { Given, When, Then } = require('@cucumber/cucumber')
-const { createModel, field, arrayField, validation } = require('../../index')
+const { Model, Property, arrayProperty, validation } = require('../../index')
 
 const MODEL_DEFINITIONS = {
-  TestModel1: createModel("TestModel1", {
-    name: field({ required: true }),
-    type: field({ required: true, isString: true }),
-    flag: field({ required: true, isNumber: true }),
+  TestModel1: Model("TestModel1", {
+    name: Property({ required: true }),
+    type: Property({ required: true, isString: true }),
+    flag: Property({ required: true, isNumber: true }),
   }),
-  ArrayModel1: createModel("ArrayModel1", {
-    arrayField: field({
+  ArrayModel1: Model("ArrayModel1", {
+    arrayProperty: Property({
       isArray: true,
       validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
     }),
   }),
-  ArrayModel2: createModel("ArrayModel2", {
-    arrayField: field({ isArray: true }),
+  ArrayModel2: Model("ArrayModel2", {
+    arrayProperty: Property({ isArray: true }),
   }),
-  ArrayModel3: createModel("ArrayModel3", {
-    arrayField: arrayField({}),
+  ArrayModel3: Model("ArrayModel3", {
+    arrayProperty: arrayProperty({}),
   }),
-  ArrayModel4: createModel("ArrayModel4", {
-    arrayField: arrayField({
+  ArrayModel4: Model("ArrayModel4", {
+    arrayProperty: arrayProperty({
       choices: [4, 5, 6],
       validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
     }),
@@ -41,22 +41,22 @@ const MODEL_INPUT_VALUES = {
     flag: 1,
   },
   ArrayModelData1: {
-    arrayField: [1, 2, 3, 4, 5],
+    arrayProperty: [1, 2, 3, 4, 5],
   },
   ArrayModelData2: {
-    arrayField: 'a-string',
+    arrayProperty: 'a-string',
   },
   ArrayModelData3: {
-    arrayField: ['a-string', 'a-string2'],
+    arrayProperty: ['a-string', 'a-string2'],
   },
   ArrayModelData4: {
-    arrayField: ['a-string', 1, {}, true],
+    arrayProperty: ['a-string', 1, {}, true],
   },
   ArrayModelData5: {
-    arrayField: [4, 5, 5, 5, 6],
+    arrayProperty: [4, 5, 5, 5, 6],
   },
   ArrayModelData6: {
-    arrayField: [4, 5, 5, 5, 6, 1],
+    arrayProperty: [4, 5, 5, 5, 6, 1],
   },
 }
 
@@ -75,7 +75,7 @@ Given(
     if (!input) {
       throw new Error(`${modelInputValues} did not result in an input`)
     }
-    this.instance = def(input)
+    this.instance = def.create(input)
   }
 )
 
@@ -106,13 +106,13 @@ When('{word} data is inserted', function (modelInputValues) {
   if (!input) {
     throw new Error(`${modelInputValues} did not result in an input`)
   }
-  this.instance = this.modelDefinition(input)
+  this.instance = this.modelDefinition.create(input)
 })
 
-Then('{word} expected fields are found', function (fields) {
-  const propertyArray = EXPECTED_FIELDS[fields]
+Then('{word} expected property is found', function (properties) {
+  const propertyArray = EXPECTED_FIELDS[properties]
   if (!propertyArray) {
-    throw new Error(`${fields} did not result in fields`)
+    throw new Error(`${properties} did not result in properties`)
   }
   propertyArray.forEach(key => {
     if (!(key in this.instance)) {
@@ -121,8 +121,8 @@ Then('{word} expected fields are found', function (fields) {
   })
 })
 
-Then('the {word} field is called on the model', function (field) {
-  return this.instance[field]().then(result => {
+Then('the {word} property is called on the model', function (property) {
+  return this.instance[property]().then(result => {
     this.results = result
   })
 })

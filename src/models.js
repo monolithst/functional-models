@@ -7,7 +7,12 @@ const { createModelValidator } = require('./validation')
 const MODEL_DEF_KEYS = ['meta', 'functions']
 const PROTECTED_KEYS = ['model']
 
-const Model = (modelName, keyToProperty, modelExtensions={}, {instanceCreatedCallback=null}={}) => {
+const Model = (
+  modelName,
+  keyToProperty,
+  modelExtensions = {},
+  { instanceCreatedCallback = null } = {}
+) => {
   PROTECTED_KEYS.forEach(key => {
     if (key in keyToProperty) {
       throw new Error(`Cannot use ${key}. This is a protected value.`)
@@ -30,20 +35,23 @@ const Model = (modelName, keyToProperty, modelExtensions={}, {instanceCreatedCal
   )
 
   const create = (instanceValues = {}) => {
-    const loadedInternals = instanceProperties.reduce((acc, [key, property]) => {
-      const propertyGetter = property.createGetter(instanceValues[key])
-      const propertyValidator = property.getValidator(propertyGetter)
-      const getPropertyKey = createPropertyTitle(key)
-      const fleshedOutInstanceProperties = {
-        [getPropertyKey]: propertyGetter,
-        functions: {
-          validate: {
-            [key]: propertyValidator,
+    const loadedInternals = instanceProperties.reduce(
+      (acc, [key, property]) => {
+        const propertyGetter = property.createGetter(instanceValues[key])
+        const propertyValidator = property.getValidator(propertyGetter)
+        const getPropertyKey = createPropertyTitle(key)
+        const fleshedOutInstanceProperties = {
+          [getPropertyKey]: propertyGetter,
+          functions: {
+            validate: {
+              [key]: propertyValidator,
+            },
           },
-        },
-      }
-      return merge(acc, fleshedOutInstanceProperties)
-    }, {})
+        }
+        return merge(acc, fleshedOutInstanceProperties)
+      },
+      {}
+    )
     const frameworkProperties = {
       functions: {
         toObj: toObj(loadedInternals),
@@ -52,21 +60,22 @@ const Model = (modelName, keyToProperty, modelExtensions={}, {instanceCreatedCal
         },
       },
     }
-    const instance = merge({}, loadedInternals, modelProperties, frameworkProperties)
+    const instance = merge(
+      {},
+      loadedInternals,
+      modelProperties,
+      frameworkProperties
+    )
     if (instanceCreatedCallback) {
       instanceCreatedCallback(instance)
     }
     return instance
   }
 
-  return merge(
-    {},
-    modelExtensions,
-    {
-      create,
-      name: modelName,
-    }
-  )
+  return merge({}, modelExtensions, {
+    create,
+    name: modelName,
+  })
 }
 
 module.exports = {

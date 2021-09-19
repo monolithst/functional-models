@@ -1,7 +1,7 @@
 Feature: Models
 
-  Scenario: A Model With a 4 fields
+  Scenario: A Model With 4 properties
     Given TestModel1 model is used
     When TestModel1b data is inserted
-    Then TestModel1b expected fields are found
+    Then TestModel1b expected property is found
 
