@@ -1,7 +1,7 @@
 const assert = require('chai').assert
 const flatMap = require('lodash/flatMap')
 const { Given, When, Then } = require('@cucumber/cucumber')
-const { Model, Property, arrayProperty, validation } = require('../../index')
+const { Model, Property, ArrayProperty, validation } = require('../../index')
 
 const MODEL_DEFINITIONS = {
   TestModel1: Model('TestModel1', {
@@ -10,19 +10,19 @@ const MODEL_DEFINITIONS = {
     flag: Property({ required: true, isNumber: true }),
   }),
   ArrayModel1: Model('ArrayModel1', {
-    arrayProperty: Property({
+    ArrayProperty: Property({
       isArray: true,
       validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
     }),
   }),
   ArrayModel2: Model('ArrayModel2', {
-    arrayProperty: Property({ isArray: true }),
+    ArrayProperty: Property({ isArray: true }),
   }),
   ArrayModel3: Model('ArrayModel3', {
-    arrayProperty: arrayProperty({}),
+    ArrayProperty: ArrayProperty({}),
   }),
   ArrayModel4: Model('ArrayModel4', {
-    arrayProperty: arrayProperty({
+    ArrayProperty: ArrayProperty({
       choices: [4, 5, 6],
       validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
     }),
@@ -41,22 +41,22 @@ const MODEL_INPUT_VALUES = {
     flag: 1,
   },
   ArrayModelData1: {
-    arrayProperty: [1, 2, 3, 4, 5],
+    ArrayProperty: [1, 2, 3, 4, 5],
   },
   ArrayModelData2: {
-    arrayProperty: 'a-string',
+    ArrayProperty: 'a-string',
   },
   ArrayModelData3: {
-    arrayProperty: ['a-string', 'a-string2'],
+    ArrayProperty: ['a-string', 'a-string2'],
   },
   ArrayModelData4: {
-    arrayProperty: ['a-string', 1, {}, true],
+    ArrayProperty: ['a-string', 1, {}, true],
   },
   ArrayModelData5: {
-    arrayProperty: [4, 5, 5, 5, 6],
+    ArrayProperty: [4, 5, 5, 5, 6],
   },
   ArrayModelData6: {
-    arrayProperty: [4, 5, 5, 5, 6, 1],
+    ArrayProperty: [4, 5, 5, 5, 6, 1],
   },
 }
 

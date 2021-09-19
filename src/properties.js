@@ -62,7 +62,7 @@ const Property = (config = {}) => {
   }
 }
 
-const uniqueId = config =>
+const UniqueId = config =>
   Property({
     ...config,
     lazyLoadMethod: value => {
@@ -73,7 +73,7 @@ const uniqueId = config =>
     },
   })
 
-const dateProperty = config =>
+const DateProperty = config =>
   Property({
     ...config,
     lazyLoadMethod: value => {
@@ -84,7 +84,7 @@ const dateProperty = config =>
     },
   })
 
-const referenceProperty = config => {
+const ReferenceProperty = config => {
   return Property({
     ...config,
     lazyLoadMethod: async smartObj => {
@@ -120,21 +120,21 @@ const referenceProperty = config => {
   })
 }
 
-const arrayProperty = (config = {}) =>
+const ArrayProperty = (config = {}) =>
   Property({
     defaultValue: [],
     ...config,
     isArray: true,
   })
 
-const objectProperty = (config = {}) =>
+const ObjectProperty = (config = {}) =>
   Property(
     merge(config, {
       validators: [isType('object')],
     })
   )
 
-const textProperty = (config = {}) =>
+const TextProperty = (config = {}) =>
   Property(
     merge(config, {
       isString: true,
@@ -149,7 +149,7 @@ const textProperty = (config = {}) =>
     })
   )
 
-const integerProperty = (config = {}) =>
+const IntegerProperty = (config = {}) =>
   Property(
     merge(config, {
       isInteger: true,
@@ -164,7 +164,7 @@ const integerProperty = (config = {}) =>
     })
   )
 
-const numberProperty = (config = {}) =>
+const NumberProperty = (config = {}) =>
   Property(
     merge(config, {
       isNumber: true,
@@ -179,15 +179,15 @@ const numberProperty = (config = {}) =>
     })
   )
 
-const constantValueProperty = (value, config = {}) =>
-  textProperty(
+const ConstantValueProperty = (value, config = {}) =>
+  TextProperty(
     merge(config, {
       value,
     })
   )
 
-const emailProperty = (config = {}) =>
-  textProperty(
+const EmailProperty = (config = {}) =>
+  TextProperty(
     merge(config, {
       validators: [meetsRegex(EMAIL_REGEX)],
     })
@@ -195,14 +195,14 @@ const emailProperty = (config = {}) =>
 
 module.exports = {
   Property,
-  uniqueId,
-  dateProperty,
-  arrayProperty,
-  referenceProperty,
-  integerProperty,
-  textProperty,
-  constantValueProperty,
-  numberProperty,
-  objectProperty,
-  emailProperty,
+  UniqueId,
+  DateProperty,
+  ArrayProperty,
+  ReferenceProperty,
+  IntegerProperty,
+  TextProperty,
+  ConstantValueProperty,
+  NumberProperty,
+  ObjectProperty,
+  EmailProperty,
 }

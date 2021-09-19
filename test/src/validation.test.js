@@ -245,7 +245,7 @@ describe('/src/validation.js', () => {
   })
   describe('#createModelValidator()', () => {
     it('should use both functions.validate for two objects', async () => {
-      const fields = {
+      const propertys = {
         functions: {
           validate: {
             id: sinon.stub().returns(undefined),
@@ -253,13 +253,13 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(fields)
+      const validator = createModelValidator(propertys)
       await validator()
-      sinon.assert.calledOnce(fields.functions.validate.id)
-      sinon.assert.calledOnce(fields.functions.validate.type)
+      sinon.assert.calledOnce(propertys.functions.validate.id)
+      sinon.assert.calledOnce(propertys.functions.validate.type)
     })
     it('should not run a validate.model function', async () => {
-      const fields = {
+      const propertys = {
         functions: {
           validate: {
             id: sinon.stub().returns(undefined),
@@ -268,12 +268,12 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(fields)
+      const validator = createModelValidator(propertys)
       await validator()
-      sinon.assert.notCalled(fields.functions.validate.model)
+      sinon.assert.notCalled(propertys.functions.validate.model)
     })
     it('should combine results for both functions.validate for two objects that error', async () => {
-      const fields = {
+      const propertys = {
         functions: {
           validate: {
             id: sinon.stub().returns('error1'),
@@ -281,7 +281,7 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(fields)
+      const validator = createModelValidator(propertys)
       const actual = await validator()
       const expected = {
         id: 'error1',
@@ -290,7 +290,7 @@ describe('/src/validation.js', () => {
       assert.deepEqual(actual, expected)
     })
     it('should take the error of the one of two functions', async () => {
-      const fields = {
+      const propertys = {
         functions: {
           validate: {
             id: sinon.stub().returns(undefined),
@@ -298,7 +298,7 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(fields)
+      const validator = createModelValidator(propertys)
       const actual = await validator()
       const expected = {
         type: 'error2',
