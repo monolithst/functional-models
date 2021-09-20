@@ -1,5 +1,4 @@
 const merge = require('lodash/merge')
-const pickBy = require('lodash/pickBy')
 const { toObj } = require('./serialization')
 const { createPropertyTitle } = require('./utils')
 const { createModelValidator } = require('./validation')
@@ -13,6 +12,15 @@ const Model = (
   modelExtensions = {},
   { instanceCreatedCallback = null } = {}
 ) => {
+  /*
+   * This non-functional approach is specifically used to
+   * allow instances to be able to refer back to its parent without
+   * having to duplicate it for every instance.
+   * This is set at the very end and returned, so it can be referenced
+   * throughout instance methods.
+   */
+  // eslint-disable-next-line functional/no-let
+  let model = null
   PROTECTED_KEYS.forEach(key => {
     if (key in keyToProperty) {
       throw new Error(`Cannot use ${key}. This is a protected value.`)
@@ -24,15 +32,6 @@ const Model = (
   const properties = instanceProperties.reduce((acc, [key, property]) => {
     return { ...acc, [key]: property }
   }, {})
-  const modelProperties = merge(
-    pickBy(keyToProperty, (value, key) => MODEL_DEF_KEYS.includes(key)),
-    {
-      meta: {
-        properties,
-        modelName,
-      },
-    }
-  )
 
   const create = (instanceValues = {}) => {
     const loadedInternals = instanceProperties.reduce(
@@ -53,6 +52,9 @@ const Model = (
       {}
     )
     const frameworkProperties = {
+      meta: {
+        getModel: () => model,
+      },
       functions: {
         toObj: toObj(loadedInternals),
         validate: {
@@ -60,22 +62,20 @@ const Model = (
         },
       },
     }
-    const instance = merge(
-      {},
-      loadedInternals,
-      modelProperties,
-      frameworkProperties
-    )
+    const instance = merge({}, loadedInternals, frameworkProperties)
     if (instanceCreatedCallback) {
       instanceCreatedCallback(instance)
     }
     return instance
   }
 
-  return merge({}, modelExtensions, {
+  // This sets the model that is used by the instances later.
+  model = merge({}, modelExtensions, {
     create,
-    name: modelName,
+    getName: () => modelName,
+    getProperties: () => properties,
   })
+  return model
 }
 
 module.exports = {

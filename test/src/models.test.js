@@ -30,32 +30,32 @@ describe('/src/models.js', () => {
           model.create()
         })
       })
-      it('should return an object that contains meta.properties.myProperty', () => {
+      it('should return an object that contains meta.getModel().getProperties().myProperty', () => {
         const input = {
           myProperty: Property({ required: true }),
         }
         const model = Model('name', input)
         const instance = model.create({ myProperty: 'value' })
-        const actual = _.get(instance, 'meta.properties.myProperty')
+        const actual = instance.meta.getModel().getProperties().myProperty
         assert.isOk(actual)
       })
-      it('should return an object that contains meta.modelName===test-the-name', () => {
+      it('should return an object that contains meta.getModel().getName()===test-the-name', () => {
         const input = {
           myProperty: Property({ required: true }),
         }
         const model = Model('test-the-name', input)
         const instance = model.create({ myProperty: 'value' })
-        const actual = _.get(instance, 'meta.modelName')
+        const actual = instance.meta.getModel().getName()
         const expected = 'test-the-name'
         assert.deepEqual(actual, expected)
       })
-      it('should return an object that contains meta.properties.myProperty', () => {
+      it('should return an object that contains meta.getModel().getProperties().myProperty', () => {
         const input = {
           myProperty: Property({ required: true }),
         }
         const model = Model('name', input)
         const instance = model.create({ myProperty: 'value' })
-        const actual = _.get(instance, 'meta.properties.myProperty')
+        const actual = instance.meta.getModel().getProperties().myProperty
         assert.isOk(actual)
       })
       it('should use the value passed in when Property.defaultValue and Property.value are not set', async () => {
@@ -70,7 +70,10 @@ describe('/src/models.js', () => {
       })
       it('should use the value for Property.value when even if Property.defaultValue is set and a value is passed in', async () => {
         const input = {
-          myProperty: Property({ value: 'value', defaultValue: 'default-value' }),
+          myProperty: Property({
+            value: 'value',
+            defaultValue: 'default-value',
+          }),
         }
         const model = Model('name', input)
         const instance = model.create({ myProperty: 'passed-in' })
