@@ -23,7 +23,7 @@ const _getValidatorFromConfigElseEmpty = (config, key, validatorGetter) => {
   return emptyValidator
 }
 
-const Property = (config = {}) => {
+const Property = (config = {}, additionalMetadata = {}) => {
   const value = config.value || undefined
   const defaultValue = config.defaultValue || undefined
   const lazyLoadMethod = config.lazyLoadMethod || false
@@ -33,6 +33,7 @@ const Property = (config = {}) => {
   }
 
   return {
+    ...additionalMetadata,
     createGetter: instanceValue => {
       if (value !== undefined) {
         return () => value
@@ -84,40 +85,53 @@ const DateProperty = config =>
     },
   })
 
-const ReferenceProperty = config => {
-  return Property({
-    ...config,
-    lazyLoadMethod: async smartObj => {
-      const _getId = () => {
-        if (!smartObj) {
-          return null
-        }
-        return smartObj && smartObj.id
-          ? smartObj.id
-          : smartObj.getId
-          ? smartObj.getId()
-          : smartObj
+const ReferenceProperty = (model, config) => {
+  if (!model) {
+    throw new Error('Must include the referenced model')
+  }
+
+  const lazyLoadMethod = async instanceValues => {
+    const _getId = () => {
+      if (!instanceValues) {
+        return null
       }
-      const _getSmartObjReturn = objToUse => {
-        return {
-          ...objToUse,
-          functions: {
-            ...(objToUse.functions ? objToUse.functions : {}),
-            toObj: _getId,
-          },
-        }
+      return instanceValues && instanceValues.id
+        ? instanceValues.id
+        : instanceValues.getId
+        ? instanceValues.getId()
+        : instanceValues
+    }
+    const _getInstanceReturn = objToUse => {
+      return {
+        ...objToUse,
+        functions: {
+          ...(objToUse.functions ? objToUse.functions : {}),
+          toObj: _getId,
+        },
       }
-      const valueIsSmartObj = smartObj && smartObj.functions
-      if (valueIsSmartObj) {
-        return _getSmartObjReturn(smartObj)
-      }
-      if (config.fetcher) {
-        const obj = await config.fetcher(smartObj)
-        return _getSmartObjReturn(obj)
-      }
-      return _getId(smartObj)
-    },
-  })
+    }
+    const valueIsSmartObj = instanceValues && instanceValues.functions
+    if (valueIsSmartObj) {
+      return _getInstanceReturn(instanceValues)
+    }
+    if (config.fetcher) {
+      const id = await _getId()
+      const obj = await config.fetcher(model, id)
+      return _getInstanceReturn(obj)
+    }
+    return _getId(instanceValues)
+  }
+
+  return Property(
+    merge({}, config, {
+      lazyLoadMethod,
+    }),
+    {
+      meta: {
+        getReferencedModel: () => model,
+      },
+    }
+  )
 }
 
 const ArrayProperty = (config = {}) =>
