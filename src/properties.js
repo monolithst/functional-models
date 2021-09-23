@@ -1,4 +1,5 @@
 const identity = require('lodash/identity')
+const isFunction = require('lodash/isFunction')
 const merge = require('lodash/merge')
 const {
   createPropertyValidator,
@@ -8,6 +9,7 @@ const {
   minNumber,
   maxNumber,
   isType,
+  referenceTypeMatch,
   meetsRegex,
 } = require('./validation')
 const { createUuid } = require('./utils')
@@ -63,7 +65,7 @@ const Property = (config = {}, additionalMetadata = {}) => {
   }
 }
 
-const UniqueId = config =>
+const UniqueId = (config = {}) =>
   Property({
     ...config,
     lazyLoadMethod: value => {
@@ -74,7 +76,7 @@ const UniqueId = config =>
     },
   })
 
-const DateProperty = config =>
+const DateProperty = (config = {}) =>
   Property({
     ...config,
     lazyLoadMethod: value => {
@@ -85,10 +87,19 @@ const DateProperty = config =>
     },
   })
 
-const ReferenceProperty = (model, config) => {
+const ReferenceProperty = (model, config = {}) => {
   if (!model) {
     throw new Error('Must include the referenced model')
   }
+
+  const _getModel = () => {
+    if (isFunction(model)) {
+      return model()
+    }
+    return model
+  }
+
+  const validators = [...(config.validators || []), referenceTypeMatch(model)]
 
   const lazyLoadMethod = async instanceValues => {
     const _getId = () => {
@@ -101,22 +112,26 @@ const ReferenceProperty = (model, config) => {
         ? instanceValues.getId()
         : instanceValues
     }
+    const valueIsModelInstance =
+      Boolean(instanceValues) && Boolean(instanceValues.functions)
+
     const _getInstanceReturn = objToUse => {
-      return {
-        ...objToUse,
+      const instance = valueIsModelInstance
+        ? objToUse
+        : _getModel().create(objToUse)
+      return merge({}, instance, {
         functions: {
-          ...(objToUse.functions ? objToUse.functions : {}),
           toObj: _getId,
         },
-      }
+      })
     }
-    const valueIsSmartObj = instanceValues && instanceValues.functions
-    if (valueIsSmartObj) {
+
+    if (valueIsModelInstance) {
       return _getInstanceReturn(instanceValues)
     }
     if (config.fetcher) {
       const id = await _getId()
-      const obj = await config.fetcher(model, id)
+      const obj = await config.fetcher(_getModel(), id)
       return _getInstanceReturn(obj)
     }
     return _getId(instanceValues)
@@ -124,11 +139,12 @@ const ReferenceProperty = (model, config) => {
 
   return Property(
     merge({}, config, {
+      validators,
       lazyLoadMethod,
     }),
     {
       meta: {
-        getReferencedModel: () => model,
+        getReferencedModel: _getModel,
       },
     }
   )

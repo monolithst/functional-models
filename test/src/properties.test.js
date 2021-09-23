@@ -1,4 +1,5 @@
 const assert = require('chai').assert
+const sinon = require('sinon')
 const {
   UniqueId,
   Property,
@@ -14,6 +15,11 @@ const {
 } = require('../../src/properties')
 const { TYPE_PRIMATIVES, arrayType } = require('../../src/validation')
 const { Model } = require('../../src/models')
+
+const TestModel1 = Model('TestModel1', {
+  id: UniqueId(),
+  name: TextProperty(),
+})
 
 describe('/src/properties.js', () => {
   describe('#EmailProperty()', () => {
@@ -420,6 +426,11 @@ describe('/src/properties.js', () => {
     })
   })
   describe('#DateProperty()', () => {
+    it('should allow creation without a config', async () => {
+      const proto = DateProperty()
+      const instance = proto.createGetter('my-date')
+      assert.isOk(await instance())
+    })
     it('should create a new date once when config.autoNow=true and called multiple times', async () => {
       const proto = DateProperty({ autoNow: true })
       const instance = proto.createGetter()
@@ -448,17 +459,22 @@ describe('/src/properties.js', () => {
     })
     describe('#meta.getReferencedModel()', () => {
       it('should return the same value passed in as the model', async () => {
-        const input = [null]
-        const property = await ReferenceProperty({ obj: 'MyModel' }, {})
+        const property = ReferenceProperty(TestModel1)
         const actual = property.meta.getReferencedModel()
-        const expected = { obj: 'MyModel' }
+        const expected = TestModel1
+        assert.deepEqual(actual, expected)
+      })
+      it('should allow a function input for model to allow delayed creation', async () => {
+        const property = ReferenceProperty(() => TestModel1)
+        const actual = property.meta.getReferencedModel()
+        const expected = TestModel1
         assert.deepEqual(actual, expected)
       })
     })
     describe('#createGetter()', () => {
       it('should return "obj-id" when no fetcher is used', async () => {
         const input = ['obj-id']
-        const actual = await ReferenceProperty('MyModel', {}).createGetter(
+        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
           ...input
         )()
         const expected = 'obj-id'
@@ -466,7 +482,7 @@ describe('/src/properties.js', () => {
       })
       it('should allow null as the input', async () => {
         const input = [null]
-        const actual = await ReferenceProperty('MyModel', {}).createGetter(
+        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
           ...input
         )()
         const expected = null
@@ -474,47 +490,30 @@ describe('/src/properties.js', () => {
       })
       it('should return "obj-id" from {}.id when no fetcher is used', async () => {
         const input = [{ id: 'obj-id' }]
-        const actual = await ReferenceProperty('MyModel', {}).createGetter(
+        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
           ...input
         )()
         const expected = 'obj-id'
         assert.equal(actual, expected)
       })
-      it('should return prop: "switch-a-roo" when switch-a-roo fetcher is used', async () => {
+      it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
         const input = ['obj-id']
-        const actual = await ReferenceProperty('MyModel', {
-          fetcher: () => ({ id: 'obj-id', prop: 'switch-a-roo' }),
+        const actual = await ReferenceProperty(TestModel1, {
+          fetcher: () => ({ id: 'obj-id', name: 'switch-a-roo' }),
         }).createGetter(...input)()
         const expected = 'switch-a-roo'
-        assert.deepEqual(actual.prop, expected)
-      })
-      it('should combine functions when switch-a-roo fetcher is used', async () => {
-        const input = ['obj-id']
-        const instance = await ReferenceProperty('MyModel', {
-          fetcher: () => ({
-            id: 'obj-id',
-            prop: 'switch-a-roo',
-            functions: { myfunc: 'ok' },
-          }),
-        }).createGetter(...input)()
-        const actual = instance.functions.myfunc
-        const expected = 'ok'
-        assert.deepEqual(actual, expected)
+        assert.deepEqual(await actual.getName(), expected)
       })
       it('should provide the passed in model and the instance values when switch-a-roo fetcher is used', async () => {
         const input = ['obj-id']
-        let value = null
-        await ReferenceProperty(
-          { obj: 'MyModel' },
-          {
-            fetcher: (modelName, instanceValues) => {
-              value = modelName
-              return instanceValues
-            },
-          }
-        ).createGetter(...input)()
-        const actual = value
-        const expected = { obj: 'MyModel' }
+        const fetcher = sinon
+          .stub()
+          .callsFake((modelName, instanceValues) => instanceValues)
+        await ReferenceProperty(TestModel1, {
+          fetcher,
+        }).createGetter(...input)()
+        const actual = fetcher.getCall(0).args[0]
+        const expected = TestModel1
         assert.deepEqual(actual, expected)
       })
       it('should take the smartObject as a value', async () => {
@@ -522,7 +521,7 @@ describe('/src/properties.js', () => {
           id: UniqueId({ value: 'obj-id' }),
         })
         const input = [proto.create({ id: 'obj-id' })]
-        const instance = await ReferenceProperty('MyModel', {}).createGetter(
+        const instance = await ReferenceProperty(TestModel1, {}).createGetter(
           ...input
         )()
         const actual = await instance.getId()
@@ -535,7 +534,7 @@ describe('/src/properties.js', () => {
             id: UniqueId({ value: 'obj-id' }),
           })
           const input = [proto.create({ id: 'obj-id' })]
-          const instance = await ReferenceProperty('MyModel', {}).createGetter(
+          const instance = await ReferenceProperty(TestModel1, {}).createGetter(
             ...input
           )()
           const actual = await instance.functions.toObj()
@@ -544,7 +543,7 @@ describe('/src/properties.js', () => {
         })
         it('should return "obj-id" when switch-a-roo fetcher is used and toObj is called', async () => {
           const input = ['obj-id']
-          const instance = await ReferenceProperty('MyModel', {
+          const instance = await ReferenceProperty(TestModel1, {
             fetcher: () => ({ id: 'obj-id', prop: 'switch-a-roo' }),
           }).createGetter(...input)()
           const actual = await instance.functions.toObj()

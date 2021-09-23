@@ -39,6 +39,19 @@ describe('/src/models.js', () => {
         const actual = instance.meta.getModel().getProperties().myProperty
         assert.isOk(actual)
       })
+      it('should flow through the additional special functions within the keyValues', () => {
+        const input = {
+          myProperty: Property({ required: true }),
+          functions: {
+            custom: () => 'works',
+          },
+        }
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: 'value' })
+        const actual = instance.functions.custom()
+        const expected = 'works'
+        assert.equal(actual, expected)
+      })
       it('should return an object that contains meta.getModel().getName()===test-the-name', () => {
         const input = {
           myProperty: Property({ required: true }),

@@ -29,9 +29,18 @@ const Model = (
   const instanceProperties = Object.entries(keyToProperty).filter(
     ([key, _]) => MODEL_DEF_KEYS.includes(key) === false
   )
+  const specialProperties1 = Object.entries(keyToProperty).filter(([key, _]) =>
+    MODEL_DEF_KEYS.includes(key)
+  )
   const properties = instanceProperties.reduce((acc, [key, property]) => {
-    return { ...acc, [key]: property }
+    return merge(acc, { [key]: property })
   }, {})
+  const specialProperties = specialProperties1.reduce(
+    (acc, [key, property]) => {
+      return merge(acc, { [key]: property })
+    },
+    {}
+  )
 
   const create = (instanceValues = {}) => {
     const loadedInternals = instanceProperties.reduce(
@@ -62,7 +71,12 @@ const Model = (
         },
       },
     }
-    const instance = merge({}, loadedInternals, frameworkProperties)
+    const instance = merge(
+      {},
+      loadedInternals,
+      specialProperties,
+      frameworkProperties
+    )
     if (instanceCreatedCallback) {
       instanceCreatedCallback(instance)
     }

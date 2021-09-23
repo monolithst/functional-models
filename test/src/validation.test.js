@@ -1,5 +1,7 @@
 const assert = require('chai').assert
 const sinon = require('sinon')
+const { Model } = require('../../src/models')
+const { UniqueId } = require('../../src/properties')
 const {
   isNumber,
   isBoolean,
@@ -15,13 +17,41 @@ const {
   minTextLength,
   meetsRegex,
   aggregateValidator,
+  referenceTypeMatch,
   emptyValidator,
   createModelValidator,
   createPropertyValidator,
   TYPE_PRIMATIVES,
 } = require('../../src/validation')
 
+const TestModel1 = Model('TestModel1', {
+  id: UniqueId(),
+})
+
+const TestModel2 = Model('TestModel2', {
+  id: UniqueId(),
+})
+
 describe('/src/validation.js', () => {
+  describe('#referenceTypeMatch()', () => {
+    it('should allow a function for a model', () => {
+      const myModel = TestModel1.create()
+      const actual = referenceTypeMatch(() => TestModel1)(myModel)
+      const expected = undefined
+      assert.equal(actual, expected)
+    })
+    it('should validate when the correct object matches the model', () => {
+      const myModel = TestModel1.create()
+      const actual = referenceTypeMatch(TestModel1)(myModel)
+      const expected = undefined
+      assert.equal(actual, expected)
+    })
+    it('should return an error when the input does not match the model', () => {
+      const myModel = TestModel2.create()
+      const actual = referenceTypeMatch(TestModel1)(myModel)
+      assert.isOk(actual)
+    })
+  })
   describe('#isNumber()', () => {
     it('should return an error when empty is passed', () => {
       const actual = isNumber(null)

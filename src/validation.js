@@ -1,4 +1,5 @@
 const isEmpty = require('lodash/isEmpty')
+const isFunction = require('lodash/isFunction')
 const flatMap = require('lodash/flatMap')
 const get = require('lodash/get')
 
@@ -130,6 +131,23 @@ const minTextLength = min => value => {
   return undefined
 }
 
+const referenceTypeMatch = referencedModel => {
+  return value => {
+    // This needs to stay here, as it delays the creation long enough for
+    // self referencing types.
+    const model = isFunction(referencedModel)
+      ? referencedModel()
+      : referencedModel
+    // Assumption: By the time this is received, value === a model instance.
+    const eModel = model.getName()
+    const aModel = value.meta.getModel().getName()
+    if (eModel !== aModel) {
+      return `Model should be ${eModel} instead, recieved ${aModel}`
+    }
+    return undefined
+  }
+}
+
 const aggregateValidator = methodOrMethods => {
   const toDo = Array.isArray(methodOrMethods)
     ? methodOrMethods
@@ -218,5 +236,6 @@ module.exports = {
   createPropertyValidator,
   createModelValidator,
   arrayType,
+  referenceTypeMatch,
   TYPE_PRIMATIVES,
 }
