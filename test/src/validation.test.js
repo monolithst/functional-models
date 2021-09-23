@@ -1,5 +1,7 @@
 const assert = require('chai').assert
 const sinon = require('sinon')
+const { Model } = require('../../src/models')
+const { UniqueId } = require('../../src/properties')
 const {
   isNumber,
   isBoolean,
@@ -15,13 +17,41 @@ const {
   minTextLength,
   meetsRegex,
   aggregateValidator,
+  referenceTypeMatch,
   emptyValidator,
   createModelValidator,
-  createFieldValidator,
+  createPropertyValidator,
   TYPE_PRIMATIVES,
 } = require('../../src/validation')
 
+const TestModel1 = Model('TestModel1', {
+  id: UniqueId(),
+})
+
+const TestModel2 = Model('TestModel2', {
+  id: UniqueId(),
+})
+
 describe('/src/validation.js', () => {
+  describe('#referenceTypeMatch()', () => {
+    it('should allow a function for a model', () => {
+      const myModel = TestModel1.create()
+      const actual = referenceTypeMatch(() => TestModel1)(myModel)
+      const expected = undefined
+      assert.equal(actual, expected)
+    })
+    it('should validate when the correct object matches the model', () => {
+      const myModel = TestModel1.create()
+      const actual = referenceTypeMatch(TestModel1)(myModel)
+      const expected = undefined
+      assert.equal(actual, expected)
+    })
+    it('should return an error when the input does not match the model', () => {
+      const myModel = TestModel2.create()
+      const actual = referenceTypeMatch(TestModel1)(myModel)
+      assert.isOk(actual)
+    })
+  })
   describe('#isNumber()', () => {
     it('should return an error when empty is passed', () => {
       const actual = isNumber(null)
@@ -245,7 +275,7 @@ describe('/src/validation.js', () => {
   })
   describe('#createModelValidator()', () => {
     it('should use both functions.validate for two objects', async () => {
-      const fields = {
+      const propertys = {
         functions: {
           validate: {
             id: sinon.stub().returns(undefined),
@@ -253,13 +283,13 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(fields)
+      const validator = createModelValidator(propertys)
       await validator()
-      sinon.assert.calledOnce(fields.functions.validate.id)
-      sinon.assert.calledOnce(fields.functions.validate.type)
+      sinon.assert.calledOnce(propertys.functions.validate.id)
+      sinon.assert.calledOnce(propertys.functions.validate.type)
     })
     it('should not run a validate.model function', async () => {
-      const fields = {
+      const propertys = {
         functions: {
           validate: {
             id: sinon.stub().returns(undefined),
@@ -268,12 +298,12 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(fields)
+      const validator = createModelValidator(propertys)
       await validator()
-      sinon.assert.notCalled(fields.functions.validate.model)
+      sinon.assert.notCalled(propertys.functions.validate.model)
     })
     it('should combine results for both functions.validate for two objects that error', async () => {
-      const fields = {
+      const propertys = {
         functions: {
           validate: {
             id: sinon.stub().returns('error1'),
@@ -281,7 +311,7 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(fields)
+      const validator = createModelValidator(propertys)
       const actual = await validator()
       const expected = {
         id: 'error1',
@@ -290,7 +320,7 @@ describe('/src/validation.js', () => {
       assert.deepEqual(actual, expected)
     })
     it('should take the error of the one of two functions', async () => {
-      const fields = {
+      const propertys = {
         functions: {
           validate: {
             id: sinon.stub().returns(undefined),
@@ -298,7 +328,7 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(fields)
+      const validator = createModelValidator(propertys)
       const actual = await validator()
       const expected = {
         type: 'error2',
@@ -306,27 +336,27 @@ describe('/src/validation.js', () => {
       assert.deepEqual(actual, expected)
     })
   })
-  describe('#createFieldValidator()', () => {
+  describe('#createPropertyValidator()', () => {
     it('should not include isRequired if required=false, returning []', async () => {
-      const validator = createFieldValidator({ required: false })
+      const validator = createPropertyValidator({ required: false })
       const actual = await validator(null)
       const expected = []
       assert.deepEqual(actual, expected)
     })
     it('should return [] if no configs are provided', async () => {
-      const validator = createFieldValidator({})
+      const validator = createPropertyValidator({})
       const actual = await validator(null)
       const expected = []
       assert.deepEqual(actual, expected)
     })
     it('should use isRequired if required=false, returning one error', async () => {
-      const validator = createFieldValidator({ required: true })
+      const validator = createPropertyValidator({ required: true })
       const actual = await validator(null)
       const expected = 1
       assert.equal(actual.length, expected)
     })
     it('should use validators.isRequired returning one error', async () => {
-      const validator = createFieldValidator({ validators: [isRequired] })
+      const validator = createPropertyValidator({ validators: [isRequired] })
       const actual = await validator(null)
       const expected = 1
       assert.equal(actual.length, expected)

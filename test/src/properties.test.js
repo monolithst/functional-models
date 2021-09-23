@@ -1,31 +1,37 @@
 const assert = require('chai').assert
+const sinon = require('sinon')
 const {
-  uniqueId,
-  field,
-  dateField,
-  referenceField,
-  arrayField,
-  constantValueField,
-  objectField,
-  numberField,
-  textField,
-  integerField,
-  emailField,
-} = require('../../src/fields')
+  UniqueId,
+  Property,
+  DateProperty,
+  ReferenceProperty,
+  ArrayProperty,
+  ConstantValueProperty,
+  ObjectProperty,
+  NumberProperty,
+  TextProperty,
+  IntegerProperty,
+  EmailProperty,
+} = require('../../src/properties')
 const { TYPE_PRIMATIVES, arrayType } = require('../../src/validation')
-const { createModel } = require('../../src/models')
+const { Model } = require('../../src/models')
 
-describe('/src/fields.js', () => {
-  describe('#emailField()', () => {
+const TestModel1 = Model('TestModel1', {
+  id: UniqueId(),
+  name: TextProperty(),
+})
+
+describe('/src/properties.js', () => {
+  describe('#EmailProperty()', () => {
     describe('#createGetter()', () => {
       it('should be able to create without a config', () => {
         assert.doesNotThrow(() => {
-          emailField()
+          EmailProperty()
         })
       })
       it('should always have the value passed in', async () => {
-        const fieldInstance = emailField({})
-        const getter = fieldInstance.createGetter('testme@email.com')
+        const PropertyInstance = EmailProperty({})
+        const getter = PropertyInstance.createGetter('testme@email.com')
         const actual = await getter()
         const expected = 'testme@email.com'
         assert.deepEqual(actual, expected)
@@ -33,20 +39,20 @@ describe('/src/fields.js', () => {
     })
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
-        const fieldInstance = emailField({})
-        const getter = fieldInstance.createGetter('testme@email.com')
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = EmailProperty({})
+        const getter = PropertyInstance.createGetter('testme@email.com')
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
       })
     })
   })
-  describe('#constantValueField()', () => {
+  describe('#ConstantValueProperty()', () => {
     describe('#createGetter()', () => {
       it('should always have the value passed in', async () => {
-        const fieldInstance = constantValueField('constant')
-        const getter = fieldInstance.createGetter('changed')
+        const PropertyInstance = ConstantValueProperty('constant')
+        const getter = PropertyInstance.createGetter('changed')
         const actual = await getter()
         const expected = 'constant'
         assert.deepEqual(actual, expected)
@@ -54,25 +60,25 @@ describe('/src/fields.js', () => {
     })
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
-        const fieldInstance = constantValueField('constant')
-        const getter = fieldInstance.createGetter('changed')
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = ConstantValueProperty('constant')
+        const getter = PropertyInstance.createGetter('changed')
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
       })
     })
   })
-  describe('#objectField()', () => {
+  describe('#ObjectProperty()', () => {
     describe('#createGetter()', () => {
       it('should be able to create without a config', () => {
         assert.doesNotThrow(() => {
-          objectField()
+          ObjectProperty()
         })
       })
       it('should be able to get the object passed in', async () => {
-        const fieldInstance = objectField({})
-        const getter = fieldInstance.createGetter({
+        const PropertyInstance = ObjectProperty({})
+        const getter = PropertyInstance.createGetter({
           my: 'object',
           complex: { it: 'is' },
         })
@@ -83,12 +89,12 @@ describe('/src/fields.js', () => {
     })
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
-        const fieldInstance = objectField({})
-        const getter = fieldInstance.createGetter({
+        const PropertyInstance = ObjectProperty({})
+        const getter = PropertyInstance.createGetter({
           my: 'object',
           complex: { it: 'is' },
         })
-        const validator = fieldInstance.getValidator(getter)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
@@ -96,23 +102,23 @@ describe('/src/fields.js', () => {
     })
   })
 
-  describe('#numberField()', () => {
+  describe('#NumberProperty()', () => {
     describe('#createGetter()', () => {
       it('should be able to create without a config', () => {
         assert.doesNotThrow(() => {
-          numberField()
+          NumberProperty()
         })
       })
       it('should be able to get the number passed in', async () => {
-        const fieldInstance = numberField({})
-        const getter = fieldInstance.createGetter(5)
+        const PropertyInstance = NumberProperty({})
+        const getter = PropertyInstance.createGetter(5)
         const actual = await getter()
         const expected = 5
         assert.equal(actual, expected)
       })
       it('should be able to get float passed in', async () => {
-        const fieldInstance = numberField({})
-        const getter = fieldInstance.createGetter(5.123)
+        const PropertyInstance = NumberProperty({})
+        const getter = PropertyInstance.createGetter(5.123)
         const actual = await getter()
         const expected = 5.123
         assert.equal(actual, expected)
@@ -120,49 +126,49 @@ describe('/src/fields.js', () => {
     })
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
-        const fieldInstance = numberField({})
-        const getter = fieldInstance.createGetter(5)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = NumberProperty({})
+        const getter = PropertyInstance.createGetter(5)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
       })
       it('should return and validate successful with a basic float', async () => {
-        const fieldInstance = numberField({})
-        const getter = fieldInstance.createGetter(5.123)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = NumberProperty({})
+        const getter = PropertyInstance.createGetter(5.123)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a non integer input', async () => {
-        const fieldInstance = numberField({})
-        const getter = fieldInstance.createGetter('string')
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = NumberProperty({})
+        const getter = PropertyInstance.createGetter('string')
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a value=5 and maxValue=3', async () => {
-        const fieldInstance = numberField({ maxValue: 3 })
-        const getter = fieldInstance.createGetter(5)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = NumberProperty({ maxValue: 3 })
+        const getter = PropertyInstance.createGetter(5)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a value=2 and minValue=3', async () => {
-        const fieldInstance = numberField({ minValue: 3 })
-        const getter = fieldInstance.createGetter(2)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = NumberProperty({ minValue: 3 })
+        const getter = PropertyInstance.createGetter(2)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with no errors with a value=3 and minValue=3 and maxValue=3', async () => {
-        const fieldInstance = numberField({ minValue: 3, maxValue: 3 })
-        const getter = fieldInstance.createGetter(3)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = NumberProperty({ minValue: 3, maxValue: 3 })
+        const getter = PropertyInstance.createGetter(3)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
@@ -170,16 +176,16 @@ describe('/src/fields.js', () => {
     })
   })
 
-  describe('#integerField()', () => {
+  describe('#IntegerProperty()', () => {
     describe('#createGetter()', () => {
       it('should be able to create without a config', () => {
         assert.doesNotThrow(() => {
-          integerField()
+          IntegerProperty()
         })
       })
       it('should be able to get the number passed in', async () => {
-        const fieldInstance = integerField({})
-        const getter = fieldInstance.createGetter(5)
+        const PropertyInstance = IntegerProperty({})
+        const getter = PropertyInstance.createGetter(5)
         const actual = await getter()
         const expected = 5
         assert.equal(actual, expected)
@@ -187,49 +193,49 @@ describe('/src/fields.js', () => {
     })
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
-        const fieldInstance = integerField({})
-        const getter = fieldInstance.createGetter(5)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = IntegerProperty({})
+        const getter = PropertyInstance.createGetter(5)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
       })
       it('should return errors with a basic float', async () => {
-        const fieldInstance = integerField({})
-        const getter = fieldInstance.createGetter(5.123)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = IntegerProperty({})
+        const getter = PropertyInstance.createGetter(5.123)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a non integer input', async () => {
-        const fieldInstance = integerField({})
-        const getter = fieldInstance.createGetter('string')
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = IntegerProperty({})
+        const getter = PropertyInstance.createGetter('string')
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a value=5 and maxValue=3', async () => {
-        const fieldInstance = integerField({ maxValue: 3 })
-        const getter = fieldInstance.createGetter(5)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = IntegerProperty({ maxValue: 3 })
+        const getter = PropertyInstance.createGetter(5)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a value=2 and minValue=3', async () => {
-        const fieldInstance = integerField({ minValue: 3 })
-        const getter = fieldInstance.createGetter(2)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = IntegerProperty({ minValue: 3 })
+        const getter = PropertyInstance.createGetter(2)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with no errors with a value=3 and minValue=3 and maxValue=3', async () => {
-        const fieldInstance = integerField({ minValue: 3, maxValue: 3 })
-        const getter = fieldInstance.createGetter(3)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = IntegerProperty({ minValue: 3, maxValue: 3 })
+        const getter = PropertyInstance.createGetter(3)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
@@ -237,16 +243,16 @@ describe('/src/fields.js', () => {
     })
   })
 
-  describe('#textField()', () => {
+  describe('#TextProperty()', () => {
     describe('#createGetter()', () => {
       it('should be able to create without a config', () => {
         assert.doesNotThrow(() => {
-          textField()
+          TextProperty()
         })
       })
       it('should be able to get the value passed in', async () => {
-        const fieldInstance = textField({})
-        const getter = fieldInstance.createGetter('basic input')
+        const PropertyInstance = TextProperty({})
+        const getter = PropertyInstance.createGetter('basic input')
         const actual = await getter()
         const expected = 'basic input'
         assert.equal(actual, expected)
@@ -254,41 +260,41 @@ describe('/src/fields.js', () => {
     })
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
-        const fieldInstance = textField({})
-        const getter = fieldInstance.createGetter('basic input')
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = TextProperty({})
+        const getter = PropertyInstance.createGetter('basic input')
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a value=5', async () => {
-        const fieldInstance = textField({})
-        const getter = fieldInstance.createGetter(5)
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = TextProperty({})
+        const getter = PropertyInstance.createGetter(5)
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a value="hello" and maxLength=3', async () => {
-        const fieldInstance = textField({ maxLength: 3 })
-        const getter = fieldInstance.createGetter('hello')
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = TextProperty({ maxLength: 3 })
+        const getter = PropertyInstance.createGetter('hello')
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with errors with a value="hello" and minLength=10', async () => {
-        const fieldInstance = textField({ minLength: 10 })
-        const getter = fieldInstance.createGetter('hello')
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = TextProperty({ minLength: 10 })
+        const getter = PropertyInstance.createGetter('hello')
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
       it('should return with no errors with a value="hello" and minLength=5 and maxLength=5', async () => {
-        const fieldInstance = textField({ minLength: 5, maxLength: 5 })
-        const getter = fieldInstance.createGetter('hello')
-        const validator = fieldInstance.getValidator(getter)
+        const PropertyInstance = TextProperty({ minLength: 5, maxLength: 5 })
+        const getter = PropertyInstance.createGetter('hello')
+        const validator = PropertyInstance.getValidator(getter)
         const actual = await validator()
         const expected = 0
         assert.equal(actual.length, expected)
@@ -296,32 +302,32 @@ describe('/src/fields.js', () => {
     })
   })
 
-  describe('#arrayField()', () => {
+  describe('#ArrayProperty()', () => {
     describe('#createGetter()', () => {
       it('should return an array passed in without issue', async () => {
-        const theField = arrayField({})
-        const getter = theField.createGetter([1, 2, 3])
+        const theProperty = ArrayProperty({})
+        const getter = theProperty.createGetter([1, 2, 3])
         const actual = await getter()
         const expected = [1, 2, 3]
         assert.deepEqual(actual, expected)
       })
       it('should return an array passed in without issue, even if no config is passed', async () => {
-        const theField = arrayField()
-        const getter = theField.createGetter([1, 2, 3])
+        const theProperty = ArrayProperty()
+        const getter = theProperty.createGetter([1, 2, 3])
         const actual = await getter()
         const expected = [1, 2, 3]
         assert.deepEqual(actual, expected)
       })
       it('should return an empty array if defaultValue is not changed in config and null is passed', async () => {
-        const theField = arrayField()
-        const getter = theField.createGetter(null)
+        const theProperty = ArrayProperty()
+        const getter = theProperty.createGetter(null)
         const actual = await getter()
         const expected = []
         assert.deepEqual(actual, expected)
       })
       it('should return the passed in defaultValue if set in config and null is passed', async () => {
-        const theField = arrayField({ defaultValue: [1, 2, 3] })
-        const getter = theField.createGetter(null)
+        const theProperty = ArrayProperty({ defaultValue: [1, 2, 3] })
+        const getter = theProperty.createGetter(null)
         const actual = await getter()
         const expected = [1, 2, 3]
         assert.deepEqual(actual, expected)
@@ -329,99 +335,104 @@ describe('/src/fields.js', () => {
     })
     describe('#getValidator()', () => {
       it('should validate an array passed in without issue', async () => {
-        const theField = arrayField({})
-        const getter = theField.createGetter([1, 2, 3])
-        const validator = theField.getValidator(getter)
+        const theProperty = ArrayProperty({})
+        const getter = theProperty.createGetter([1, 2, 3])
+        const validator = theProperty.getValidator(getter)
         const actual = await validator()
         const expected = []
         assert.deepEqual(actual, expected)
       })
       it('should error an array passed in when it doesnt have the right types', async () => {
-        const theField = arrayField({
+        const theProperty = ArrayProperty({
           validators: [arrayType(TYPE_PRIMATIVES.integer)],
         })
-        const getter = theField.createGetter([1, 'string', 3])
-        const validator = theField.getValidator(getter)
+        const getter = theProperty.createGetter([1, 'string', 3])
+        const validator = theProperty.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.deepEqual(actual.length, expected)
       })
       it('should validate an array with [4,4,5,5,6,6] when choices are [4,5,6]', async () => {
-        const theField = arrayField({ choices: [4, 5, 6] })
-        const getter = theField.createGetter([4, 4, 5, 5, 6, 6])
-        const validator = theField.getValidator(getter)
+        const theProperty = ArrayProperty({ choices: [4, 5, 6] })
+        const getter = theProperty.createGetter([4, 4, 5, 5, 6, 6])
+        const validator = theProperty.getValidator(getter)
         const actual = await validator()
         const expected = []
         assert.deepEqual(actual, expected)
       })
       it('should return errors when an array with [4,4,3,5,5,6,6] when choices are [4,5,6]', async () => {
-        const theField = arrayField({ choices: [4, 5, 6] })
-        const getter = theField.createGetter([4, 4, 3, 5, 5, 6, 6])
-        const validator = theField.getValidator(getter)
+        const theProperty = ArrayProperty({ choices: [4, 5, 6] })
+        const getter = theProperty.createGetter([4, 4, 3, 5, 5, 6, 6])
+        const validator = theProperty.getValidator(getter)
         const actual = await validator()
         const expected = 1
         assert.equal(actual.length, expected)
       })
     })
   })
-  describe('#field()', () => {
+  describe('#Property()', () => {
     it('should throw an exception if config.valueSelector is not a function but is set', () => {
       assert.throws(() => {
-        field({ valueSelector: 'blah' })
+        Property({ valueSelector: 'blah' })
       })
     })
     it('should not throw an exception if config.valueSelector is a function', () => {
       assert.doesNotThrow(() => {
-        field({ valueSelector: () => ({}) })
+        Property({ valueSelector: () => ({}) })
       })
     })
     describe('#createGetter()', () => {
       it('should return a function even if config.value is set to a value', () => {
-        const instance = field({ value: 'my-value' })
+        const instance = Property({ value: 'my-value' })
         const actual = instance.createGetter('not-my-value')
         assert.isFunction(actual)
       })
       it('should return the value passed into config.value regardless of what is passed into the createGetter', async () => {
-        const instance = field({ value: 'my-value' })
+        const instance = Property({ value: 'my-value' })
         const actual = await instance.createGetter('not-my-value')()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
       })
       it('should return the value passed into createGetter when config.value is not set', async () => {
-        const instance = field()
+        const instance = Property()
         const actual = await instance.createGetter('my-value')()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
       })
       it('should return the value of the function passed into createGetter when config.value is not set', async () => {
-        const instance = field()
+        const instance = Property()
         const actual = await instance.createGetter(() => 'my-value')()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
       })
     })
   })
-  describe('#uniqueId()', () => {
+  describe('#UniqueId()', () => {
     describe('#createGetter()', () => {
       it('should call createUuid only once even if called twice', async () => {
-        const uniqueField = uniqueId({})
-        const getter = uniqueField.createGetter()
+        const uniqueProperty = UniqueId({})
+        const getter = uniqueProperty.createGetter()
         const first = await getter()
         const second = await getter()
         assert.deepEqual(first, second)
       })
       it('should use the uuid passed in', async () => {
-        const uniqueField = uniqueId({})
-        const getter = uniqueField.createGetter('my-uuid')
+        const uniqueProperty = UniqueId({})
+        const getter = uniqueProperty.createGetter('my-uuid')
         const actual = await getter()
         const expected = 'my-uuid'
         assert.deepEqual(actual, expected)
       })
     })
   })
-  describe('#dateField()', () => {
+  describe('#DateProperty()', () => {
+    it('should allow creation without a config', async () => {
+      const proto = DateProperty()
+      const instance = proto.createGetter('my-date')
+      assert.isOk(await instance())
+    })
     it('should create a new date once when config.autoNow=true and called multiple times', async () => {
-      const proto = dateField({ autoNow: true })
+      const proto = DateProperty({ autoNow: true })
       const instance = proto.createGetter()
       const first = await instance()
       const second = await instance()
@@ -430,7 +441,7 @@ describe('/src/fields.js', () => {
       assert.deepEqual(first, third)
     })
     it('should use the date passed in', async () => {
-      const proto = dateField({ autoNow: true })
+      const proto = DateProperty({ autoNow: true })
       const date = new Date()
       const instance = proto.createGetter(date)
       const actual = await instance()
@@ -439,71 +450,100 @@ describe('/src/fields.js', () => {
     })
   })
 
-  describe('#referenceField()', () => {
+  describe('#ReferenceProperty()', () => {
+    it('should throw an exception if a model value is not passed in', () => {
+      assert.throws(() => {
+        const input = ['obj-id']
+        const actual = ReferenceProperty(null, {})
+      })
+    })
+    describe('#meta.getReferencedModel()', () => {
+      it('should return the same value passed in as the model', async () => {
+        const property = ReferenceProperty(TestModel1)
+        const actual = property.meta.getReferencedModel()
+        const expected = TestModel1
+        assert.deepEqual(actual, expected)
+      })
+      it('should allow a function input for model to allow delayed creation', async () => {
+        const property = ReferenceProperty(() => TestModel1)
+        const actual = property.meta.getReferencedModel()
+        const expected = TestModel1
+        assert.deepEqual(actual, expected)
+      })
+    })
     describe('#createGetter()', () => {
       it('should return "obj-id" when no fetcher is used', async () => {
         const input = ['obj-id']
-        const actual = await referenceField({}).createGetter(...input)()
+        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
+          ...input
+        )()
         const expected = 'obj-id'
         assert.equal(actual, expected)
       })
       it('should allow null as the input', async () => {
         const input = [null]
-        const actual = await referenceField({}).createGetter(...input)()
+        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
+          ...input
+        )()
         const expected = null
         assert.equal(actual, expected)
       })
       it('should return "obj-id" from {}.id when no fetcher is used', async () => {
         const input = [{ id: 'obj-id' }]
-        const actual = await referenceField({}).createGetter(...input)()
+        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
+          ...input
+        )()
         const expected = 'obj-id'
         assert.equal(actual, expected)
       })
-      it('should return prop: "switch-a-roo" when switch-a-roo fetcher is used', async () => {
+      it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
         const input = ['obj-id']
-        const actual = await referenceField({
-          fetcher: () => ({ id: 'obj-id', prop: 'switch-a-roo' }),
+        const actual = await ReferenceProperty(TestModel1, {
+          fetcher: () => ({ id: 'obj-id', name: 'switch-a-roo' }),
         }).createGetter(...input)()
         const expected = 'switch-a-roo'
-        assert.deepEqual(actual.prop, expected)
+        assert.deepEqual(await actual.getName(), expected)
       })
-      it('should combine functions when switch-a-roo fetcher is used', async () => {
+      it('should provide the passed in model and the instance values when switch-a-roo fetcher is used', async () => {
         const input = ['obj-id']
-        const instance = await referenceField({
-          fetcher: () => ({
-            id: 'obj-id',
-            prop: 'switch-a-roo',
-            functions: { myfunc: 'ok' },
-          }),
+        const fetcher = sinon
+          .stub()
+          .callsFake((modelName, instanceValues) => instanceValues)
+        await ReferenceProperty(TestModel1, {
+          fetcher,
         }).createGetter(...input)()
-        const actual = instance.functions.myfunc
-        const expected = 'ok'
+        const actual = fetcher.getCall(0).args[0]
+        const expected = TestModel1
         assert.deepEqual(actual, expected)
       })
       it('should take the smartObject as a value', async () => {
-        const proto = createModel('name', {
-          id: uniqueId({ value: 'obj-id' }),
+        const proto = Model('name', {
+          id: UniqueId({ value: 'obj-id' }),
         })
-        const input = [proto({ id: 'obj-id' })]
-        const instance = await referenceField({}).createGetter(...input)()
+        const input = [proto.create({ id: 'obj-id' })]
+        const instance = await ReferenceProperty(TestModel1, {}).createGetter(
+          ...input
+        )()
         const actual = await instance.getId()
         const expected = 'obj-id'
         assert.deepEqual(actual, expected)
       })
       describe('#functions.toObj()', () => {
         it('should use the getId of the smartObject passed in when toObj is called', async () => {
-          const proto = createModel('name', {
-            id: uniqueId({ value: 'obj-id' }),
+          const proto = Model('name', {
+            id: UniqueId({ value: 'obj-id' }),
           })
-          const input = [proto({ id: 'obj-id' })]
-          const instance = await referenceField({}).createGetter(...input)()
+          const input = [proto.create({ id: 'obj-id' })]
+          const instance = await ReferenceProperty(TestModel1, {}).createGetter(
+            ...input
+          )()
           const actual = await instance.functions.toObj()
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)
         })
         it('should return "obj-id" when switch-a-roo fetcher is used and toObj is called', async () => {
           const input = ['obj-id']
-          const instance = await referenceField({
+          const instance = await ReferenceProperty(TestModel1, {
             fetcher: () => ({ id: 'obj-id', prop: 'switch-a-roo' }),
           }).createGetter(...input)()
           const actual = await instance.functions.toObj()

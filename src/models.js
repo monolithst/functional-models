@@ -1,5 +1,4 @@
 const merge = require('lodash/merge')
-const pickBy = require('lodash/pickBy')
 const { toObj } = require('./serialization')
 const { createPropertyTitle } = require('./utils')
 const { createModelValidator } = require('./validation')
@@ -7,44 +6,64 @@ const { createModelValidator } = require('./validation')
 const MODEL_DEF_KEYS = ['meta', 'functions']
 const PROTECTED_KEYS = ['model']
 
-const createModel = (modelName, keyToField) => {
+const Model = (
+  modelName,
+  keyToProperty,
+  modelExtensions = {},
+  { instanceCreatedCallback = null } = {}
+) => {
+  /*
+   * This non-functional approach is specifically used to
+   * allow instances to be able to refer back to its parent without
+   * having to duplicate it for every instance.
+   * This is set at the very end and returned, so it can be referenced
+   * throughout instance methods.
+   */
+  // eslint-disable-next-line functional/no-let
+  let model = null
   PROTECTED_KEYS.forEach(key => {
-    if (key in keyToField) {
+    if (key in keyToProperty) {
       throw new Error(`Cannot use ${key}. This is a protected value.`)
     }
   })
-  const fieldProperties = Object.entries(keyToField).filter(
-    ([key, _]) => !(key in MODEL_DEF_KEYS)
+  const instanceProperties = Object.entries(keyToProperty).filter(
+    ([key, _]) => MODEL_DEF_KEYS.includes(key) === false
   )
-  const fields = fieldProperties.reduce((acc, [key, field]) => {
-    return { ...acc, [key]: field }
+  const specialProperties1 = Object.entries(keyToProperty).filter(([key, _]) =>
+    MODEL_DEF_KEYS.includes(key)
+  )
+  const properties = instanceProperties.reduce((acc, [key, property]) => {
+    return merge(acc, { [key]: property })
   }, {})
-  const modelDefProperties = merge(
-    pickBy(keyToField, (value, key) => MODEL_DEF_KEYS.includes(key)),
-    {
-      meta: {
-        fields,
-        modelName,
-      },
-    }
+  const specialProperties = specialProperties1.reduce(
+    (acc, [key, property]) => {
+      return merge(acc, { [key]: property })
+    },
+    {}
   )
 
-  return (instanceValues = {}) => {
-    const loadedInternals = fieldProperties.reduce((acc, [key, field]) => {
-      const fieldGetter = field.createGetter(instanceValues[key])
-      const fieldValidator = field.getValidator(fieldGetter)
-      const getFieldKey = createPropertyTitle(key)
-      const fleshedOutField = {
-        [getFieldKey]: fieldGetter,
-        functions: {
-          validate: {
-            [key]: fieldValidator,
+  const create = (instanceValues = {}) => {
+    const loadedInternals = instanceProperties.reduce(
+      (acc, [key, property]) => {
+        const propertyGetter = property.createGetter(instanceValues[key])
+        const propertyValidator = property.getValidator(propertyGetter)
+        const getPropertyKey = createPropertyTitle(key)
+        const fleshedOutInstanceProperties = {
+          [getPropertyKey]: propertyGetter,
+          functions: {
+            validate: {
+              [key]: propertyValidator,
+            },
           },
-        },
-      }
-      return merge(acc, fleshedOutField)
-    }, {})
+        }
+        return merge(acc, fleshedOutInstanceProperties)
+      },
+      {}
+    )
     const frameworkProperties = {
+      meta: {
+        getModel: () => model,
+      },
       functions: {
         toObj: toObj(loadedInternals),
         validate: {
@@ -52,10 +71,27 @@ const createModel = (modelName, keyToField) => {
         },
       },
     }
-    return merge(loadedInternals, modelDefProperties, frameworkProperties)
+    const instance = merge(
+      {},
+      loadedInternals,
+      specialProperties,
+      frameworkProperties
+    )
+    if (instanceCreatedCallback) {
+      instanceCreatedCallback(instance)
+    }
+    return instance
   }
+
+  // This sets the model that is used by the instances later.
+  model = merge({}, modelExtensions, {
+    create,
+    getName: () => modelName,
+    getProperties: () => properties,
+  })
+  return model
 }
 
 module.exports = {
-  createModel,
+  Model,
 }

@@ -1,132 +1,158 @@
 const _ = require('lodash')
+const sinon = require('sinon')
 const assert = require('chai').assert
-const { createModel } = require('../../src/models')
-const { field } = require('../../src/fields')
+const { Model } = require('../../src/models')
+const { Property } = require('../../src/properties')
 
 describe('/src/models.js', () => {
-  describe('#createModel()', () => {
-    it('should return a function when called once with valid data', () => {
-      const actual = createModel('name', {})
-      const expected = 'function'
-      assert.isFunction(actual)
-    })
-    describe('#()', () => {
+  describe('#Model()', () => {
+    describe('#create()', () => {
+      it('should call the instanceCreatedCallback function when create() is called', () => {
+        const input = {
+          myProperty: Property({ required: true }),
+        }
+        const callback = sinon.stub()
+        const model = Model(
+          'name',
+          input,
+          {},
+          { instanceCreatedCallback: callback }
+        )
+        model.create({ myProperty: 'value' })
+        sinon.assert.calledOnce(callback)
+      })
       it('should not throw an exception if nothing is passed into function', () => {
         const input = {
-          myField: field({ required: true }),
+          myProperty: Property({ required: true }),
         }
-        const model = createModel('name', input)
+        const model = Model('name', input)
         assert.doesNotThrow(() => {
-          model()
+          model.create()
         })
       })
-      it('should return an object that contains meta.fields.myField', () => {
+      it('should return an object that contains meta.getModel().getProperties().myProperty', () => {
         const input = {
-          myField: field({ required: true }),
+          myProperty: Property({ required: true }),
         }
-        const model = createModel('name', input)
-        const instance = model({ myField: 'value' })
-        const actual = _.get(instance, 'meta.fields.myField')
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: 'value' })
+        const actual = instance.meta.getModel().getProperties().myProperty
         assert.isOk(actual)
       })
-      it('should return an object that contains meta.modelName===test-the-name', () => {
+      it('should flow through the additional special functions within the keyValues', () => {
         const input = {
-          myField: field({ required: true }),
+          myProperty: Property({ required: true }),
+          functions: {
+            custom: () => 'works',
+          },
         }
-        const model = createModel('test-the-name', input)
-        const instance = model({ myField: 'value' })
-        const actual = _.get(instance, 'meta.modelName')
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: 'value' })
+        const actual = instance.functions.custom()
+        const expected = 'works'
+        assert.equal(actual, expected)
+      })
+      it('should return an object that contains meta.getModel().getName()===test-the-name', () => {
+        const input = {
+          myProperty: Property({ required: true }),
+        }
+        const model = Model('test-the-name', input)
+        const instance = model.create({ myProperty: 'value' })
+        const actual = instance.meta.getModel().getName()
         const expected = 'test-the-name'
         assert.deepEqual(actual, expected)
       })
-      it('should return an object that contains meta.fields.myField', () => {
+      it('should return an object that contains meta.getModel().getProperties().myProperty', () => {
         const input = {
-          myField: field({ required: true }),
+          myProperty: Property({ required: true }),
         }
-        const model = createModel('name', input)
-        const instance = model({ myField: 'value' })
-        const actual = _.get(instance, 'meta.fields.myField')
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: 'value' })
+        const actual = instance.meta.getModel().getProperties().myProperty
         assert.isOk(actual)
       })
-      it('should use the value passed in when field.defaultValue and field.value are not set', async () => {
+      it('should use the value passed in when Property.defaultValue and Property.value are not set', async () => {
         const input = {
-          myField: field({ required: true }),
+          myProperty: Property({ required: true }),
         }
-        const model = createModel('name', input)
-        const instance = model({ myField: 'passed-in' })
-        const actual = await instance.getMyField()
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: 'passed-in' })
+        const actual = await instance.getMyProperty()
         const expected = 'passed-in'
         assert.deepEqual(actual, expected)
       })
-      it('should use the value for field.value when even if field.defaultValue is set and a value is passed in', async () => {
+      it('should use the value for Property.value when even if Property.defaultValue is set and a value is passed in', async () => {
         const input = {
-          myField: field({ value: 'value', defaultValue: 'default-value' }),
+          myProperty: Property({
+            value: 'value',
+            defaultValue: 'default-value',
+          }),
         }
-        const model = createModel('name', input)
-        const instance = model({ myField: 'passed-in' })
-        const actual = await instance.getMyField()
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: 'passed-in' })
+        const actual = await instance.getMyProperty()
         const expected = 'value'
         assert.deepEqual(actual, expected)
       })
-      it('should use the value for field.value when even if field.defaultValue is not set and a value is passed in', async () => {
+      it('should use the value for Property.value when even if Property.defaultValue is not set and a value is passed in', async () => {
         const input = {
-          myField: field({ value: 'value' }),
+          myProperty: Property({ value: 'value' }),
         }
-        const model = createModel('name', input)
-        const instance = model({ myField: 'passed-in' })
-        const actual = await instance.getMyField()
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: 'passed-in' })
+        const actual = await instance.getMyProperty()
         const expected = 'value'
         assert.deepEqual(actual, expected)
       })
-      it('should use the value for field.defaultValue when field.value is not set and no value is passed in', async () => {
+      it('should use the value for Property.defaultValue when Property.value is not set and no value is passed in', async () => {
         const input = {
-          myField: field({ defaultValue: 'defaultValue' }),
+          myProperty: Property({ defaultValue: 'defaultValue' }),
         }
-        const model = createModel('name', input)
-        const instance = model({})
-        const actual = await instance.getMyField()
+        const model = Model('name', input)
+        const instance = model.create({})
+        const actual = await instance.getMyProperty()
         const expected = 'defaultValue'
         assert.deepEqual(actual, expected)
       })
-      it('should use the value for field.defaultValue when field.value is not set and null is passed as a value', async () => {
+      it('should use the value for Property.defaultValue when Property.value is not set and null is passed as a value', async () => {
         const input = {
-          myField: field({ defaultValue: 'defaultValue' }),
+          myProperty: Property({ defaultValue: 'defaultValue' }),
         }
-        const model = createModel('name', input)
-        const instance = model({ myField: null })
-        const actual = await instance.getMyField()
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: null })
+        const actual = await instance.getMyProperty()
         const expected = 'defaultValue'
         assert.deepEqual(actual, expected)
       })
-      it('should return a model with getId and getType for the provided valid keyToField', () => {
+      it('should return a model with getId and getType for the provided valid keyToProperty', () => {
         const input = {
-          id: field({ required: true }),
-          type: field(),
+          id: Property({ required: true }),
+          type: Property(),
         }
-        const model = createModel('name', input)
-        const actual = model({ id: 'my-id', type: 'my-type' })
+        const model = Model('name', input)
+        const actual = model.create({ id: 'my-id', type: 'my-type' })
         assert.isOk(actual.getId)
         assert.isOk(actual.getType)
       })
       it('should return a model where validate returns one error for id', async () => {
         const input = {
-          id: field({ required: true }),
-          type: field(),
+          id: Property({ required: true }),
+          type: Property(),
         }
-        const model = createModel('name', input)
-        const instance = model({ type: 'my-type' })
+        const model = Model('name', input)
+        const instance = model.create({ type: 'my-type' })
         const actual = await instance.functions.validate.model()
         const expected = 1
         assert.equal(Object.values(actual).length, expected)
       })
     })
-    it('should return a function when called once with valid data', () => {
-      const actual = createModel('name', {})
-      assert.isFunction(actual)
+    it('should return an object with a function "create" when called once with valid data', () => {
+      const actual = Model('name', {})
+      assert.isFunction(actual.create)
     })
     it('should throw an exception if a key "model" is passed in', () => {
       assert.throws(() => {
-        createModel('name', { model: 'weeee' })
+        Model('name', { model: 'weeee' }).create()
       })
     })
   })

@@ -1,4 +1,5 @@
 const isEmpty = require('lodash/isEmpty')
+const isFunction = require('lodash/isFunction')
 const flatMap = require('lodash/flatMap')
 const get = require('lodash/get')
 
@@ -130,6 +131,23 @@ const minTextLength = min => value => {
   return undefined
 }
 
+const referenceTypeMatch = referencedModel => {
+  return value => {
+    // This needs to stay here, as it delays the creation long enough for
+    // self referencing types.
+    const model = isFunction(referencedModel)
+      ? referencedModel()
+      : referencedModel
+    // Assumption: By the time this is received, value === a model instance.
+    const eModel = model.getName()
+    const aModel = value.meta.getModel().getName()
+    if (eModel !== aModel) {
+      return `Model should be ${eModel} instead, recieved ${aModel}`
+    }
+    return undefined
+  }
+}
+
 const aggregateValidator = methodOrMethods => {
   const toDo = Array.isArray(methodOrMethods)
     ? methodOrMethods
@@ -161,7 +179,7 @@ const CONFIG_TO_VALIDATE_METHOD = {
   choices,
 }
 
-const createFieldValidator = config => {
+const createPropertyValidator = config => {
   const validators = [
     ...Object.entries(config).map(([key, value]) => {
       return (CONFIG_TO_VALIDATE_METHOD[key] || (() => undefined))(value)
@@ -170,17 +188,17 @@ const createFieldValidator = config => {
   ].filter(x => x)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
-  const _fieldValidator = async value => {
+  const _propertyValidator = async value => {
     const errors = await validator(value)
     return [...new Set(flatMap(errors))]
   }
-  return _fieldValidator
+  return _propertyValidator
 }
 
-const createModelValidator = fields => {
+const createModelValidator = properties => {
   const _modelValidator = async () => {
     const keysAndFunctions = Object.entries(
-      get(fields, 'functions.validate', {})
+      get(properties, 'functions.validate', {})
     )
     const data = await Promise.all(
       keysAndFunctions.map(async ([key, validator]) => {
@@ -215,8 +233,9 @@ module.exports = {
   meetsRegex,
   aggregateValidator,
   emptyValidator,
-  createFieldValidator,
+  createPropertyValidator,
   createModelValidator,
   arrayType,
+  referenceTypeMatch,
   TYPE_PRIMATIVES,
 }

@@ -1,13 +1,15 @@
 const identity = require('lodash/identity')
+const isFunction = require('lodash/isFunction')
 const merge = require('lodash/merge')
 const {
-  createFieldValidator,
+  createPropertyValidator,
   emptyValidator,
   maxTextLength,
   minTextLength,
   minNumber,
   maxNumber,
   isType,
+  referenceTypeMatch,
   meetsRegex,
 } = require('./validation')
 const { createUuid } = require('./utils')
@@ -23,7 +25,7 @@ const _getValidatorFromConfigElseEmpty = (config, key, validatorGetter) => {
   return emptyValidator
 }
 
-const field = (config = {}) => {
+const Property = (config = {}, additionalMetadata = {}) => {
   const value = config.value || undefined
   const defaultValue = config.defaultValue || undefined
   const lazyLoadMethod = config.lazyLoadMethod || false
@@ -33,6 +35,7 @@ const field = (config = {}) => {
   }
 
   return {
+    ...additionalMetadata,
     createGetter: instanceValue => {
       if (value !== undefined) {
         return () => value
@@ -53,17 +56,17 @@ const field = (config = {}) => {
       }
     },
     getValidator: valueGetter => {
-      const validator = createFieldValidator(config)
-      const _fieldValidatorWrapper = async () => {
+      const validator = createPropertyValidator(config)
+      const _propertyValidatorWrapper = async () => {
         return validator(await valueGetter())
       }
-      return _fieldValidatorWrapper
+      return _propertyValidatorWrapper
     },
   }
 }
 
-const uniqueId = config =>
-  field({
+const UniqueId = (config = {}) =>
+  Property({
     ...config,
     lazyLoadMethod: value => {
       if (!value) {
@@ -73,8 +76,8 @@ const uniqueId = config =>
     },
   })
 
-const dateField = config =>
-  field({
+const DateProperty = (config = {}) =>
+  Property({
     ...config,
     lazyLoadMethod: value => {
       if (!value && config.autoNow) {
@@ -84,58 +87,85 @@ const dateField = config =>
     },
   })
 
-const referenceField = config => {
-  return field({
-    ...config,
-    lazyLoadMethod: async smartObj => {
-      const _getId = () => {
-        if (!smartObj) {
-          return null
-        }
-        return smartObj && smartObj.id
-          ? smartObj.id
-          : smartObj.getId
-          ? smartObj.getId()
-          : smartObj
+const ReferenceProperty = (model, config = {}) => {
+  if (!model) {
+    throw new Error('Must include the referenced model')
+  }
+
+  const _getModel = () => {
+    if (isFunction(model)) {
+      return model()
+    }
+    return model
+  }
+
+  const validators = [...(config.validators || []), referenceTypeMatch(model)]
+
+  const lazyLoadMethod = async instanceValues => {
+    const _getId = () => {
+      if (!instanceValues) {
+        return null
       }
-      const _getSmartObjReturn = objToUse => {
-        return {
-          ...objToUse,
-          functions: {
-            ...(objToUse.functions ? objToUse.functions : {}),
-            toObj: _getId,
-          },
-        }
-      }
-      const valueIsSmartObj = smartObj && smartObj.functions
-      if (valueIsSmartObj) {
-        return _getSmartObjReturn(smartObj)
-      }
-      if (config.fetcher) {
-        const obj = await config.fetcher(smartObj)
-        return _getSmartObjReturn(obj)
-      }
-      return _getId(smartObj)
-    },
-  })
+      return instanceValues && instanceValues.id
+        ? instanceValues.id
+        : instanceValues.getId
+        ? instanceValues.getId()
+        : instanceValues
+    }
+    const valueIsModelInstance =
+      Boolean(instanceValues) && Boolean(instanceValues.functions)
+
+    const _getInstanceReturn = objToUse => {
+      const instance = valueIsModelInstance
+        ? objToUse
+        : _getModel().create(objToUse)
+      return merge({}, instance, {
+        functions: {
+          toObj: _getId,
+        },
+      })
+    }
+
+    if (valueIsModelInstance) {
+      return _getInstanceReturn(instanceValues)
+    }
+    if (config.fetcher) {
+      const id = await _getId()
+      const obj = await config.fetcher(_getModel(), id)
+      return _getInstanceReturn(obj)
+    }
+    return _getId(instanceValues)
+  }
+
+  return Property(
+    merge({}, config, {
+      validators,
+      lazyLoadMethod,
+    }),
+    {
+      meta: {
+        getReferencedModel: _getModel,
+      },
+    }
+  )
 }
 
-const arrayField = (config = {}) =>
-  field({
+const ArrayProperty = (config = {}) =>
+  Property({
     defaultValue: [],
     ...config,
     isArray: true,
   })
 
-const objectField = (config = {}) =>
-  field(
+const ObjectProperty = (config = {}) =>
+  Property(
     merge(config, {
       validators: [isType('object')],
     })
   )
 
-const textField = (config = {}) =>
-  field(
+const TextProperty = (config = {}) =>
+  Property(
     merge(config, {
       isString: true,
       validators: [
@@ -149,8 +179,8 @@ const textField = (config = {}) =>
     })
   )
 
-const integerField = (config = {}) =>
-  field(
+const IntegerProperty = (config = {}) =>
+  Property(
     merge(config, {
       isInteger: true,
       validators: [
@@ -164,8 +194,8 @@ const integerField = (config = {}) =>
     })
   )
 
-const numberField = (config = {}) =>
-  field(
+const NumberProperty = (config = {}) =>
+  Property(
     merge(config, {
       isNumber: true,
       validators: [
@@ -179,30 +209,30 @@ const numberField = (config = {}) =>
     })
   )
 
-const constantValueField = (value, config = {}) =>
-  textField(
+const ConstantValueProperty = (value, config = {}) =>
+  TextProperty(
     merge(config, {
       value,
     })
   )
 
-const emailField = (config = {}) =>
-  textField(
+const EmailProperty = (config = {}) =>
+  TextProperty(
     merge(config, {
       validators: [meetsRegex(EMAIL_REGEX)],
     })
   )
 
 module.exports = {
-  field,
-  uniqueId,
-  dateField,
-  arrayField,
-  referenceField,
-  integerField,
-  textField,
-  constantValueField,
-  numberField,
-  objectField,
-  emailField,
+  Property,
+  UniqueId,
+  DateProperty,
+  ArrayProperty,
+  ReferenceProperty,
+  IntegerProperty,
+  TextProperty,
+  ConstantValueProperty,
+  NumberProperty,
+  ObjectProperty,
+  EmailProperty,
 }
