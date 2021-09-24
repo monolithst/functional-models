@@ -508,7 +508,7 @@ describe('/src/properties.js', () => {
         const input = ['obj-id']
         const fetcher = sinon
           .stub()
-          .callsFake((modelName, instanceValues) => instanceValues)
+          .callsFake((modelName, id) => ({id}))
         await ReferenceProperty(TestModel1, {
           fetcher,
         }).createGetter(...input)()
