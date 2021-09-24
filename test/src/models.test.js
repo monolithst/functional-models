@@ -39,6 +39,16 @@ describe('/src/models.js', () => {
         const actual = instance.meta.getModel().getProperties().myProperty
         assert.isOk(actual)
       })
+      it('should combine the meta within the instance values', () => {
+        const input = {
+          myProperty: Property({ required: true }),
+        }
+        const model = Model('name', input)
+        const instance = model.create({ myProperty: 'value', meta: {random: () => 'random'}})
+        const actual = instance.meta.random()
+        const expected = 'random'
+        assert.equal(actual, expected)
+      })
       it('should flow through the additional special functions within the keyValues', () => {
         const input = {
           myProperty: Property({ required: true }),

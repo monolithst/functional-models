@@ -1,6 +1,6 @@
 {
   "name": "functional-models",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "A library for creating JavaScript function based models.",
   "main": "index.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "functional"
   ],
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/package"
+    "registry": "https://registry.npmjs.org"
   },
   "author": "Mike Cornwell",
   "license": "GPLV3",
