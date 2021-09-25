@@ -77,6 +77,16 @@ const choices = choiceArray => value => {
   return undefined
 }
 
+const isDate = value => {
+  if (!value) {
+    return 'Date value is empty'
+  }
+  if (!value.toISOString) {
+    return 'Value is not a date'
+  }
+  return undefined
+}
+
 const isRequired = value => {
   if (value === true || value === false) {
     return undefined
@@ -84,7 +94,13 @@ const isRequired = value => {
   if (isNumber(value) === undefined) {
     return undefined
   }
-  return isEmpty(value) ? 'A value is required' : undefined
+  const empty = isEmpty(value)
+  if (empty) {
+    if (isDate(value)) {
+      return 'A value is required'
+    }
+  }
+  return undefined
 }
 
 const maxNumber = max => value => {
@@ -186,9 +202,15 @@ const createPropertyValidator = config => {
     }),
     ...(config.validators ? config.validators : []),
   ].filter(x => x)
+  const isRequiredValue = config.required
+    ? true
+    : validators.includes(isRequired)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
   const _propertyValidator = async value => {
+    if (!value && !isRequiredValue) {
+      return []
+    }
     const errors = await validator(value)
     return [...new Set(flatMap(errors))]
   }
@@ -223,6 +245,7 @@ module.exports = {
   isString,
   isInteger,
   isType,
+  isDate,
   isArray,
   isRequired,
   maxNumber,

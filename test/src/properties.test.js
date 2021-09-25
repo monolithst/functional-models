@@ -506,9 +506,7 @@ describe('/src/properties.js', () => {
       })
       it('should provide the passed in model and the instance values when switch-a-roo fetcher is used', async () => {
         const input = ['obj-id']
-        const fetcher = sinon
-          .stub()
-          .callsFake((modelName, id) => ({id}))
+        const fetcher = sinon.stub().callsFake((modelName, id) => ({ id }))
         await ReferenceProperty(TestModel1, {
           fetcher,
         }).createGetter(...input)()
