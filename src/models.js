@@ -45,7 +45,7 @@ const Model = (
   const create = (instanceValues = {}) => {
     const specialInstanceProperties1 = MODEL_DEF_KEYS.reduce((acc, key) => {
       if (key in instanceValues) {
-        return {...acc, [key]: instanceValues[key]}
+        return { ...acc, [key]: instanceValues[key] }
       }
       return acc
     }, {})
@@ -82,7 +82,7 @@ const Model = (
       loadedInternals,
       specialProperties,
       frameworkProperties,
-      specialInstanceProperties1,
+      specialInstanceProperties1
     )
     if (instanceCreatedCallback) {
       instanceCreatedCallback(instance)

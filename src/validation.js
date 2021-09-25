@@ -82,7 +82,7 @@ const isDate = value => {
     return 'Date value is empty'
   }
   if (!value.toISOString) {
-    return 'Value is not a string'
+    return 'Value is not a date'
   }
   return undefined
 }
@@ -245,6 +245,7 @@ module.exports = {
   isString,
   isInteger,
   isType,
+  isDate,
   isArray,
   isRequired,
   maxNumber,

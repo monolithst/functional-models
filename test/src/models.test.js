@@ -44,7 +44,10 @@ describe('/src/models.js', () => {
           myProperty: Property({ required: true }),
         }
         const model = Model('name', input)
-        const instance = model.create({ myProperty: 'value', meta: {random: () => 'random'}})
+        const instance = model.create({
+          myProperty: 'value',
+          meta: { random: () => 'random' },
+        })
         const actual = instance.meta.random()
         const expected = 'random'
         assert.equal(actual, expected)

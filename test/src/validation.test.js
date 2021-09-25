@@ -8,6 +8,7 @@ const {
   isInteger,
   isString,
   isArray,
+  isDate,
   arrayType,
   isRequired,
   maxNumber,
@@ -33,6 +34,24 @@ const TestModel2 = Model('TestModel2', {
 })
 
 describe('/src/validation.js', () => {
+  describe('#isDate()', () => {
+    it('should return an error if value is null', () => {
+      const actual = isDate(null)
+      assert.isOk(actual)
+    })
+    it('should return an error if value is undefined', () => {
+      const actual = isDate(undefined)
+      assert.isOk(actual)
+    })
+    it('should return an error object does not have toISOString', () => {
+      const actual = isDate({})
+      assert.isOk(actual)
+    })
+    it('should return undefined if a date', () => {
+      const actual = isDate(new Date())
+      assert.isUndefined(actual)
+    })
+  })
   describe('#referenceTypeMatch()', () => {
     it('should allow a function for a model', () => {
       const myModel = TestModel1.create()
@@ -83,6 +102,10 @@ describe('/src/validation.js', () => {
   describe('#isRequired()', () => {
     it('should return undefined when 1 is passed', () => {
       const actual = isRequired(1)
+      assert.isUndefined(actual)
+    })
+    it('should return undefined when a date is passed', () => {
+      const actual = isRequired(new Date())
       assert.isUndefined(actual)
     })
     it('should return undefined when 0 is passed', () => {
