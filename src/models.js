@@ -9,8 +9,11 @@ const PROTECTED_KEYS = ['model']
 const Model = (
   modelName,
   keyToProperty,
-  modelExtensions = {},
-  { instanceCreatedCallback = null } = {}
+  {
+    instanceCreatedCallback = null,
+    modelFunctions = {},
+    instanceFunctions = {},
+  } = {}
 ) => {
   /*
    * This non-functional approach is specifically used to
@@ -43,6 +46,8 @@ const Model = (
   )
 
   const create = (instanceValues = {}) => {
+    // eslint-disable-next-line functional/no-let
+    let instance = null
     const specialInstanceProperties1 = MODEL_DEF_KEYS.reduce((acc, key) => {
       if (key in instanceValues) {
         return { ...acc, [key]: instanceValues[key] }
@@ -77,10 +82,20 @@ const Model = (
         },
       },
     }
-    const instance = merge(
+    const fleshedOutInstanceFunctions = Object.entries(
+      instanceFunctions
+    ).reduce((acc, [key, func]) => {
+      return merge(acc, {
+        functions: {
+          [key]: func(instance),
+        },
+      })
+    }, {})
+    instance = merge(
       {},
       loadedInternals,
       specialProperties,
+      fleshedOutInstanceFunctions,
       frameworkProperties,
       specialInstanceProperties1
     )
@@ -90,8 +105,17 @@ const Model = (
     return instance
   }
 
+  const fleshedOutModelFunctions = Object.entries(modelFunctions).reduce(
+    (acc, [key, func]) => {
+      return merge(acc, {
+        [key]: func(model),
+      })
+    },
+    {}
+  )
+
   // This sets the model that is used by the instances later.
-  model = merge({}, modelExtensions, {
+  model = merge({}, fleshedOutModelFunctions, {
     create,
     getName: () => modelName,
     getProperties: () => properties,
