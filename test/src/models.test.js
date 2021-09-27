@@ -6,18 +6,45 @@ const { Property } = require('../../src/properties')
 
 describe('/src/models.js', () => {
   describe('#Model()', () => {
+    it('should find model.myString when modelExtension has myString function in it', () => {
+      const model = Model(
+        'ModelName',
+        {},
+        {
+          modelFunctions: {
+            myString: model => () => {
+              return 'To String'
+            },
+          },
+        }
+      )
+      console.log(model)
+      assert.isFunction(model.myString)
+    })
     describe('#create()', () => {
+      it('should find instance.functions.toString when in instanceFunctions', () => {
+        const model = Model(
+          'ModelName',
+          {},
+          {
+            instanceFunctions: {
+              toString: instance => () => {
+                return 'An instance'
+              },
+            },
+          }
+        )
+        const instance = model.create({})
+        assert.isFunction(instance.functions.toString)
+      })
       it('should call the instanceCreatedCallback function when create() is called', () => {
         const input = {
           myProperty: Property({ required: true }),
         }
         const callback = sinon.stub()
-        const model = Model(
-          'name',
-          input,
-          {},
-          { instanceCreatedCallback: callback }
-        )
+        const model = Model('name', input, {
+          instanceCreatedCallback: callback,
+        })
         model.create({ myProperty: 'value' })
         sinon.assert.calledOnce(callback)
       })

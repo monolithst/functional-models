@@ -1,9 +1,50 @@
 const assert = require('chai').assert
 const flatMap = require('lodash/flatMap')
 const { Given, When, Then } = require('@cucumber/cucumber')
-const { Model, Property, ArrayProperty, validation } = require('../../index')
+const {
+  Model,
+  UniqueId,
+  TextProperty,
+  Function,
+  Property,
+  ArrayProperty,
+  validation,
+} = require('../../index')
+
+const instanceToString = Function(modelInstance => {
+  return `${modelInstance.getModel().getName()}-Instance`
+})
+
+const instanceToJson = Function(async modelInstance => {
+  return JSON.stringify(await modelInstance.functions.toObj())
+})
+
+const modelToString = Function(model => {
+  return `${model.getName()}-[${Object.keys(model.getProperties()).join(',')}]`
+})
+
+const modelWrapper = Function(model => {
+  return model
+})
 
 const MODEL_DEFINITIONS = {
+  FunctionModel1: Model(
+    'FunctionModel1',
+    {
+      id: UniqueId({ required: true }),
+      name: TextProperty({ required: true }),
+    },
+    {
+      modelFunctions: {
+        modelWrapper,
+        toString: modelToString,
+      },
+      instanceFunctions: {
+        toString: instanceToString,
+        toJson: instanceToJson,
+      },
+    }
+  ),
   TestModel1: Model('TestModel1', {
     name: Property({ required: true }),
     type: Property({ required: true, isString: true }),
@@ -30,6 +71,10 @@ const MODEL_DEFINITIONS = {
 }
 
 const MODEL_INPUT_VALUES = {
+  FunctionModelData1: {
+    id: 'my-id',
+    name: 'function-model-name',
+  },
   TestModel1a: {
     name: 'my-name',
     type: 1,
@@ -68,6 +113,8 @@ Given(
   'the {word} has been created, with {word} inputs provided',
   function (modelDefinition, modelInputValues) {
     const def = MODEL_DEFINITIONS[modelDefinition]
+    this.model = def
+
     const input = MODEL_INPUT_VALUES[modelInputValues]
     if (!def) {
       throw new Error(`${modelDefinition} did not result in a definition`)
@@ -99,6 +146,7 @@ Given('{word} model is used', function (modelDefinition) {
     throw new Error(`${modelDefinition} did not result in a definition`)
   }
   this.modelDefinition = def
+  this.model = def
 })
 
 When('{word} data is inserted', function (modelInputValues) {
@@ -130,4 +178,16 @@ Then('the {word} property is called on the model', function (property) {
 Then('the array values match', function (table) {
   const expected = JSON.parse(table.rowsHash().array)
   assert.deepEqual(this.results, expected)
+})
+
+Then('{word} property is found', function (propertyKey) {
+  assert.isFunction(this.instance[propertyKey])
+})
+
+Then('{word} instance function is found', function (instanceFunctionKey) {
+  assert.isFunction(this.instance.functions[instanceFunctionKey])
+})
+
+Then('{word} model function is found', function (modelFunctionKey) {
+  assert.isFunction(this.model[modelFunctionKey])
 })
