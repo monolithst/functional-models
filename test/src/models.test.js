@@ -6,6 +6,46 @@ const { Property } = require('../../src/properties')
 
 describe('/src/models.js', () => {
   describe('#Model()', () => {
+    it('should pass a functional instance to the instanceFunctions by the time the function is called by a client', () => {
+      const model = Model(
+        'ModelName',
+        {},
+        {
+          instanceFunctions: {
+            func1: instance => () => {
+              console.log(instance)
+              return instance.functions.func2()
+            },
+            func2: instance => () => {
+              return 'from instance func2'
+            },
+          },
+        }
+      )
+      const instance = model.create({})
+      const actual = instance.functions.func1()
+      const expected = 'from instance func2'
+      assert.deepEqual(actual, expected)
+    })
+    it('should pass a functional model to the modelFunction by the time the function is called by a client', () => {
+      const model = Model(
+        'ModelName',
+        {},
+        {
+          modelFunctions: {
+            func1: model => () => {
+              return model.func2()
+            },
+            func2: model => () => {
+              return 'from func2'
+            },
+          },
+        }
+      )
+      const actual = model.func1()
+      const expected = 'from func2'
+      assert.deepEqual(actual, expected)
+    })
     it('should find model.myString when modelExtension has myString function in it', () => {
       const model = Model(
         'ModelName',
@@ -18,7 +58,6 @@ describe('/src/models.js', () => {
           },
         }
       )
-      console.log(model)
       assert.isFunction(model.myString)
     })
     describe('#create()', () => {

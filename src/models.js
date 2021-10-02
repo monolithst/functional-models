@@ -87,7 +87,9 @@ const Model = (
     ).reduce((acc, [key, func]) => {
       return merge(acc, {
         functions: {
-          [key]: func(instance),
+          [key]: (...args) => {
+            return func(instance)(...args)
+          },
         },
       })
     }, {})
@@ -108,7 +110,9 @@ const Model = (
   const fleshedOutModelFunctions = Object.entries(modelFunctions).reduce(
     (acc, [key, func]) => {
       return merge(acc, {
-        [key]: func(model),
+        [key]: (...args) => {
+          return func(model)(...args)
+        },
       })
     },
     {}
