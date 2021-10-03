@@ -396,6 +396,27 @@ describe('/src/validation.js', () => {
       }
       assert.deepEqual(actual, expected)
     })
+    it('should return no errors when two model validators return undefined', async () => {
+      const modelValidator1 = sinon.stub().resolves(undefined)
+      const modelValidator2 = sinon.stub().resolves(undefined)
+      const testModel3 = createTestModel3([modelValidator1, modelValidator2])
+      const properties = {
+        functions: {
+          validate: {
+            id: sinon.stub().returns(undefined),
+            name: sinon.stub().returns(undefined),
+          },
+        },
+      }
+      const validator = createModelValidator(properties, [modelValidator1, modelValidator2])
+      const instance = testModel3.create({
+        id: 'test-id',
+        name: 'my-name',
+      })
+      const actual = await validator(instance)
+      const expected = {}
+      assert.deepEqual(actual, expected)
+    })
     it('should use both functions.validate for two objects', async () => {
       const propertys = {
         functions: {
