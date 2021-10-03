@@ -234,9 +234,11 @@ const createModelValidator = (properties, modelValidators = []) => {
     const instanceData = await (modelValidators.length > 0
       ? instance.functions.toObj()
       : {})
-    const modelValidationErrors = (await Promise.all(
-      modelValidators.map(validator => validator(instance, instanceData))
-    )).filter(x=>x)
+    const modelValidationErrors = (
+      await Promise.all(
+        modelValidators.map(validator => validator(instance, instanceData))
+      )
+    ).filter(x => x)
     const propertyErrors = data
       .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
       .reduce((acc, [key, errors]) => {

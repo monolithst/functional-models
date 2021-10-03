@@ -408,7 +408,10 @@ describe('/src/validation.js', () => {
           },
         },
       }
-      const validator = createModelValidator(properties, [modelValidator1, modelValidator2])
+      const validator = createModelValidator(properties, [
+        modelValidator1,
+        modelValidator2,
+      ])
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
