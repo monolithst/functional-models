@@ -106,17 +106,23 @@ const ReferenceProperty = (model, config = {}) => {
       if (!instanceValues) {
         return null
       }
-      return instanceValues && instanceValues.id
-        ? instanceValues.id
-        : instanceValues.getId
-        ? instanceValues.getId()
-        : instanceValues
+      if (instanceValues && !instanceValues.id) {
+        if (instanceValues.getId) {
+          return instanceValues.getId()
+        }
+        return instanceValues
+      }
+      return instanceValues.id
     }
+
     const valueIsModelInstance =
       Boolean(instanceValues) && Boolean(instanceValues.functions)
 
     const _getInstanceReturn = objToUse => {
-      const instance = valueIsModelInstance
+      // We need to determine if the object we just go is an actual model instance to determine if we need to make one.
+      const objIsModelInstance =
+        Boolean(objToUse) && Boolean(objToUse.functions)
+      const instance = objIsModelInstance
         ? objToUse
         : _getModel().create(objToUse)
       return merge({}, instance, {
@@ -131,7 +137,8 @@ const ReferenceProperty = (model, config = {}) => {
     }
     if (config.fetcher) {
       const id = await _getId()
-      const obj = await config.fetcher(_getModel(), id)
+      const model = _getModel()
+      const obj = await config.fetcher(model, id)
       return _getInstanceReturn(obj)
     }
     return _getId(instanceValues)
