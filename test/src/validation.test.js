@@ -1,7 +1,7 @@
 const assert = require('chai').assert
 const sinon = require('sinon')
 const { Model } = require('../../src/models')
-const { UniqueId } = require('../../src/properties')
+const { UniqueId, TextProperty } = require('../../src/properties')
 const {
   isNumber,
   isBoolean,
@@ -32,6 +32,18 @@ const TestModel1 = Model('TestModel1', {
 const TestModel2 = Model('TestModel2', {
   id: UniqueId(),
 })
+
+const createTestModel3 = modelValidators =>
+  Model(
+    'TestModel3',
+    {
+      id: UniqueId(),
+      name: TextProperty(),
+    },
+    {
+      modelValidators,
+    }
+  )
 
 describe('/src/validation.js', () => {
   describe('#isDate()', () => {
@@ -297,6 +309,93 @@ describe('/src/validation.js', () => {
     })
   })
   describe('#createModelValidator()', () => {
+    it('should call the model validator passed in', async () => {
+      const modelValidator = sinon.stub().returns(undefined)
+      const testModel3 = createTestModel3([modelValidator])
+      const properties = {
+        functions: {
+          validate: {
+            id: sinon.stub().returns(undefined),
+            name: sinon.stub().returns(undefined),
+          },
+        },
+      }
+      const validator = createModelValidator(properties, [modelValidator])
+      await validator(
+        testModel3.create({
+          id: 'test-id',
+          name: 'my-name',
+        })
+      )
+
+      sinon.assert.calledOnce(modelValidator)
+    })
+    it('should pass the instance into the validator as the first argument', async () => {
+      const modelValidator = sinon.stub().returns(undefined)
+      const testModel3 = createTestModel3([modelValidator])
+      const properties = {
+        functions: {
+          validate: {
+            id: sinon.stub().returns(undefined),
+            name: sinon.stub().returns(undefined),
+          },
+        },
+      }
+      const validator = createModelValidator(properties, [modelValidator])
+      const instance = testModel3.create({
+        id: 'test-id',
+        name: 'my-name',
+      })
+      await validator(instance)
+
+      const actual = modelValidator.getCall(0).args[0]
+      const expected = instance
+      assert.deepEqual(actual, expected)
+    })
+    it('should pass the instance data into the validator as the second argument', async () => {
+      const modelValidator = sinon.stub().returns(undefined)
+      const testModel3 = createTestModel3([modelValidator])
+      const properties = {
+        functions: {
+          validate: {
+            id: sinon.stub().returns(undefined),
+            name: sinon.stub().returns(undefined),
+          },
+        },
+      }
+      const validator = createModelValidator(properties, [modelValidator])
+      const instance = testModel3.create({
+        id: 'test-id',
+        name: 'my-name',
+      })
+      const expected = await instance.functions.toObj()
+      await validator(instance)
+
+      const actual = modelValidator.getCall(0).args[1]
+      assert.deepEqual(actual, expected)
+    })
+    it('should return a overall: ["my-validation-error"] when the model validator returns "my-validation-error"', async () => {
+      const modelValidator = sinon.stub().returns('my-validation-error')
+      const testModel3 = createTestModel3([modelValidator])
+      const properties = {
+        functions: {
+          validate: {
+            id: sinon.stub().returns(undefined),
+            name: sinon.stub().returns(undefined),
+          },
+        },
+      }
+      const validator = createModelValidator(properties, [modelValidator])
+      const instance = testModel3.create({
+        id: 'test-id',
+        name: 'my-name',
+      })
+      const actual = await validator(instance)
+      const expected = {
+        overall: ['my-validation-error'],
+      }
+      assert.deepEqual(actual, expected)
+    })
     it('should use both functions.validate for two objects', async () => {
       const propertys = {
         functions: {

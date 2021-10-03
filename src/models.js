@@ -13,6 +13,7 @@ const Model = (
     instanceCreatedCallback = null,
     modelFunctions = {},
     instanceFunctions = {},
+    modelValidators = [],
   } = {}
 ) => {
   /*
@@ -78,7 +79,8 @@ const Model = (
       functions: {
         toObj: toObj(loadedInternals),
         validate: {
-          model: createModelValidator(loadedInternals),
+          model: () =>
+            createModelValidator(loadedInternals, modelValidators)(instance),
         },
       },
     }

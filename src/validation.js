@@ -1,4 +1,5 @@
 const isEmpty = require('lodash/isEmpty')
+const merge = require('lodash/merge')
 const isFunction = require('lodash/isFunction')
 const flatMap = require('lodash/flatMap')
 const get = require('lodash/get')
@@ -217,8 +218,8 @@ const createPropertyValidator = config => {
   return _propertyValidator
 }
 
-const createModelValidator = properties => {
-  const _modelValidator = async () => {
+const createModelValidator = (properties, modelValidators = []) => {
+  const _modelValidator = async instance => {
     const keysAndFunctions = Object.entries(
       get(properties, 'functions.validate', {})
     )
@@ -230,11 +231,20 @@ const createModelValidator = properties => {
         return [key, await validator()]
       })
     )
-    return data
+    const instanceData = await (modelValidators.length > 0
+      ? instance.functions.toObj()
+      : {})
+    const modelValidationErrors = await Promise.all(
+      modelValidators.map(validator => validator(instance, instanceData))
+    )
+    const propertyErrors = data
       .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
       .reduce((acc, [key, errors]) => {
         return { ...acc, [key]: errors }
       }, {})
+    return modelValidationErrors.length > 0
+      ? merge(propertyErrors, { overall: modelValidationErrors })
+      : propertyErrors
   }
   return _modelValidator
 }
