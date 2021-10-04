@@ -5,7 +5,6 @@ const { createModelValidator } = require('./validation')
 const { UniqueId } = require('./properties')
 
 const MODEL_DEF_KEYS = ['meta', 'functions']
-const PROTECTED_KEYS = ['model']
 
 const Model = (
   modelName,
@@ -33,11 +32,6 @@ const Model = (
     [primaryKey]: getPrimaryKeyProperty(),
     ...keyToProperty,
   }
-  PROTECTED_KEYS.forEach(key => {
-    if (key in keyToProperty) {
-      throw new Error(`Cannot use ${key}. This is a protected value.`)
-    }
-  })
   const instanceProperties = Object.entries(keyToProperty).filter(
     ([key, _]) => MODEL_DEF_KEYS.includes(key) === false
   )
