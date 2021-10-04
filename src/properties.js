@@ -58,8 +58,8 @@ const Property = (config = {}, additionalMetadata = {}) => {
     },
     getValidator: valueGetter => {
       const validator = createPropertyValidator(config)
-      const _propertyValidatorWrapper = async () => {
-        return validator(await valueGetter())
+      const _propertyValidatorWrapper = async (instance, instanceData) => {
+        return validator(await valueGetter(), instance, instanceData)
       }
       return _propertyValidatorWrapper
     },

@@ -208,11 +208,11 @@ const createPropertyValidator = config => {
     : validators.includes(isRequired)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
-  const _propertyValidator = async value => {
+  const _propertyValidator = async (value, instance, instanceData) => {
     if (!value && !isRequiredValue) {
       return []
     }
-    const errors = await validator(value)
+    const errors = await validator(value, instance, instanceData)
     return [...new Set(flatMap(errors))]
   }
   return _propertyValidator
@@ -223,17 +223,17 @@ const createModelValidator = (properties, modelValidators = []) => {
     const keysAndFunctions = Object.entries(
       get(properties, 'functions.validate', {})
     )
+    const instanceData = await (modelValidators.length > 0
+      ? instance.functions.toObj()
+      : {})
     const data = await Promise.all(
       keysAndFunctions.map(async ([key, validator]) => {
         if (key === 'model') {
           return [key, []]
         }
-        return [key, await validator()]
+        return [key, await validator(instance, instanceData)]
       })
     )
-    const instanceData = await (modelValidators.length > 0
-      ? instance.functions.toObj()
-      : {})
     const modelValidationErrors = (
       await Promise.all(
         modelValidators.map(validator => validator(instance, instanceData))
