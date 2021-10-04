@@ -1,4 +1,5 @@
 const identity = require('lodash/identity')
+const get = require('lodash/get')
 const isFunction = require('lodash/isFunction')
 const merge = require('lodash/merge')
 const {
@@ -106,13 +107,16 @@ const ReferenceProperty = (model, config = {}) => {
       if (!instanceValues) {
         return null
       }
-      if (instanceValues && !instanceValues.id) {
-        if (instanceValues.getId) {
-          return instanceValues.getId()
-        }
-        return instanceValues
+      const theModel = _getModel()
+      const primaryKey = theModel.getPrimaryKeyName()
+      if (instanceValues[primaryKey]) {
+        return instanceValues[primaryKey]
       }
-      return instanceValues.id
+      const primaryKeyFunc = get(instanceValues, 'functions.getPrimaryKey')
+      if (primaryKeyFunc) {
+        return primaryKeyFunc()
+      }
+      return instanceValues
     }
 
     const valueIsModelInstance =
