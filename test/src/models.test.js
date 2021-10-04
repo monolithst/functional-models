@@ -60,7 +60,57 @@ describe('/src/models.js', () => {
       )
       assert.isFunction(model.myString)
     })
+    describe('#getPrimaryKeyName()', () => {
+      it('should return "primaryKey" when this value is passed in as the primaryKey', () => {
+        const expected = 'primaryKey'
+        const model = Model(
+          'ModelName',
+          {},
+          {
+            primaryKey: expected,
+            modelFunctions: {
+              myString: model => () => {
+                return 'To String'
+              },
+            },
+          }
+        )
+        const actual = model.getPrimaryKeyName()
+        assert.equal(actual, expected)
+      })
+    })
     describe('#create()', () => {
+      it('should have an "getId" field when no primaryKey is passed', () => {
+        const model = Model(
+          'ModelName',
+          {},
+          {
+            instanceFunctions: {
+              toString: instance => () => {
+                return 'An instance'
+              },
+            },
+          }
+        )
+        const instance = model.create({})
+        assert.isFunction(instance.getId)
+      })
+      it('should have an "getMyPrimaryKeyId" field when "myPrimaryKeyId" is passed as the "primaryKey" is passed', () => {
+        const model = Model(
+          'ModelName',
+          {},
+          {
+            primaryKey: 'myPrimaryKeyId',
+            instanceFunctions: {
+              toString: instance => () => {
+                return 'An instance'
+              },
+            },
+          }
+        )
+        const instance = model.create({})
+        assert.isFunction(instance.getMyPrimaryKeyId)
+      })
       it('should find instance.functions.toString when in instanceFunctions', () => {
         const model = Model(
           'ModelName',
@@ -232,6 +282,43 @@ describe('/src/models.js', () => {
     it('should throw an exception if a key "model" is passed in', () => {
       assert.throws(() => {
         Model('name', { model: 'weeee' }).create()
+      })
+    })
+    describe('#functions.getPrimaryKey()', () => {
+      it('should return the id field when no primaryKey is passed', async () => {
+        const model = Model(
+          'ModelName',
+          {},
+          {
+            instanceFunctions: {
+              toString: instance => () => {
+                return 'An instance'
+              },
+            },
+          }
+        )
+        const expected = 'my-primary-key'
+        const instance = model.create({id: expected})
+        const actual = await instance.functions.getPrimaryKey()
+        assert.equal(actual, expected)
+      })
+      it('should return the primaryKey field when "primaryKey" is passed as primaryKey', async () => {
+        const model = Model(
+          'ModelName',
+          {},
+          {
+            primaryKey: 'primaryKey',
+            instanceFunctions: {
+              toString: instance => () => {
+                return 'An instance'
+              },
+            },
+          }
+        )
+        const expected = 'my-primary-key'
+        const instance = model.create({primaryKey: expected})
+        const actual = await instance.functions.getPrimaryKey()
+        assert.equal(actual, expected)
       })
     })
   })

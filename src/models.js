@@ -2,6 +2,7 @@ const merge = require('lodash/merge')
 const { toObj } = require('./serialization')
 const { createPropertyTitle } = require('./utils')
 const { createModelValidator } = require('./validation')
+const { UniqueId } = require('./properties')
 
 const MODEL_DEF_KEYS = ['meta', 'functions']
 const PROTECTED_KEYS = ['model']
@@ -10,6 +11,8 @@ const Model = (
   modelName,
   keyToProperty,
   {
+    primaryKey = 'id',
+    getPrimaryKeyProperty=() => UniqueId({required: true}),
     instanceCreatedCallback = null,
     modelFunctions = {},
     instanceFunctions = {},
@@ -25,6 +28,11 @@ const Model = (
    */
   // eslint-disable-next-line functional/no-let
   let model = null
+  keyToProperty = {
+    // this key exists over keyToProperty, so it can be overrided if desired.
+    [primaryKey]: getPrimaryKeyProperty(),
+    ...keyToProperty,
+  }
   PROTECTED_KEYS.forEach(key => {
     if (key in keyToProperty) {
       throw new Error(`Cannot use ${key}. This is a protected value.`)
@@ -78,6 +86,7 @@ const Model = (
       },
       functions: {
         toObj: toObj(loadedInternals),
+        getPrimaryKey: loadedInternals[createPropertyTitle(primaryKey)],
         validate: {
           model: () =>
             createModelValidator(loadedInternals, modelValidators)(instance),
@@ -125,6 +134,7 @@ const Model = (
     create,
     getName: () => modelName,
     getProperties: () => properties,
+    getPrimaryKeyName: () => primaryKey,
   })
   return model
 }
