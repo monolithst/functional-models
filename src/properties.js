@@ -26,6 +26,10 @@ const _getValidatorFromConfigElseEmpty = (config, key, validatorGetter) => {
   return emptyValidator
 }
 
+const _mergeValidators = (config, validators) => {
+  return [...validators, ...(config.validators ? config.validators : [])]
+}
+
 const Property = (config = {}, additionalMetadata = {}) => {
   const value = config.value || undefined
   const defaultValue = config.defaultValue || undefined
@@ -100,7 +104,7 @@ const ReferenceProperty = (model, config = {}) => {
     return model
   }
 
-  const validators = [...(config.validators || []), referenceTypeMatch(model)]
+  const validators = _mergeValidators(config, [referenceTypeMatch(model)])
 
   const lazyLoadMethod = async instanceValues => {
     const _getId = () => {
@@ -171,7 +175,7 @@ const ArrayProperty = (config = {}) =>
 const ObjectProperty = (config = {}) =>
   Property(
     merge(config, {
-      validators: [isType('object')],
+      validators: _mergeValidators(config, [isType('object')]),
     })
   )
 
@@ -179,14 +183,14 @@ const TextProperty = (config = {}) =>
   Property(
     merge(config, {
       isString: true,
-      validators: [
+      validators: _mergeValidators(config, [
         _getValidatorFromConfigElseEmpty(config, 'maxLength', value =>
           maxTextLength(value)
         ),
         _getValidatorFromConfigElseEmpty(config, 'minLength', value =>
           minTextLength(value)
         ),
-      ],
+      ]),
     })
   )
 
@@ -194,14 +198,14 @@ const IntegerProperty = (config = {}) =>
   Property(
     merge(config, {
       isInteger: true,
-      validators: [
+      validators: _mergeValidators(config, [
         _getValidatorFromConfigElseEmpty(config, 'minValue', value =>
           minNumber(value)
         ),
         _getValidatorFromConfigElseEmpty(config, 'maxValue', value =>
           maxNumber(value)
         ),
-      ],
+      ]),
     })
   )
 
@@ -209,14 +213,14 @@ const NumberProperty = (config = {}) =>
   Property(
     merge(config, {
       isNumber: true,
-      validators: [
+      validators: _mergeValidators(config, [
         _getValidatorFromConfigElseEmpty(config, 'minValue', value =>
           minNumber(value)
         ),
         _getValidatorFromConfigElseEmpty(config, 'maxValue', value =>
           maxNumber(value)
         ),
-      ],
+      ]),
     })
   )
 
@@ -230,7 +234,7 @@ const ConstantValueProperty = (value, config = {}) =>
 const EmailProperty = (config = {}) =>
   TextProperty(
     merge(config, {
-      validators: [meetsRegex(EMAIL_REGEX)],
+      validators: _mergeValidators(config, [meetsRegex(EMAIL_REGEX)]),
     })
   )
 

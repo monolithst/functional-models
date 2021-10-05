@@ -11,7 +11,7 @@ const Model = (
   keyToProperty,
   {
     primaryKey = 'id',
-    getPrimaryKeyProperty=() => UniqueId({required: true}),
+    getPrimaryKeyProperty = () => UniqueId({ required: true }),
     instanceCreatedCallback = null,
     modelFunctions = {},
     instanceFunctions = {},
@@ -65,7 +65,7 @@ const Model = (
         const fleshedOutInstanceProperties = {
           [getPropertyKey]: propertyGetter,
           functions: {
-            validate: {
+            validators: {
               [key]: propertyValidator,
             },
           },
@@ -81,9 +81,11 @@ const Model = (
       functions: {
         toObj: toObj(loadedInternals),
         getPrimaryKey: loadedInternals[createPropertyTitle(primaryKey)],
-        validate: {
-          model: () =>
-            createModelValidator(loadedInternals, modelValidators)(instance),
+        validate: () => {
+          return createModelValidator(
+            loadedInternals,
+            modelValidators
+          )(instance)
         },
       },
     }

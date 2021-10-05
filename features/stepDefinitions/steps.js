@@ -127,7 +127,7 @@ Given(
 )
 
 When('functions.validate is called', function () {
-  return this.instance.functions.validate.model().then(x => {
+  return this.instance.functions.validate().then(x => {
     this.errors = x
   })
 })

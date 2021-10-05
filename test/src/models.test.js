@@ -270,7 +270,7 @@ describe('/src/models.js', () => {
         }
         const model = Model('name', input)
         const instance = model.create({ type: 'my-type' })
-        const actual = await instance.functions.validate.model()
+        const actual = await instance.functions.validate()
         const expected = 1
         assert.equal(Object.values(actual).length, expected)
       })
@@ -298,7 +298,7 @@ describe('/src/models.js', () => {
           }
         )
         const expected = 'my-primary-key'
-        const instance = model.create({id: expected})
+        const instance = model.create({ id: expected })
         const actual = await instance.functions.getPrimaryKey()
         assert.equal(actual, expected)
       })
@@ -316,7 +316,7 @@ describe('/src/models.js', () => {
           }
         )
         const expected = 'my-primary-key'
-        const instance = model.create({primaryKey: expected})
+        const instance = model.create({ primaryKey: expected })
         const actual = await instance.functions.getPrimaryKey()
         assert.equal(actual, expected)
       })

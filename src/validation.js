@@ -170,10 +170,10 @@ const aggregateValidator = methodOrMethods => {
     ? methodOrMethods
     : [methodOrMethods]
 
-  const _aggregativeValidator = async value => {
+  const _aggregativeValidator = async (...args) => {
     const values = await Promise.all(
       toDo.map(method => {
-        return method(value)
+        return method(...args)
       })
     )
     return values.filter(x => x)
@@ -220,17 +220,15 @@ const createPropertyValidator = config => {
 
 const createModelValidator = (properties, modelValidators = []) => {
   const _modelValidator = async instance => {
+    if (!instance) {
+      throw new Error(`Instance cannot be empty`)
+    }
     const keysAndFunctions = Object.entries(
-      get(properties, 'functions.validate', {})
+      get(properties, 'functions.validators', {})
     )
-    const instanceData = await (modelValidators.length > 0
-      ? instance.functions.toObj()
-      : {})
+    const instanceData = await instance.functions.toObj()
     const data = await Promise.all(
       keysAndFunctions.map(async ([key, validator]) => {
-        if (key === 'model') {
-          return [key, []]
-        }
         return [key, await validator(instance, instanceData)]
       })
     )

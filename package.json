@@ -1,6 +1,6 @@
 {
   "name": "functional-models",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "A library for creating JavaScript function based models.",
   "main": "index.js",
   "scripts": {
@@ -37,6 +37,7 @@
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "chai": "^4.3.0",
+    "chai-as-promised": "^7.1.1",
     "cucumber": "^7.0.0-rc.0",
     "eslint": "^7.19.0",
     "eslint-config-prettier": "^7.2.0",
