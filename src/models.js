@@ -1,4 +1,5 @@
 const merge = require('lodash/merge')
+const get = require('lodash/get')
 const { toObj } = require('./serialization')
 const { createPropertyTitle } = require('./utils')
 const { createModelValidator } = require('./validation')
@@ -70,7 +71,16 @@ const Model = (
             },
           },
         }
-        return merge(acc, fleshedOutInstanceProperties)
+        const referenceProperties = get(property, 'meta.getReferencedId')
+          ? {
+            meta: {
+              references: {
+                [createPropertyTitle(`${key}Id`)]: () => property.meta.getReferencedId(instanceValues[key])
+              }
+            }
+          }
+          : {}
+        return merge(acc, fleshedOutInstanceProperties, referenceProperties)
       },
       {}
     )
@@ -118,7 +128,7 @@ const Model = (
     (acc, [key, func]) => {
       return merge(acc, {
         [key]: (...args) => {
-          return func(model)(...args)
+          return func(...args, model)
         },
       })
     },

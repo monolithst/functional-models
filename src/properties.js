@@ -70,7 +70,7 @@ const Property = (config = {}, additionalMetadata = {}) => {
   }
 }
 
-const UniqueId = (config = {}) =>
+const UniqueId = (config = {}, additionalMetadata={}) =>
   Property({
     ...config,
     lazyLoadMethod: value => {
@@ -79,20 +79,19 @@ const UniqueId = (config = {}) =>
       }
       return value
     },
-  })
+  }, additionalMetadata)
 
-const DateProperty = (config = {}) =>
-  Property({
-    ...config,
-    lazyLoadMethod: value => {
-      if (!value && config.autoNow) {
-        return new Date()
-      }
-      return value
-    },
-  })
+const DateProperty = (config = {}, additionalMetadata={}) => Property({
+  ...config,
+  lazyLoadMethod: value => {
+    if (!value && config.autoNow) {
+      return new Date()
+    }
+    return value
+  },
+}, additionalMetadata)
 
-const ReferenceProperty = (model, config = {}) => {
+const ReferenceProperty = (model, config = {}, additionalMetadata={}) => {
   if (!model) {
     throw new Error('Must include the referenced model')
   }
@@ -106,22 +105,23 @@ const ReferenceProperty = (model, config = {}) => {
 
   const validators = _mergeValidators(config, [referenceTypeMatch(model)])
 
-  const lazyLoadMethod = async instanceValues => {
-    const _getId = () => {
-      if (!instanceValues) {
-        return null
-      }
-      const theModel = _getModel()
-      const primaryKey = theModel.getPrimaryKeyName()
-      if (instanceValues[primaryKey]) {
-        return instanceValues[primaryKey]
-      }
-      const primaryKeyFunc = get(instanceValues, 'functions.getPrimaryKey')
-      if (primaryKeyFunc) {
-        return primaryKeyFunc()
-      }
-      return instanceValues
+  const _getId = (instanceValues) => () => {
+    if (!instanceValues) {
+      return null
     }
+    const theModel = _getModel()
+    const primaryKey = theModel.getPrimaryKeyName()
+    if (instanceValues[primaryKey]) {
+      return instanceValues[primaryKey]
+    }
+    const primaryKeyFunc = get(instanceValues, 'functions.getPrimaryKey')
+    if (primaryKeyFunc) {
+      return primaryKeyFunc()
+    }
+    return instanceValues
+  }
+
+  const lazyLoadMethod = async instanceValues => {
 
     const valueIsModelInstance =
       Boolean(instanceValues) && Boolean(instanceValues.functions)
@@ -135,7 +135,7 @@ const ReferenceProperty = (model, config = {}) => {
         : _getModel().create(objToUse)
       return merge({}, instance, {
         functions: {
-          toObj: _getId,
+          toObj: _getId(instanceValues),
         },
       })
     }
@@ -144,12 +144,12 @@ const ReferenceProperty = (model, config = {}) => {
       return _getInstanceReturn(instanceValues)
     }
     if (config.fetcher) {
-      const id = await _getId()
+      const id = await _getId(instanceValues)()
       const model = _getModel()
       const obj = await config.fetcher(model, id)
       return _getInstanceReturn(obj)
     }
-    return _getId(instanceValues)
+    return _getId(instanceValues)()
   }
 
   return Property(
@@ -158,28 +158,31 @@ const ReferenceProperty = (model, config = {}) => {
       lazyLoadMethod,
     }),
     {
+      ...additionalMetadata,
       meta: {
+        getReferencedId: (instanceValues) => _getId(instanceValues)(),
         getReferencedModel: _getModel,
       },
     }
   )
 }
 
-const ArrayProperty = (config = {}) =>
+const ArrayProperty = (config = {}, additionalMetadata={}) =>
   Property({
     defaultValue: [],
     ...config,
     isArray: true,
-  })
+  }, additionalMetadata)
 
-const ObjectProperty = (config = {}) =>
+const ObjectProperty = (config = {}, additionalMetadata={}) =>
   Property(
     merge(config, {
       validators: _mergeValidators(config, [isType('object')]),
-    })
+    }),
+    additionalMetadata
   )
 
-const TextProperty = (config = {}) =>
+const TextProperty = (config = {}, additionalMetadata={} ) =>
   Property(
     merge(config, {
       isString: true,
@@ -191,10 +194,11 @@ const TextProperty = (config = {}) =>
           minTextLength(value)
         ),
       ]),
-    })
+    }),
+    additionalMetadata
   )
 
-const IntegerProperty = (config = {}) =>
+const IntegerProperty = (config = {}, additionalMetadata={}) =>
   Property(
     merge(config, {
       isInteger: true,
@@ -206,10 +210,11 @@ const IntegerProperty = (config = {}) =>
           maxNumber(value)
         ),
       ]),
-    })
+    }),
+    additionalMetadata
   )
 
-const NumberProperty = (config = {}) =>
+const NumberProperty = (config = {}, additionalMetadata={}) =>
   Property(
     merge(config, {
       isNumber: true,
@@ -221,21 +226,24 @@ const NumberProperty = (config = {}) =>
           maxNumber(value)
         ),
       ]),
-    })
+    }),
+    additionalMetadata
   )
 
-const ConstantValueProperty = (value, config = {}) =>
+const ConstantValueProperty = (value, config = {}, additionalMetadata={}) =>
   TextProperty(
     merge(config, {
       value,
-    })
+    }),
+    additionalMetadata
   )
 
-const EmailProperty = (config = {}) =>
+const EmailProperty = (config = {}, additionalMetadata={}) =>
   TextProperty(
     merge(config, {
       validators: _mergeValidators(config, [meetsRegex(EMAIL_REGEX)]),
-    })
+    }),
+    additionalMetadata
   )
 
 module.exports = {

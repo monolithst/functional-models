@@ -2,7 +2,9 @@ const _ = require('lodash')
 const sinon = require('sinon')
 const assert = require('chai').assert
 const { Model } = require('../../src/models')
-const { Property } = require('../../src/properties')
+const { Property, TextProperty, ReferenceProperty } = require('../../src/properties')
+
+const TEST_MODEL_1 = Model('MyModel', )
 
 describe('/src/models.js', () => {
   describe('#Model()', () => {
@@ -13,7 +15,6 @@ describe('/src/models.js', () => {
         {
           instanceFunctions: {
             func1: instance => () => {
-              console.log(instance)
               return instance.functions.func2()
             },
             func2: instance => () => {
@@ -27,16 +28,35 @@ describe('/src/models.js', () => {
       const expected = 'from instance func2'
       assert.deepEqual(actual, expected)
     })
+    it('should the clients arguments before the model is passed', () => {
+      const model = Model(
+        'ModelName',
+        {},
+        {
+          modelFunctions: {
+            func1: (input, model) => {
+              return `${input} ${model.func2()}`
+            },
+            func2: model => {
+              return 'from func2'
+            },
+          },
+        }
+      )
+      const actual = model.func1('hello')
+      const expected = 'hello from func2'
+      assert.deepEqual(actual, expected)
+    })
     it('should pass a functional model to the modelFunction by the time the function is called by a client', () => {
       const model = Model(
         'ModelName',
         {},
         {
           modelFunctions: {
-            func1: model => () => {
+            func1: model => {
               return model.func2()
             },
-            func2: model => () => {
+            func2: model => {
               return 'from func2'
             },
           },
@@ -80,6 +100,16 @@ describe('/src/models.js', () => {
       })
     })
     describe('#create()', () => {
+      it('should have a meta.references.getTheReferenceId when the property has meta.getReferencedId and the key is theReference', () => {
+        const model = Model(
+          'ModelName',
+          {
+            theReference: ReferenceProperty(TEST_MODEL_1),
+          },
+        )
+        const instance = model.create({})
+        assert.isFunction(instance.meta.references.getTheReferenceId)
+      })
       it('should have an "getId" field when no primaryKey is passed', () => {
         const model = Model(
           'ModelName',
@@ -274,6 +304,17 @@ describe('/src/models.js', () => {
         const expected = 1
         assert.equal(Object.values(actual).length, expected)
       })
+      it('should return a model where validate returns one error for the missing text property', async () => {
+        const input = {
+          id: Property({ required: true }),
+          text: TextProperty({required: true}),
+        }
+        const model = Model('name', input)
+        const instance = model.create({ id: 'my-id' })
+        const actual = await instance.functions.validate()
+        const expected = 1
+        assert.equal(Object.values(actual).length, expected)
+      })
     })
     it('should return an object with a function "create" when called once with valid data', () => {
       const actual = Model('name', {})
@@ -282,6 +323,20 @@ describe('/src/models.js', () => {
     it('should throw an exception if a key "model" is passed in', () => {
       assert.throws(() => {
         Model('name', { model: 'weeee' }).create()
+      })
+    })
+    describe('#meta.references.getMyReferencedId()', () => {
+      it('should return the id from the ReferenceProperty', () => {
+        const model = Model(
+          'ModelName',
+          {
+            myReference: ReferenceProperty(TEST_MODEL_1),
+          },
+        )
+        const instance = model.create({ myReference: 'unit-test-id' })
+        const actual = instance.meta.references.getMyReferenceId()
+        const expected = 'unit-test-id'
+        assert.deepEqual(actual, expected)
       })
     })
     describe('#functions.getPrimaryKey()', () => {

@@ -227,7 +227,7 @@ const createModelValidator = (properties, modelValidators = []) => {
       get(properties, 'functions.validators', {})
     )
     const instanceData = await instance.functions.toObj()
-    const data = await Promise.all(
+    const propertyValidationErrors = await Promise.all(
       keysAndFunctions.map(async ([key, validator]) => {
         return [key, await validator(instance, instanceData)]
       })
@@ -237,7 +237,7 @@ const createModelValidator = (properties, modelValidators = []) => {
         modelValidators.map(validator => validator(instance, instanceData))
       )
     ).filter(x => x)
-    const propertyErrors = data
+    const propertyErrors = propertyValidationErrors
       .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
       .reduce((acc, [key, errors]) => {
         return { ...acc, [key]: errors }
