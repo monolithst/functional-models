@@ -13,8 +13,14 @@ const {
   referenceTypeMatch,
   meetsRegex,
 } = require('./validation')
-const { createUuid } = require('./utils')
+const { PROPERTY_TYPES } = require('./constants')
 const { lazyValue } = require('./lazy')
+const { toTitleCase, createUuid } = require('./utils')
+
+const createPropertyTitle = key => {
+  const goodName = toTitleCase(key)
+  return `get${goodName}`
+}
 
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
@@ -30,21 +36,35 @@ const _mergeValidators = (config, validators) => {
   return [...validators, ...(config.validators ? config.validators : [])]
 }
 
-const Property = (config = {}, additionalMetadata = {}) => {
-  const value = config.value || undefined
-  const defaultValue = config.defaultValue || undefined
+const Property = (type, config = {}, additionalMetadata = {}) => {
+  if (!type && !config.type) {
+    throw new Error(`Property type must be provided.`)
+  }
+  if (config.type) {
+    type = config.type
+  }
+  const getConstantValue = () => config.value !== undefined ? config.value : undefined
+  const getDefaultValue = () => config.defaultValue !== undefined ? config.defaultValue : undefined
+  const getChoices = () => config.choices ? config.choices : []
   const lazyLoadMethod = config.lazyLoadMethod || false
   const valueSelector = config.valueSelector || identity
   if (typeof valueSelector !== 'function') {
     throw new Error(`valueSelector must be a function`)
   }
 
+
   return {
     ...additionalMetadata,
+    getChoices,
+    getDefaultValue,
+    getConstantValue,
+    getPropertyType: () => type,
     createGetter: instanceValue => {
+      const value = getConstantValue()
       if (value !== undefined) {
         return () => value
       }
+      const defaultValue = getDefaultValue()
       if (
         defaultValue !== undefined &&
         (instanceValue === null || instanceValue === undefined)
@@ -62,26 +82,15 @@ const Property = (config = {}, additionalMetadata = {}) => {
     },
     getValidator: valueGetter => {
       const validator = createPropertyValidator(config)
-      const _propertyValidatorWrapper = async (instance, instanceData) => {
-        return validator(await valueGetter(), instance, instanceData)
+      const _propertyValidatorWrapper = async (instance, instanceData, options={}) => {
+        return validator(await valueGetter(), instance, instanceData, options)
       }
       return _propertyValidatorWrapper
     },
   }
 }
 
-const UniqueId = (config = {}, additionalMetadata={}) =>
-  Property({
-    ...config,
-    lazyLoadMethod: value => {
-      if (!value) {
-        return createUuid()
-      }
-      return value
-    },
-  }, additionalMetadata)
-
-const DateProperty = (config = {}, additionalMetadata={}) => Property({
+const DateProperty = (config = {}, additionalMetadata={}) => Property(PROPERTY_TYPES.DateProperty, {
   ...config,
   lazyLoadMethod: value => {
     if (!value && config.autoNow) {
@@ -153,6 +162,7 @@ const ReferenceProperty = (model, config = {}, additionalMetadata={}) => {
   }
 
   return Property(
+    PROPERTY_TYPES.ReferenceProperty,
     merge({}, config, {
       validators,
       lazyLoadMethod,
@@ -168,7 +178,9 @@ const ReferenceProperty = (model, config = {}, additionalMetadata={}) => {
 }
 
 const ArrayProperty = (config = {}, additionalMetadata={}) =>
-  Property({
+  Property(
+    PROPERTY_TYPES.ArrayProperty,
+    {
     defaultValue: [],
     ...config,
     isArray: true,
@@ -176,6 +188,7 @@ const ArrayProperty = (config = {}, additionalMetadata={}) =>
 
 const ObjectProperty = (config = {}, additionalMetadata={}) =>
   Property(
+    PROPERTY_TYPES.ObjectProperty,
     merge(config, {
       validators: _mergeValidators(config, [isType('object')]),
     }),
@@ -184,6 +197,7 @@ const ObjectProperty = (config = {}, additionalMetadata={}) =>
 
 const TextProperty = (config = {}, additionalMetadata={} ) =>
   Property(
+    PROPERTY_TYPES.TextProperty,
     merge(config, {
       isString: true,
       validators: _mergeValidators(config, [
@@ -200,6 +214,7 @@ const TextProperty = (config = {}, additionalMetadata={} ) =>
 
 const IntegerProperty = (config = {}, additionalMetadata={}) =>
   Property(
+    PROPERTY_TYPES.IntegerProperty,
     merge(config, {
       isInteger: true,
       validators: _mergeValidators(config, [
@@ -216,6 +231,7 @@ const IntegerProperty = (config = {}, additionalMetadata={}) =>
 
 const NumberProperty = (config = {}, additionalMetadata={}) =>
   Property(
+    PROPERTY_TYPES.NumberProperty,
     merge(config, {
       isNumber: true,
       validators: _mergeValidators(config, [
@@ -233,6 +249,7 @@ const NumberProperty = (config = {}, additionalMetadata={}) =>
 const ConstantValueProperty = (value, config = {}, additionalMetadata={}) =>
   TextProperty(
     merge(config, {
+      type: PROPERTY_TYPES.ConstantValueProperty,
       value,
     }),
     additionalMetadata
@@ -241,10 +258,42 @@ const ConstantValueProperty = (value, config = {}, additionalMetadata={}) =>
 const EmailProperty = (config = {}, additionalMetadata={}) =>
   TextProperty(
     merge(config, {
+      type: PROPERTY_TYPES.EmailProperty,
       validators: _mergeValidators(config, [meetsRegex(EMAIL_REGEX)]),
     }),
     additionalMetadata
   )
+
+const BooleanProperty = (config = {}, additionalMetadata={}) => Property(
+  PROPERTY_TYPES.BooleanProperty,
+  merge(config, {
+      isBoolean: true,
+      validators: _mergeValidators(config, [
+        _getValidatorFromConfigElseEmpty(config, 'minValue', value =>
+          minNumber(value)
+        ),
+        _getValidatorFromConfigElseEmpty(config, 'maxValue', value =>
+          maxNumber(value)
+        ),
+      ]),
+    }),
+    additionalMetadata
+)
+
+const UniqueId = (config = {}, additionalMetadata={}) =>
+  Property(
+    PROPERTY_TYPES.UniqueId,
+    {
+    ...config,
+    lazyLoadMethod: value => {
+      if (!value) {
+        return createUuid()
+      }
+      return value
+    },
+  }, additionalMetadata)
+
+
 
 module.exports = {
   Property,
@@ -258,4 +307,6 @@ module.exports = {
   NumberProperty,
   ObjectProperty,
   EmailProperty,
+  BooleanProperty,
+  createPropertyTitle,
 }

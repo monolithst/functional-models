@@ -57,6 +57,15 @@ const arrayType = type => value => {
   }, undefined)
 }
 
+const multiplePropertiesMustMatch = (getKeyA, getKeyB, errorMessage='Properties do not match') => async (_, instance) => {
+  const keyA = await getKeyA(instance)
+  const keyB = await getKeyB(instance)
+  if (keyA !== keyB) {
+    return errorMessage
+  }
+  return undefined
+}
+
 const meetsRegex =
   (regex, flags, errorMessage = 'Format was invalid') =>
   value => {
@@ -193,6 +202,7 @@ const CONFIG_TO_VALIDATE_METHOD = {
   isNumber: _boolChoice(isNumber),
   isString: _boolChoice(isString),
   isArray: _boolChoice(isArray),
+  isBoolean: _boolChoice(isBoolean),
   choices,
 }
 
@@ -208,18 +218,18 @@ const createPropertyValidator = config => {
     : validators.includes(isRequired)
   const validator =
     validators.length > 0 ? aggregateValidator(validators) : emptyValidator
-  const _propertyValidator = async (value, instance, instanceData) => {
+  const _propertyValidator = async (value, instance, instanceData={}, options) => {
     if (!value && !isRequiredValue) {
       return []
     }
-    const errors = await validator(value, instance, instanceData)
+    const errors = await validator(value, instance, instanceData, options)
     return [...new Set(flatMap(errors))]
   }
   return _propertyValidator
 }
 
 const createModelValidator = (properties, modelValidators = []) => {
-  const _modelValidator = async instance => {
+  const _modelValidator = async (instance, options) => {
     if (!instance) {
       throw new Error(`Instance cannot be empty`)
     }
@@ -229,12 +239,12 @@ const createModelValidator = (properties, modelValidators = []) => {
     const instanceData = await instance.functions.toObj()
     const propertyValidationErrors = await Promise.all(
       keysAndFunctions.map(async ([key, validator]) => {
-        return [key, await validator(instance, instanceData)]
+        return [key, await validator(instance, instanceData, options)]
       })
     )
     const modelValidationErrors = (
       await Promise.all(
-        modelValidators.map(validator => validator(instance, instanceData))
+        modelValidators.map(validator => validator(instance, instanceData, options))
       )
     ).filter(x => x)
     const propertyErrors = propertyValidationErrors
@@ -270,5 +280,6 @@ module.exports = {
   createModelValidator,
   arrayType,
   referenceTypeMatch,
+  multiplePropertiesMustMatch,
   TYPE_PRIMATIVES,
 }

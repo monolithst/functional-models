@@ -1,9 +1,8 @@
 const merge = require('lodash/merge')
 const get = require('lodash/get')
 const { toObj } = require('./serialization')
-const { createPropertyTitle } = require('./utils')
 const { createModelValidator } = require('./validation')
-const { UniqueId } = require('./properties')
+const { UniqueId, createPropertyTitle } = require('./properties')
 
 const MODEL_DEF_KEYS = ['meta', 'functions']
 
@@ -66,6 +65,9 @@ const Model = (
         const fleshedOutInstanceProperties = {
           [getPropertyKey]: propertyGetter,
           functions: {
+            getters: {
+              [key]:  propertyGetter,
+            },
             validators: {
               [key]: propertyValidator,
             },
@@ -91,11 +93,11 @@ const Model = (
       functions: {
         toObj: toObj(loadedInternals),
         getPrimaryKey: loadedInternals[createPropertyTitle(primaryKey)],
-        validate: () => {
+        validate: (options={}) => {
           return createModelValidator(
             loadedInternals,
             modelValidators
-          )(instance)
+          )(instance, options)
         },
       },
     }
@@ -105,7 +107,7 @@ const Model = (
       return merge(acc, {
         functions: {
           [key]: (...args) => {
-            return func(instance)(...args)
+            return func(...args, instance)
           },
         },
       })
@@ -128,7 +130,7 @@ const Model = (
     (acc, [key, func]) => {
       return merge(acc, {
         [key]: (...args) => {
-          return func(...args, model)
+          return func(model)(...args)
         },
       })
     },

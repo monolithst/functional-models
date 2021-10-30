@@ -14,10 +14,10 @@ describe('/src/models.js', () => {
         {},
         {
           instanceFunctions: {
-            func1: instance => () => {
+            func1: instance => {
               return instance.functions.func2()
             },
-            func2: instance => () => {
+            func2: instance => {
               return 'from instance func2'
             },
           },
@@ -34,10 +34,10 @@ describe('/src/models.js', () => {
         {},
         {
           modelFunctions: {
-            func1: (input, model) => {
+            func1: (model) => (input) => {
               return `${input} ${model.func2()}`
             },
-            func2: model => {
+            func2: model => () => {
               return 'from func2'
             },
           },
@@ -53,10 +53,10 @@ describe('/src/models.js', () => {
         {},
         {
           modelFunctions: {
-            func1: model => {
+            func1: model => () => {
               return model.func2()
             },
-            func2: model => {
+            func2: model => () => {
               return 'from func2'
             },
           },
@@ -242,7 +242,7 @@ describe('/src/models.js', () => {
       })
       it('should use the value for Property.value when even if Property.defaultValue is set and a value is passed in', async () => {
         const input = {
-          myProperty: Property({
+          myProperty: Property('MyProperty', {
             value: 'value',
             defaultValue: 'default-value',
           }),
@@ -255,7 +255,7 @@ describe('/src/models.js', () => {
       })
       it('should use the value for Property.value when even if Property.defaultValue is not set and a value is passed in', async () => {
         const input = {
-          myProperty: Property({ value: 'value' }),
+          myProperty: Property('MyProperty', { value: 'value' }),
         }
         const model = Model('name', input)
         const instance = model.create({ myProperty: 'passed-in' })
@@ -265,7 +265,7 @@ describe('/src/models.js', () => {
       })
       it('should use the value for Property.defaultValue when Property.value is not set and no value is passed in', async () => {
         const input = {
-          myProperty: Property({ defaultValue: 'defaultValue' }),
+          myProperty: Property('MyProperty', { defaultValue: 'defaultValue' }),
         }
         const model = Model('name', input)
         const instance = model.create({})
@@ -275,7 +275,7 @@ describe('/src/models.js', () => {
       })
       it('should use the value for Property.defaultValue when Property.value is not set and null is passed as a value', async () => {
         const input = {
-          myProperty: Property({ defaultValue: 'defaultValue' }),
+          myProperty: Property('MyProperty', { defaultValue: 'defaultValue' }),
         }
         const model = Model('name', input)
         const instance = model.create({ myProperty: null })
@@ -285,8 +285,8 @@ describe('/src/models.js', () => {
       })
       it('should return a model with getId and getType for the provided valid keyToProperty', () => {
         const input = {
-          id: Property({ required: true }),
-          type: Property(),
+          id: Property('MyProperty', { required: true }),
+          type: Property('MyProperty'),
         }
         const model = Model('name', input)
         const actual = model.create({ id: 'my-id', type: 'my-type' })
@@ -295,8 +295,8 @@ describe('/src/models.js', () => {
       })
       it('should return a model where validate returns one error for id', async () => {
         const input = {
-          id: Property({ required: true }),
-          type: Property(),
+          id: Property('MyProperty', { required: true }),
+          type: Property('MyProperty'),
         }
         const model = Model('name', input)
         const instance = model.create({ type: 'my-type' })
@@ -306,7 +306,7 @@ describe('/src/models.js', () => {
       })
       it('should return a model where validate returns one error for the missing text property', async () => {
         const input = {
-          id: Property({ required: true }),
+          id: Property('MyProperty', { required: true }),
           text: TextProperty({required: true}),
         }
         const model = Model('name', input)

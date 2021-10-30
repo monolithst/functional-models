@@ -4,9 +4,9 @@ const lazyValue = method => {
   let called = false
   return async (...args) => {
     if (!called) {
+      called = true
       value = await method(...args)
       // eslint-disable-next-line require-atomic-updates
-      called = true
     }
 
     return value

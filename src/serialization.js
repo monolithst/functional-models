@@ -4,7 +4,10 @@ const SIZE_OF_GET = 'get'.length
 const IGNORABLE_KEYS = ['meta', 'functions']
 
 const _getValue = async value => {
-  if (!value) {
+  if (value === undefined) {
+    return null
+  }
+  if (value === null) {
     return null
   }
   const type = typeof value

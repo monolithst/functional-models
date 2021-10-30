@@ -373,34 +373,34 @@ describe('/src/properties.js', () => {
   describe('#Property()', () => {
     it('should throw an exception if config.valueSelector is not a function but is set', () => {
       assert.throws(() => {
-        Property({ valueSelector: 'blah' })
+        Property('MyProperty', { valueSelector: 'blah' })
       })
     })
     it('should not throw an exception if config.valueSelector is a function', () => {
       assert.doesNotThrow(() => {
-        Property({ valueSelector: () => ({}) })
+        Property('MyProperty', { valueSelector: () => ({}) })
       })
     })
     describe('#createGetter()', () => {
       it('should return a function even if config.value is set to a value', () => {
-        const instance = Property({ value: 'my-value' })
+        const instance = Property('MyProperty', { value: 'my-value' })
         const actual = instance.createGetter('not-my-value')
         assert.isFunction(actual)
       })
       it('should return the value passed into config.value regardless of what is passed into the createGetter', async () => {
-        const instance = Property({ value: 'my-value' })
+        const instance = Property('MyProperty', { value: 'my-value' })
         const actual = await instance.createGetter('not-my-value')()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
       })
       it('should return the value passed into createGetter when config.value is not set', async () => {
-        const instance = Property()
+        const instance = Property('MyProperty')
         const actual = await instance.createGetter('my-value')()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
       })
       it('should return the value of the function passed into createGetter when config.value is not set', async () => {
-        const instance = Property()
+        const instance = Property('MyProperty')
         const actual = await instance.createGetter(() => 'my-value')()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
