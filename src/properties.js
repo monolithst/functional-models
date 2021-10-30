@@ -55,6 +55,7 @@ const Property = (type, config = {}, additionalMetadata = {}) => {
 
   return {
     ...additionalMetadata,
+    getConfig: () => config,
     getChoices,
     getDefaultValue,
     getConstantValue,
