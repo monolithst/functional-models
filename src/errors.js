@@ -1,16 +1,34 @@
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ValidationError = void 0;
 /* eslint-disable functional/no-this-expression */
 /* eslint-disable functional/no-class */
-class ValidationError extends Error {
-  constructor(modelName, keysToErrors) {
-    super(`${modelName} did not pass validation`)
-    this.name = 'ValidationError'
-    this.modelName = modelName
-    this.keysToErrors = keysToErrors
-  }
-}
-/* eslint-enable functional/no-this-expression */
-/* eslint-enable functional/no-class */
-
-module.exports = {
-  ValidationError,
-}
+var ValidationError = /** @class */ (function (_super) {
+    __extends(ValidationError, _super);
+    function ValidationError(modelName, keysToErrors) {
+        var _this = _super.call(this, modelName + " did not pass validation") || this;
+        _this.name = 'ValidationError';
+        // @ts-ignore
+        _this.modelName = modelName;
+        // @ts-ignore
+        _this.keysToErrors = keysToErrors;
+        return _this;
+    }
+    return ValidationError;
+}(Error));
+exports.ValidationError = ValidationError;
