@@ -116,7 +116,7 @@
     "functional/no-class": ["error"],
     "functional/no-mixed-type": ["error"],
     "functional/no-this-expression": ["error"],
-    "functional/prefer-type-literal": ["error"],
+    "functional/prefer-type-literal": 0,
     "functional/no-conditional-statement": 0,
     "functional/no-expression-statement": 0,
     "functional/no-loop-statement": ["error"],
@@ -156,7 +156,7 @@
     "import/first": ["error"],
     "import/exports-last": ["error"],
     "import/no-duplicates": ["error"],
-    "import/no-namespace": ["error"],
+    "import/no-namespace": 0,
     "import/extensions": ["error"],
     "import/order": ["error"],
     "import/newline-after-import": ["error"],
@@ -182,5 +182,5 @@
       "jsx": true
     }
   },
-  "parser": "babel-eslint"
+  "parser": "@typescript-eslint/parser"
 }

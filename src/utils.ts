@@ -44,7 +44,7 @@ const loweredTitleCase = (string: String) => {
   return `${string.slice(0, 1).toLowerCase()}${string.slice(1)}`
 }
 
-const getObjToArray = (array: Array<String>) : Object => {
+const getObjToArray = (array: readonly string[]) : Object => {
   const obj = keyBy(array)
   return {
     ...obj,

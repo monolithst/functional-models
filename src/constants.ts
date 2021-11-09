@@ -1,5 +1,19 @@
 import { getObjToArray } from './utils'
 
+enum PROPERTY_TYPES {
+  UniqueId = 'UniqueId',
+  DateProperty = 'DateProperty',
+  ArrayProperty = 'ArrayProperty',
+  ReferenceProperty = 'ReferenceProperty',
+  IntegerProperty = 'IntegerProperty',
+  TextProperty = 'TextProperty',
+  ConstantValueProperty = 'ConstantValueProperty',
+  NumberProperty = 'NumberProperty',
+  ObjectProperty = 'ObjectProperty',
+  EmailProperty = 'EmailProperty',
+  BooleanProperty = 'BooleanProperty',
+}
+/*
 const PROPERTY_TYPES = getObjToArray([
   'UniqueId',
   'DateProperty',
@@ -13,6 +27,7 @@ const PROPERTY_TYPES = getObjToArray([
   'EmailProperty',
   'BooleanProperty',
 ])
+ */
 
 export {
   PROPERTY_TYPES,

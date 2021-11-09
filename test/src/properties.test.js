@@ -21,7 +21,7 @@ const TestModel1 = Model('TestModel1', {
   name: TextProperty(),
 })
 
-describe('/src/properties.js', () => {
+describe('/src/properties.ts', () => {
   describe('#EmailProperty()', () => {
     describe('#createGetter()', () => {
       it('should be able to create without a config', () => {

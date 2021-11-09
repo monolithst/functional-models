@@ -1,7 +1,7 @@
 const assert = require('chai').assert
 const { toObj } = require('../../src/serialization')
 
-describe('/src/serialization.js', () => {
+describe('/src/serialization.ts', () => {
   describe('#toObj()', () => {
     it('serialize a very basic input of key-value', async () => {
       const actual = await toObj({
