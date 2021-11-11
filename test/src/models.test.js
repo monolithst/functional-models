@@ -6,7 +6,7 @@ const { Property, TextProperty, ReferenceProperty } = require('../../src/propert
 
 const TEST_MODEL_1 = Model('MyModel', )
 
-describe('/src/models.js', () => {
+describe('/src/models.ts', () => {
   describe('#Model()', () => {
     it('should pass a functional instance to the instanceFunctions by the time the function is called by a client', () => {
       const model = Model(

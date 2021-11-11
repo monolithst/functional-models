@@ -1,16 +1,21 @@
 /* eslint-disable no-unused-vars */
 import {choices, isArray, isBoolean, isInteger, isNumber, isRequired, isString} from "./validation";
 
-interface IModel {
+interface IModel<T> {
   readonly getName: () => string,
-  readonly create: (data: Object) => IModelInstance,
+  readonly create: (data: Object) => IModelInstance<T>
 }
 
-type IModelProperties = {
-  readonly [s: string]: IModelInstance
+type IModelProperties<T> = {
+  readonly [s: string]: IModelInstance<T>
 }
 
-interface IModelInstance {
+interface Getters<T> {
+}
+
+
+type IModelInstance<T> = {
+    /*
   readonly functions: {
     readonly toObj: () => Promise<any>,
     readonly getPrimaryKey: () => Promise<Number>,
@@ -18,9 +23,13 @@ interface IModelInstance {
       readonly [s: string]: IPropertyValidator
     },
   },
+
+     */
   readonly meta: {
-    readonly getModel: () => IModel,
-  }
+    readonly getModel: () => IModel<T>,
+  },
+  //readonly [Property in keyof T as Exclude<T, "meta" > `get${Capitalize<string & Property>}`] : any () => T[Property]
+  readonly [Property in keyof T as Exclude<T, "meta">]: () => Type[Property]
 }
 
 type IModelValue = string | boolean | number | Object | Date
