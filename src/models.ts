@@ -3,8 +3,34 @@ import get from 'lodash/get'
 import { toObj } from './serialization'
 import { createModelValidator } from './validation'
 import { UniqueId, createPropertyTitle } from'./properties'
+import {IModel, IPropertyValidator} from './interfaces'
 
 const MODEL_DEF_KEYS = ['meta', 'functions']
+
+
+function x(input: T): T {
+  return T
+}
+
+type Blah = {name: number}
+const Model2 : IModel<Blah> = {
+  getName: () => 'blah',
+  create: (data: any) => {
+    return {
+      functions: {
+      toObj: () => Promise.resolve(),
+        getPrimaryKey: () => Promise.resolve(1),
+        validators: {
+      },
+    },
+    meta: {
+      getModel: () => Model2
+    },
+    }
+  }
+}
+
+const y = x<IModel<Blah>>(Model2)
 
 const Model = (
   modelName,

@@ -3,39 +3,32 @@ import {choices, isArray, isBoolean, isInteger, isNumber, isRequired, isString} 
 
 interface IModel<T> {
   readonly getName: () => string,
-  readonly create: (data: Object) => IModelInstance<T>
+  readonly getPrimaryKeyName: () => string,
+  readonly getPrimaryKey: (t: T) => string,
+  readonly create: (data: T) => IModelInstance<T>
 }
 
 type IModelProperties<T> = {
   readonly [s: string]: IModelInstance<T>
 }
 
-interface Getters<T> {
-}
-
-
 type IModelInstance<T> = {
-    /*
   readonly functions: {
     readonly toObj: () => Promise<any>,
-    readonly getPrimaryKey: () => Promise<Number>,
+    readonly getPrimaryKey: () => string,
     readonly validators: {
       readonly [s: string]: IPropertyValidator
     },
   },
-
-     */
   readonly meta: {
     readonly getModel: () => IModel<T>,
   },
-  //readonly [Property in keyof T as Exclude<T, "meta" > `get${Capitalize<string & Property>}`] : any () => T[Property]
-  readonly [Property in keyof T as Exclude<T, "meta">]: () => Type[Property]
 }
 
 type IModelValue = string | boolean | number | Object | Date
 
 interface IPropertyValidatorComponentType<T> {
-  (value: T, instance: IModelInstance, instanceData: Object): string | undefined
+  (value: T, instance: IModelInstance<any>, instanceData: Object): string | undefined
 }
 
 interface IPropertyValidatorComponentSync extends IPropertyValidatorComponentType<any> {
@@ -52,11 +45,11 @@ type IPropertyValidatorComponent = IPropertyValidatorComponentSync | IPropertyVa
 
 
 interface IPropertyValidatorComponentAsync {
-  (value: any, instance: IModelInstance, instanceData: Object): Promise<string | undefined>
+  (value: any, instance: IModelInstance<any>, instanceData: Object): Promise<string | undefined>
 }
 
 interface IPropertyValidator {
-  (value: any, instance: IModelInstance, instanceData: Object, options?: Object): Promise<readonly string[]>
+  (value: any, instance: IModelInstance<any>, instanceData: Object, options?: Object): Promise<readonly string[]>
 }
 
 interface IModelErrors {
@@ -64,34 +57,41 @@ interface IModelErrors {
 }
 
 interface IModelComponentValidator {
-  (instance: IModelInstance, instanceData: Object, options?: Object): Promise<readonly string[]>
+  (instance: IModelInstance<any>, instanceData: Object, options?: Object): Promise<readonly string[]>
 }
 
 interface IModelValidator {
-  (instance: IModelInstance, instanceData: Object, options?: Object): Promise<IModelErrors>
+  (instance: IModelInstance<any>, instanceData: Object, options?: Object): Promise<IModelErrors>
 }
 
-type IValueGetter = () => any | undefined | null
 
-interface IPropertyInstance {
+type FunctionalObj = {
+  [s: string]: number | string | boolean | null | FunctionalObj
+}
+
+type FunctionalType = number | string | boolean | null | undefined | FunctionalObj | Date
+type IValueGetter = () => Promise<FunctionalType>
+
+interface IPropertyInstance<T extends FunctionalType> {
   readonly getConfig: () => Object,
   readonly getChoices: () => readonly string[],
-  readonly getDefaultValue: () => any | undefined,
-  readonly getConstantValue: () => any | undefined,
+  readonly getDefaultValue: () => FunctionalType,
+  readonly getConstantValue: () => FunctionalType,
   readonly getPropertyType: () => string,
-  readonly createGetter: (value: any) => IValueGetter,
+  readonly createGetter: (value: T) => IValueGetter,
   readonly getValidator: (valueGetter: IValueGetter) => IPropertyValidator,
 }
 
-interface IProperty {
-  (type: string, config: IPropertyConfig, additionalMetadata?: Object): IPropertyInstance
+interface IProperty<T extends FunctionalType> {
+  (type: string, config: IPropertyConfig, additionalMetadata?: Object): IPropertyInstance<T>
 }
 
-interface ITypedProperty {
-  (config: IPropertyConfig, additionalMetadata?: Object): IPropertyInstance
+interface ITypedProperty<T extends FunctionalType> {
+  (config: IPropertyConfig, additionalMetadata?: Object): IPropertyInstance<T>
 }
 
-type ILazyMethod = ((value: any) => Promise<any>)
+type ILazyValue<T extends FunctionalType> = null|undefined|T|Promise<T>
+type ILazyMethod<T extends FunctionalType> = ((value?: T) => ILazyValue<T>)
 
 type IDefaultPropertyValidators = {
   readonly required?: boolean,
@@ -107,7 +107,7 @@ type IPropertyConfigContents = {
   readonly defaultValue?: string,
   readonly value?: string,
   readonly choices?: readonly string[],
-  readonly lazyLoadMethod?: ILazyMethod,
+  readonly lazyLoadMethod?: <T extends FunctionalType>(value? : T) => ILazyValue<T>
   readonly valueSelector?: (instanceValue: any) => any,
   readonly validators?: readonly IPropertyValidatorComponent[],
   readonly maxLength?: number,
@@ -115,9 +115,12 @@ type IPropertyConfigContents = {
   readonly maxValue?: number,
   readonly minValue?: number,
   readonly autoNow?: boolean,
+  readonly fetcher?: <T extends FunctionalType>(model: IModel<T>, primaryKey: String) => Promise<T>
 }
 
 type IPropertyConfig = IPropertyConfigContents & IDefaultPropertyValidators | undefined
+type MaybeFunction<T> = T | (() => T)
+
 /*
   readonly type?: string,
   readonly defaultValue?: string,
@@ -149,5 +152,11 @@ export {
   IProperty,
   IPropertyInstance,
   IPropertyConfig,
+  FunctionalType,
+  IValueGetter,
+  MaybeFunction,
+  FunctionalObj,
+  ILazyMethod,
+  ILazyValue,
 }
 /* eslint-enable no-unused-vars */

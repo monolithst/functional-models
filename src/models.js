@@ -9,6 +9,25 @@ const serialization_1 = require("./serialization");
 const validation_1 = require("./validation");
 const properties_1 = require("./properties");
 const MODEL_DEF_KEYS = ['meta', 'functions'];
+function x(input) {
+    return T;
+}
+const Model2 = {
+    getName: () => 'blah',
+    create: (data) => {
+        return {
+            functions: {
+                toObj: () => Promise.resolve(),
+                getPrimaryKey: () => Promise.resolve(1),
+                validators: {},
+            },
+            meta: {
+                getModel: () => Model2
+            },
+        };
+    }
+};
+const y = x(Model2);
 const Model = (modelName, keyToProperty, { primaryKey = 'id', getPrimaryKeyProperty = () => (0, properties_1.UniqueId)({ required: true }), instanceCreatedCallback = null, modelFunctions = {}, instanceFunctions = {}, modelValidators = [], } = {}) => {
     /*
      * This non-functional approach is specifically used to

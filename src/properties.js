@@ -14,8 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createPropertyTitle = exports.BooleanProperty = exports.EmailProperty = exports.ObjectProperty = exports.NumberProperty = exports.ConstantValueProperty = exports.TextProperty = exports.IntegerProperty = exports.ReferenceProperty = exports.ArrayProperty = exports.DateProperty = exports.UniqueId = exports.Property = void 0;
 const identity_1 = __importDefault(require("lodash/identity"));
-const get_1 = __importDefault(require("lodash/get"));
-const isFunction_1 = __importDefault(require("lodash/isFunction"));
 const merge_1 = __importDefault(require("lodash/merge"));
 const validation_1 = require("./validation");
 const constants_1 = require("./constants");
@@ -39,63 +37,66 @@ validatorGetter) {
 const _mergeValidators = (config, validators) => {
     return [...validators, ...((config === null || config === void 0 ? void 0 : config.validators) ? config.validators : [])];
 };
-const Property = (type, config, additionalMetadata = {}) => {
-    if (!type && !config.type) {
+function Property(type, config, additionalMetadata = {}) {
+    if (!type && !(config === null || config === void 0 ? void 0 : config.type)) {
         throw new Error(`Property type must be provided.`);
     }
-    if (config.type) {
+    if (config === null || config === void 0 ? void 0 : config.type) {
         type = config.type;
     }
-    const getConstantValue = () => config.value !== undefined ? config.value : undefined;
-    const getDefaultValue = () => config.defaultValue !== undefined ? config.defaultValue : undefined;
-    const getChoices = () => config.choices ? config.choices : [];
-    const lazyLoadMethod = config.lazyLoadMethod || false;
-    const valueSelector = config.valueSelector || identity_1.default;
+    const getConstantValue = () => (config === null || config === void 0 ? void 0 : config.value) !== undefined ? config === null || config === void 0 ? void 0 : config.value : undefined;
+    const getDefaultValue = () => (config === null || config === void 0 ? void 0 : config.defaultValue) !== undefined ? config === null || config === void 0 ? void 0 : config.defaultValue : undefined;
+    const getChoices = () => (config === null || config === void 0 ? void 0 : config.choices) ? config === null || config === void 0 ? void 0 : config.choices : [];
+    const lazyLoadMethod = (config === null || config === void 0 ? void 0 : config.lazyLoadMethod) || false;
+    const valueSelector = (config === null || config === void 0 ? void 0 : config.valueSelector) || identity_1.default;
     if (typeof valueSelector !== 'function') {
         throw new Error(`valueSelector must be a function`);
     }
-    return Object.assign(Object.assign({}, additionalMetadata), { getConfig: () => config, getChoices,
+    const r = Object.assign(Object.assign({}, additionalMetadata), { getConfig: () => config || {}, getChoices,
         getDefaultValue,
-        getConstantValue, getPropertyType: () => type, createGetter: instanceValue => {
+        getConstantValue, getPropertyType: () => type, createGetter: (instanceValue) => {
             const value = getConstantValue();
             if (value !== undefined) {
-                return () => value;
+                return () => Promise.resolve(value);
             }
             const defaultValue = getDefaultValue();
             if (defaultValue !== undefined &&
                 (instanceValue === null || instanceValue === undefined)) {
-                return () => defaultValue;
+                return () => Promise.resolve(defaultValue);
             }
             const method = lazyLoadMethod
                 ? (0, lazy_1.lazyValue)(lazyLoadMethod)
                 : typeof instanceValue === 'function'
                     ? instanceValue
                     : () => instanceValue;
-            return () => __awaiter(void 0, void 0, void 0, function* () {
+            return () => __awaiter(this, void 0, void 0, function* () {
                 return valueSelector(yield method(instanceValue));
             });
         }, getValidator: valueGetter => {
             const validator = (0, validation_1.createPropertyValidator)(config);
-            const _propertyValidatorWrapper = (instance, instanceData, options = {}) => __awaiter(void 0, void 0, void 0, function* () {
+            const _propertyValidatorWrapper = (instance, instanceData, options = {}) => __awaiter(this, void 0, void 0, function* () {
                 return validator(yield valueGetter(), instance, instanceData, options);
             });
             return _propertyValidatorWrapper;
         } });
-};
+    return r;
+}
 exports.Property = Property;
-const DateProperty = (config, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.DateProperty, Object.assign(Object.assign({}, config), { lazyLoadMethod: value => {
+const DateProperty = (config, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.DateProperty, Object.assign(Object.assign({}, config), { lazyLoadMethod: (value) => {
+        return Promise.resolve(value);
+    }, lazyLoadMethod1: (value) => {
         if (!value && (config === null || config === void 0 ? void 0 : config.autoNow)) {
             return new Date();
         }
         return value;
     } }), additionalMetadata);
 exports.DateProperty = DateProperty;
-const ReferenceProperty = (model, config = {}, additionalMetadata = {}) => {
+const ReferenceProperty = (model, config, additionalMetadata = {}) => {
     if (!model) {
         throw new Error('Must include the referenced model');
     }
     const _getModel = () => {
-        if ((0, isFunction_1.default)(model)) {
+        if (typeof model === 'function') {
             return model();
         }
         return model;
@@ -105,22 +106,25 @@ const ReferenceProperty = (model, config = {}, additionalMetadata = {}) => {
         if (!instanceValues) {
             return null;
         }
+        if (typeof instanceValues === 'string') {
+            return instanceValues;
+        }
+        if (instanceValues.functions) {
+            return instanceValues.functions.getPrimaryKey();
+        }
         const theModel = _getModel();
         const primaryKey = theModel.getPrimaryKeyName();
-        if (instanceValues[primaryKey]) {
-            return instanceValues[primaryKey];
+        const id = instanceValues[primaryKey];
+        if (typeof id === 'string') {
+            return id;
         }
-        const primaryKeyFunc = (0, get_1.default)(instanceValues, 'functions.getPrimaryKey');
-        if (primaryKeyFunc) {
-            return primaryKeyFunc();
-        }
-        return instanceValues;
+        throw new Error(`Unexpectedly no key to return.`);
     };
     const lazyLoadMethod = (instanceValues) => __awaiter(void 0, void 0, void 0, function* () {
-        const valueIsModelInstance = Boolean(instanceValues) && Boolean(instanceValues.functions);
-        const _getInstanceReturn = objToUse => {
+        const valueIsModelInstance = instanceValues && instanceValues.functions;
+        const _getInstanceReturn = (objToUse) => {
             // We need to determine if the object we just go is an actual model instance to determine if we need to make one.
-            const objIsModelInstance = Boolean(objToUse) && Boolean(objToUse.functions);
+            const objIsModelInstance = instanceValues && instanceValues.functions;
             const instance = objIsModelInstance
                 ? objToUse
                 : _getModel().create(objToUse);
@@ -133,11 +137,14 @@ const ReferenceProperty = (model, config = {}, additionalMetadata = {}) => {
         if (valueIsModelInstance) {
             return _getInstanceReturn(instanceValues);
         }
-        if (config.fetcher) {
+        if (config === null || config === void 0 ? void 0 : config.fetcher) {
             const id = yield _getId(instanceValues)();
             const model = _getModel();
-            const obj = yield config.fetcher(model, id);
-            return _getInstanceReturn(obj);
+            if (id !== null && id !== undefined) {
+                const obj = yield config.fetcher(model, id);
+                return _getInstanceReturn(obj);
+            }
+            return null;
         }
         return _getId(instanceValues)();
     });

@@ -18,8 +18,16 @@ import { lazyValue } from './lazy'
 import { toTitleCase, createUuid } from './utils'
 import {
   IProperty,
+  ILazyMethod,
+  ILazyValue,
+  FunctionalObj,
+  IModelInstance,
+  IModel,
   IPropertyInstance,
+  FunctionalType,
   IPropertyConfig,
+  IValueGetter,
+  MaybeFunction,
   IPropertyValidatorComponent, IPropertyValidator, IPropertyValidatorComponentSync
 } from './interfaces'
 
@@ -51,47 +59,47 @@ const _mergeValidators = (config: IPropertyConfig|undefined, validators: readonl
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 
-const Property : IProperty = (type: string, config : IPropertyConfig, additionalMetadata = {}) => {
-  if (!type && !config.type) {
+function Property<T extends FunctionalType>(type: string, config : IPropertyConfig, additionalMetadata = {})  {
+  if (!type && !config?.type) {
     throw new Error(`Property type must be provided.`)
   }
-  if (config.type) {
+  if (config?.type) {
     type = config.type
   }
-  const getConstantValue = () => config.value !== undefined ? config.value : undefined
-  const getDefaultValue = () => config.defaultValue !== undefined ? config.defaultValue : undefined
-  const getChoices = () => config.choices ? config.choices : []
-  const lazyLoadMethod = config.lazyLoadMethod || false
-  const valueSelector = config.valueSelector || identity
+  const getConstantValue = () : FunctionalType => config?.value !== undefined ? config?.value : undefined
+  const getDefaultValue = () : FunctionalType => config?.defaultValue !== undefined ? config?.defaultValue : undefined
+  const getChoices = () => config?.choices ? config?.choices : []
+  const lazyLoadMethod = config?.lazyLoadMethod || false
+  const valueSelector = config?.valueSelector || identity
   if (typeof valueSelector !== 'function') {
     throw new Error(`valueSelector must be a function`)
   }
 
 
-  return {
+  const r : IPropertyInstance<T> = {
     ...additionalMetadata,
-    getConfig: () => config,
+    getConfig: () => config || {},
     getChoices,
     getDefaultValue,
     getConstantValue,
     getPropertyType: () => type,
-    createGetter: instanceValue => {
+    createGetter: (instanceValue: T) : IValueGetter => {
       const value = getConstantValue()
       if (value !== undefined) {
-        return () => value
+        return () => Promise.resolve(value)
       }
       const defaultValue = getDefaultValue()
       if (
         defaultValue !== undefined &&
         (instanceValue === null || instanceValue === undefined)
       ) {
-        return () => defaultValue
+        return () => Promise.resolve(defaultValue)
       }
       const method = lazyLoadMethod
-        ? lazyValue(lazyLoadMethod)
+        ? lazyValue(lazyLoadMethod) as ((value: T) => Promise<T>)
         : typeof instanceValue === 'function'
-        ? instanceValue
-        : () => instanceValue
+          ? instanceValue as () => T
+          : () => instanceValue
       return async () => {
         return valueSelector(await method(instanceValue))
       }
@@ -104,11 +112,15 @@ const Property : IProperty = (type: string, config : IPropertyConfig, additional
       return _propertyValidatorWrapper
     },
   }
+  return r
 }
 
-const DateProperty = (config?: IPropertyConfig, additionalMetadata={}) => Property(PROPERTY_TYPES.DateProperty, {
+const DateProperty = (config?: IPropertyConfig, additionalMetadata={}) => Property<Date|undefined>(PROPERTY_TYPES.DateProperty, {
   ...config,
-  lazyLoadMethod: value => {
+    lazyLoadMethod:(value? : Date) : ILazyValue<Date> => {
+      return Promise.resolve(value)
+    },
+    lazyLoadMethod1: (value?: Date) : ILazyValue<Date> => {
     if (!value && config?.autoNow) {
       return new Date()
     }
@@ -116,13 +128,15 @@ const DateProperty = (config?: IPropertyConfig, additionalMetadata={}) => Proper
   },
 }, additionalMetadata)
 
-const ReferenceProperty = (model, config = {}, additionalMetadata={}) => {
+type ReferenceValueType<T extends FunctionalType> = IModelInstance<T> | T | string | undefined | null
+
+const ReferenceProperty = <T extends FunctionalType>(model: MaybeFunction<IModel<T>>, config : IPropertyConfig, additionalMetadata={}) => {
   if (!model) {
     throw new Error('Must include the referenced model')
   }
 
   const _getModel = () => {
-    if (isFunction(model)) {
+    if (typeof model === 'function') {
       return model()
     }
     return model
@@ -130,34 +144,38 @@ const ReferenceProperty = (model, config = {}, additionalMetadata={}) => {
 
   const validators = _mergeValidators(config, [referenceTypeMatch(model)])
 
-  const _getId = (instanceValues) => () => {
+  const _getId = (instanceValues: ReferenceValueType<T>) => () : string|null|undefined => {
     if (!instanceValues) {
       return null
     }
+    if (typeof instanceValues === 'string') {
+      return instanceValues
+    }
+    if((instanceValues as IModelInstance<T>).functions) {
+      return (instanceValues as IModelInstance<T>).functions.getPrimaryKey()
+    }
+
     const theModel = _getModel()
     const primaryKey = theModel.getPrimaryKeyName()
-    if (instanceValues[primaryKey]) {
-      return instanceValues[primaryKey]
+
+    const id = (instanceValues as FunctionalObj)[primaryKey]
+    if (typeof id === 'string') {
+      return id
     }
-    const primaryKeyFunc = get(instanceValues, 'functions.getPrimaryKey')
-    if (primaryKeyFunc) {
-      return primaryKeyFunc()
-    }
-    return instanceValues
+    throw new Error(`Unexpectedly no key to return.`)
   }
 
-  const lazyLoadMethod = async instanceValues => {
+  const lazyLoadMethod = async (instanceValues: ReferenceValueType<T>) => {
 
-    const valueIsModelInstance =
-      Boolean(instanceValues) && Boolean(instanceValues.functions)
+    const valueIsModelInstance = instanceValues && (instanceValues as IModelInstance<T>).functions
 
-    const _getInstanceReturn = objToUse => {
+    const _getInstanceReturn = (objToUse: ReferenceValueType<T>) => {
       // We need to determine if the object we just go is an actual model instance to determine if we need to make one.
-      const objIsModelInstance =
-        Boolean(objToUse) && Boolean(objToUse.functions)
+      const objIsModelInstance = instanceValues && (instanceValues as IModelInstance<T>).functions
+
       const instance = objIsModelInstance
         ? objToUse
-        : _getModel().create(objToUse)
+        : _getModel().create(objToUse as T)
       return merge({}, instance, {
         functions: {
           toObj: _getId(instanceValues),
@@ -168,16 +186,19 @@ const ReferenceProperty = (model, config = {}, additionalMetadata={}) => {
     if (valueIsModelInstance) {
       return _getInstanceReturn(instanceValues)
     }
-    if (config.fetcher) {
+    if (config?.fetcher) {
       const id = await _getId(instanceValues)()
       const model = _getModel()
-      const obj = await config.fetcher(model, id)
-      return _getInstanceReturn(obj)
+      if (id !== null && id !== undefined) {
+        const obj = await config.fetcher(model, id)
+        return _getInstanceReturn(obj)
+      }
+      return null
     }
     return _getId(instanceValues)()
   }
 
-  return Property(
+  return Property<T|string>(
     PROPERTY_TYPES.ReferenceProperty,
     merge({}, config, {
       validators,
@@ -186,7 +207,7 @@ const ReferenceProperty = (model, config = {}, additionalMetadata={}) => {
     {
       ...additionalMetadata,
       meta: {
-        getReferencedId: (instanceValues) => _getId(instanceValues)(),
+        getReferencedId: (instanceValues: ReferenceValueType<T>) => _getId(instanceValues)(),
         getReferencedModel: _getModel,
       },
     }
