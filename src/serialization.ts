@@ -1,16 +1,6 @@
-import { loweredTitleCase } from './utils'
-import { IModelInstance } from './interfaces'
+import { FunctionalType, Getters } from './interfaces'
 
-const SIZE_OF_GET = 'get'.length
-const IGNORABLE_KEYS = ['meta', 'functions']
-
-type SerializableObj = {
-  readonly [s: string]: Serializable
-}
-
-type Serializable = number | string | Date | null | undefined | boolean | IModelInstance | Function | SerializableObj
-
-const _getValue = async (value: Serializable) : Promise<Serializable> => {
+const _getValue = async (value: any) : Promise<FunctionalType> => {
   if (value === undefined) {
     return null
   }
@@ -23,9 +13,9 @@ const _getValue = async (value: Serializable) : Promise<Serializable> => {
     return _getValue(await asFunction())
   }
   // Nested Object
-  const asModel = value as IModelInstance
-  if (type === 'object' && asModel.functions && asModel.functions.toObj) {
-    return _getValue(await asModel.functions.toObj())
+  const asModel = value.toObj
+  if (asModel) {
+    return _getValue(await asModel.toObj())
   }
   // Dates
   const asDate = value as Date
@@ -35,23 +25,11 @@ const _getValue = async (value: Serializable) : Promise<Serializable> => {
   return value
 }
 
-const _getKey = (key: string) => {
-  return key.startsWith('get') ? loweredTitleCase(key.slice(SIZE_OF_GET)) : key
-}
-
-const _shouldIgnoreKey = (key: string) => {
-  return IGNORABLE_KEYS.includes(key)
-}
-
-const toObj = (keyToFunc: Object) => async () => {
+const toObj = (keyToFunc: Getters<any>) => async () => {
   return Object.entries(keyToFunc).reduce(async (acc, [key, value]) => {
     const realAcc = await acc
-    if (_shouldIgnoreKey(key)) {
-      return realAcc
-    }
-    const keyToUse = _getKey(key)
-    const trueValue = await _getValue(value)
-    return { ...realAcc, [keyToUse]: trueValue }
+    const trueValue = await _getValue(await value)
+    return { ...realAcc, [key]: trueValue }
   }, Promise.resolve({}))
 }
 

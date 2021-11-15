@@ -16,7 +16,6 @@ exports.TYPE_PRIMATIVES = exports.multiplePropertiesMustMatch = exports.referenc
 const isEmpty_1 = __importDefault(require("lodash/isEmpty"));
 const merge_1 = __importDefault(require("lodash/merge"));
 const flatMap_1 = __importDefault(require("lodash/flatMap"));
-const get_1 = __importDefault(require("lodash/get"));
 const TYPE_PRIMATIVES = {
     boolean: 'boolean',
     string: 'string',
@@ -110,7 +109,7 @@ const meetsRegex = (regex, flags, errorMessage = 'Format was invalid') => (value
 exports.meetsRegex = meetsRegex;
 const choices = (choiceArray) => (value) => {
     if (Array.isArray(value)) {
-        const bad = value.find(v => !choiceArray.includes(v));
+        const bad = value.find(v => !choiceArray.includes(String(v)));
         if (bad) {
             return `${bad} is not a valid choice`;
         }
@@ -211,7 +210,7 @@ const referenceTypeMatch = (referencedModel) => {
             : referencedModel;
         // Assumption: By the time this is received, value === a model instance.
         const eModel = model.getName();
-        const aModel = value.meta.getModel().getName();
+        const aModel = value.getModel().getName();
         if (eModel !== aModel) {
             return `Model should be ${eModel} instead, received ${aModel}`;
         }
@@ -219,11 +218,11 @@ const referenceTypeMatch = (referencedModel) => {
     };
 };
 exports.referenceTypeMatch = referenceTypeMatch;
-const aggregateValidator = (methodOrMethods) => {
+const aggregateValidator = (value, methodOrMethods) => {
     const toDo = Array.isArray(methodOrMethods)
         ? methodOrMethods
         : [methodOrMethods];
-    const _aggregativeValidator = (value, instance, data) => __awaiter(void 0, void 0, void 0, function* () {
+    const _aggregativeValidator = (instance, data) => __awaiter(void 0, void 0, void 0, function* () {
         const values = yield Promise.all(toDo.map(method => {
             return method(value, instance, data);
         }));
@@ -256,42 +255,43 @@ const CONFIG_TO_VALIDATE_METHOD = {
     isBoolean: _boolChoice(simpleFuncWrap(isBoolean)),
     choices: _boolChoice(choices),
 };
-const createPropertyValidator = (config) => {
-    const validators = [
-        ...Object.entries(config).map(([key, value]) => {
-            const method = CONFIG_TO_VALIDATE_METHOD[key];
-            if (method) {
-                const validator = method(value);
-                if (validator === undefined) {
-                    return emptyValidator;
+const createPropertyValidator = (valueGetter, config) => {
+    const _propertyValidator = (instance, instanceData = {}, options) => __awaiter(void 0, void 0, void 0, function* () {
+        const validators = [
+            ...Object.entries(config).map(([key, value]) => {
+                const method = CONFIG_TO_VALIDATE_METHOD[key];
+                if (method) {
+                    const validator = method(value);
+                    if (validator === undefined) {
+                        return emptyValidator;
+                    }
+                    return validator;
                 }
-                return validator;
-            }
-            return emptyValidator;
-        }),
-        ...(config.validators ? config.validators : []),
-    ].filter(x => x);
-    const isRequiredValue = config.required
-        ? true
-        : validators.includes(isRequired);
-    const validator = aggregateValidator(validators);
-    const _propertyValidator = (value, instance, instanceData = {}, options) => __awaiter(void 0, void 0, void 0, function* () {
+                return emptyValidator;
+            }),
+            ...((config === null || config === void 0 ? void 0 : config.validators) ? config.validators : []),
+        ].filter(x => x);
+        const value = yield valueGetter();
+        const isRequiredValue = (config === null || config === void 0 ? void 0 : config.required)
+            ? true
+            : validators.includes(isRequired);
         if (!value && !isRequiredValue) {
             return [];
         }
-        const errors = yield validator(value, instance, instanceData);
+        const validator = aggregateValidator(value, validators);
+        const errors = yield validator(instance, instanceData);
         return [...new Set((0, flatMap_1.default)(errors))];
     });
     return _propertyValidator;
 };
 exports.createPropertyValidator = createPropertyValidator;
-const createModelValidator = (properties, modelValidators) => {
+const createModelValidator = (validators, modelValidators) => {
     const _modelValidator = (instance, options) => __awaiter(void 0, void 0, void 0, function* () {
         if (!instance) {
             throw new Error(`Instance cannot be empty`);
         }
-        const keysAndFunctions = Object.entries((0, get_1.default)(properties, 'functions.validators', {}));
-        const instanceData = yield instance.functions.toObj();
+        const keysAndFunctions = Object.entries(validators);
+        const instanceData = yield instance.toObj();
         const propertyValidationErrors = yield Promise.all(keysAndFunctions.map(([key, validator]) => __awaiter(void 0, void 0, void 0, function* () {
             return [key, yield validator(instance, instanceData, options)];
         })));
@@ -299,7 +299,7 @@ const createModelValidator = (properties, modelValidators) => {
         const propertyErrors = propertyValidationErrors
             .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
             .reduce((acc, [key, errors]) => {
-            return Object.assign(Object.assign({}, acc), { [key]: errors });
+            return Object.assign(Object.assign({}, acc), { [String(key)]: errors });
         }, {});
         return modelValidationErrors.length > 0
             ? (0, merge_1.default)(propertyErrors, { overall: modelValidationErrors })

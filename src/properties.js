@@ -44,8 +44,8 @@ function Property(type, config, additionalMetadata = {}) {
     if (config === null || config === void 0 ? void 0 : config.type) {
         type = config.type;
     }
-    const getConstantValue = () => (config === null || config === void 0 ? void 0 : config.value) !== undefined ? config === null || config === void 0 ? void 0 : config.value : undefined;
-    const getDefaultValue = () => (config === null || config === void 0 ? void 0 : config.defaultValue) !== undefined ? config === null || config === void 0 ? void 0 : config.defaultValue : undefined;
+    const getConstantValue = () => ((config === null || config === void 0 ? void 0 : config.value) !== undefined ? config === null || config === void 0 ? void 0 : config.value : undefined);
+    const getDefaultValue = () => ((config === null || config === void 0 ? void 0 : config.defaultValue) !== undefined ? config === null || config === void 0 ? void 0 : config.defaultValue : undefined);
     const getChoices = () => (config === null || config === void 0 ? void 0 : config.choices) ? config === null || config === void 0 ? void 0 : config.choices : [];
     const lazyLoadMethod = (config === null || config === void 0 ? void 0 : config.lazyLoadMethod) || false;
     const valueSelector = (config === null || config === void 0 ? void 0 : config.valueSelector) || identity_1.default;
@@ -65,6 +65,7 @@ function Property(type, config, additionalMetadata = {}) {
                 return () => Promise.resolve(defaultValue);
             }
             const method = lazyLoadMethod
+                // eslint-disable-next-line no-unused-vars
                 ? (0, lazy_1.lazyValue)(lazyLoadMethod)
                 : typeof instanceValue === 'function'
                     ? instanceValue
@@ -73,23 +74,23 @@ function Property(type, config, additionalMetadata = {}) {
                 return valueSelector(yield method(instanceValue));
             });
         }, getValidator: valueGetter => {
-            const validator = (0, validation_1.createPropertyValidator)(config);
+            const validator = (0, validation_1.createPropertyValidator)(valueGetter, config);
             const _propertyValidatorWrapper = (instance, instanceData, options = {}) => __awaiter(this, void 0, void 0, function* () {
-                return validator(yield valueGetter(), instance, instanceData, options);
+                return validator(instance, instanceData, options);
             });
             return _propertyValidatorWrapper;
         } });
     return r;
 }
 exports.Property = Property;
-const DateProperty = (config, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.DateProperty, Object.assign(Object.assign({}, config), { lazyLoadMethod: (value) => {
-        return Promise.resolve(value);
-    }, lazyLoadMethod1: (value) => {
+const DateProperty = (config, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.DateProperty, (0, merge_1.default)({
+    lazyLoadMethod: (value) => {
         if (!value && (config === null || config === void 0 ? void 0 : config.autoNow)) {
             return new Date();
         }
         return value;
-    } }), additionalMetadata);
+    },
+}, config), additionalMetadata);
 exports.DateProperty = DateProperty;
 const ReferenceProperty = (model, config, additionalMetadata = {}) => {
     if (!model) {
@@ -109,8 +110,8 @@ const ReferenceProperty = (model, config, additionalMetadata = {}) => {
         if (typeof instanceValues === 'string') {
             return instanceValues;
         }
-        if (instanceValues.functions) {
-            return instanceValues.functions.getPrimaryKey();
+        if (instanceValues.getPrimaryKey) {
+            return instanceValues.getPrimaryKey();
         }
         const theModel = _getModel();
         const primaryKey = theModel.getPrimaryKeyName();
@@ -121,10 +122,10 @@ const ReferenceProperty = (model, config, additionalMetadata = {}) => {
         throw new Error(`Unexpectedly no key to return.`);
     };
     const lazyLoadMethod = (instanceValues) => __awaiter(void 0, void 0, void 0, function* () {
-        const valueIsModelInstance = instanceValues && instanceValues.functions;
+        const valueIsModelInstance = instanceValues && instanceValues.getPrimaryKey;
         const _getInstanceReturn = (objToUse) => {
             // We need to determine if the object we just go is an actual model instance to determine if we need to make one.
-            const objIsModelInstance = instanceValues && instanceValues.functions;
+            const objIsModelInstance = instanceValues && instanceValues.getPrimaryKey;
             const instance = objIsModelInstance
                 ? objToUse
                 : _getModel().create(objToUse);
@@ -148,13 +149,14 @@ const ReferenceProperty = (model, config, additionalMetadata = {}) => {
         }
         return _getId(instanceValues)();
     });
-    return Property(constants_1.PROPERTY_TYPES.ReferenceProperty, (0, merge_1.default)({}, config, {
+    const p = (0, merge_1.default)(Property(constants_1.PROPERTY_TYPES.ReferenceProperty, (0, merge_1.default)({}, config, {
         validators,
         lazyLoadMethod,
-    }), Object.assign(Object.assign({}, additionalMetadata), { meta: {
-            getReferencedId: (instanceValues) => _getId(instanceValues)(),
-            getReferencedModel: _getModel,
-        } }));
+    }), additionalMetadata), {
+        getReferencedId: (instanceValues) => _getId(instanceValues)(),
+        getReferencedModel: _getModel,
+    });
+    return p;
 };
 exports.ReferenceProperty = ReferenceProperty;
 const ArrayProperty = (config = {}, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.ArrayProperty, Object.assign(Object.assign({ defaultValue: [] }, config), { isArray: true }), additionalMetadata);
@@ -163,19 +165,19 @@ const ObjectProperty = (config = {}, additionalMetadata = {}) => Property(consta
     validators: _mergeValidators(config, [(0, validation_1.isType)('object')]),
 }), additionalMetadata);
 exports.ObjectProperty = ObjectProperty;
-const TextProperty = (config = {}, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.TextProperty, (0, merge_1.default)(config, {
+const TextProperty = (config, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.TextProperty, (0, merge_1.default)(config, {
     isString: true,
     validators: _mergeValidators(config, [
-        _getValidatorFromConfigElseEmpty(config, 'maxLength', value => (0, validation_1.maxTextLength)(value)),
-        _getValidatorFromConfigElseEmpty(config, 'minLength', value => (0, validation_1.minTextLength)(value)),
+        _getValidatorFromConfigElseEmpty(config === null || config === void 0 ? void 0 : config.maxLength, (value) => (0, validation_1.maxTextLength)(value)),
+        _getValidatorFromConfigElseEmpty(config === null || config === void 0 ? void 0 : config.minLength, (value) => (0, validation_1.minTextLength)(value)),
     ]),
 }), additionalMetadata);
 exports.TextProperty = TextProperty;
-const IntegerProperty = (config = {}, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.IntegerProperty, (0, merge_1.default)(config, {
+const IntegerProperty = (config, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.IntegerProperty, (0, merge_1.default)(config, {
     isInteger: true,
     validators: _mergeValidators(config, [
-        _getValidatorFromConfigElseEmpty(config, 'minValue', value => (0, validation_1.minNumber)(value)),
-        _getValidatorFromConfigElseEmpty(config, 'maxValue', value => (0, validation_1.maxNumber)(value)),
+        _getValidatorFromConfigElseEmpty(config === null || config === void 0 ? void 0 : config.minValue, value => (0, validation_1.minNumber)(value)),
+        _getValidatorFromConfigElseEmpty(config === null || config === void 0 ? void 0 : config.maxValue, value => (0, validation_1.maxNumber)(value)),
     ]),
 }), additionalMetadata);
 exports.IntegerProperty = IntegerProperty;
@@ -205,10 +207,12 @@ const BooleanProperty = (config, additionalMetadata = {}) => Property(constants_
     ]),
 }), additionalMetadata);
 exports.BooleanProperty = BooleanProperty;
-const UniqueId = (config, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.UniqueId, Object.assign(Object.assign({}, config), { lazyLoadMethod: value => {
+const UniqueId = (config, additionalMetadata = {}) => Property(constants_1.PROPERTY_TYPES.UniqueId, (0, merge_1.default)({
+    lazyLoadMethod: (value) => {
         if (!value) {
             return (0, utils_1.createUuid)();
         }
         return value;
-    } }), additionalMetadata);
+    },
+}, config), additionalMetadata);
 exports.UniqueId = UniqueId;

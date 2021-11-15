@@ -1,48 +1,82 @@
 import merge from 'lodash/merge'
-import get from 'lodash/get'
 import { toObj } from './serialization'
 import { createModelValidator } from './validation'
-import { UniqueId, createPropertyTitle } from'./properties'
-import {IModel, IPropertyValidator} from './interfaces'
+import { UniqueId } from'./properties'
+import {
+  IModel,
+  FunctionalObj,
+  IModelDefinition2,
+  Nullable,
+  IModelDefinition,
+  IModelInstance,
+  ModelOptions,
+  Getters,
+  OptionalModelOptions,
+  IReferenceProperty,
+  ReferenceValueType,
+  IPropertyValidators,
+  IReferenceProperties, FunctionalModel,
+} from './interfaces'
 
 const MODEL_DEF_KEYS = ['meta', 'functions']
 
 
-function x(input: T): T {
-  return T
-}
-
-type Blah = {name: number}
-const Model2 : IModel<Blah> = {
-  getName: () => 'blah',
-  create: (data: any) => {
-    return {
-      functions: {
-      toObj: () => Promise.resolve(),
-        getPrimaryKey: () => Promise.resolve(1),
-        validators: {
+/*
+const createModel = () : IModel<{
+  name: string,
+}> => ({
+  getName: () => '',
+  getPrimaryKeyName: () => '',
+  getPrimaryKey: (t: {}) => '',
+  create: (data) => ({
+    get: {
+      name: () => Promise.resolve(data.name)
+    },
+    functions: {
+      toObj: () => Promise.resolve({}),
+      getPrimaryKey: () => '',
+      validators: {
       },
     },
     meta: {
-      getModel: () => Model2
+      getModel: () => createModel()
     },
-    }
-  }
+  })
+})
+
+
+const modelGetter = (model: IModel<{text: string}>, key: string) => {
+  const m = model.create({ text: 'hello' })
+  const t = m.get.text()
+
+  return Promise.resolve({})
 }
 
-const y = x<IModel<Blah>>(Model2)
+const myconfig : IPropertyConfig = {
+  fetcher: modelGetter,
+}
+ */
 
-const Model = (
-  modelName,
-  keyToProperty,
-  {
-    primaryKey = 'id',
-    getPrimaryKeyProperty = () => UniqueId({ required: true }),
-    instanceCreatedCallback = null,
-    modelFunctions = {},
-    instanceFunctions = {},
-    modelValidators = [],
-  } = {}
+const _defaultOptions = () : ModelOptions => ({
+  primaryKey: 'id',
+  getPrimaryKeyProperty: () => UniqueId({ required: true }),
+  instanceCreatedCallback: null,
+  modelFunctions: {},
+  instanceFunctions: {},
+  modelValidators: [],
+})
+
+const _convertOptions = (options?: OptionalModelOptions) => {
+  const r : ModelOptions = merge({}, _defaultOptions(), options)
+  return r
+}
+
+
+const Model = <T extends FunctionalModel>(
+  modelName: string,
+  keyToProperty: IModelDefinition<T>,
+  //keyToProperty: IModelDefinition2<T>,
+  options?: OptionalModelOptions,
 ) => {
   /*
    * This non-functional approach is specifically used to
@@ -52,19 +86,22 @@ const Model = (
    * throughout instance methods.
    */
   // eslint-disable-next-line functional/no-let
-  let model = null
+  let model : Nullable<IModel<T>> = null
+  const theOptions = _convertOptions(options)
   keyToProperty = {
     // this key exists over keyToProperty, so it can be overrided if desired.
-    [primaryKey]: getPrimaryKeyProperty(),
+    // This is BEFORE, because the ... overrides this.
+    [theOptions.primaryKey]: theOptions.getPrimaryKeyProperty(),
     ...keyToProperty,
-  }
+  } as IModelDefinition<T>
+
   const instanceProperties = Object.entries(keyToProperty).filter(
-    ([key, _]) => MODEL_DEF_KEYS.includes(key) === false
+    ([key, _]) => !MODEL_DEF_KEYS.includes(key)
   )
   const specialProperties1 = Object.entries(keyToProperty).filter(([key, _]) =>
     MODEL_DEF_KEYS.includes(key)
   )
-  const properties = instanceProperties.reduce((acc, [key, property]) => {
+  const properties : IModelDefinition<T> = instanceProperties.reduce((acc, [key, property]) => {
     return merge(acc, { [key]: property })
   }, {})
   const specialProperties = specialProperties1.reduce(
@@ -74,67 +111,61 @@ const Model = (
     {}
   )
 
-  const create = (instanceValues = {}) => {
+  const create = (instanceValues : T) => {
     // eslint-disable-next-line functional/no-let
-    let instance = null
+    let instance : Nullable<IModelInstance<T>> = null
     const specialInstanceProperties1 = MODEL_DEF_KEYS.reduce((acc, key) => {
       if (key in instanceValues) {
         return { ...acc, [key]: instanceValues[key] }
       }
       return acc
     }, {})
+    const startingInternals: { get: Getters<T>, validators: IPropertyValidators, references: IReferenceProperties} = {get: {} as Getters<T>, validators: {}, references: {}}
     const loadedInternals = instanceProperties.reduce(
       (acc, [key, property]) => {
+        // @ts-ignore
         const propertyGetter = property.createGetter(instanceValues[key])
         const propertyValidator = property.getValidator(propertyGetter)
-        const getPropertyKey = createPropertyTitle(key)
         const fleshedOutInstanceProperties = {
-          [getPropertyKey]: propertyGetter,
-          functions: {
-            getters: {
-              [key]:  propertyGetter,
-            },
-            validators: {
-              [key]: propertyValidator,
-            },
+          get: {
+            [key]: propertyGetter,
+          },
+          validators: {
+            [key]: propertyValidator,
           },
         }
-        const referenceProperties = get(property, 'meta.getReferencedId')
+        const asReferenced = property as IReferenceProperty<T>
+        const referencedProperty = asReferenced
           ? {
-            meta: {
-              references: {
-                [createPropertyTitle(`${key}Id`)]: () => property.meta.getReferencedId(instanceValues[key])
-              }
+            references: {
+              [key]: () => asReferenced.getReferencedId(instanceValues[key] as ReferenceValueType<T>)
             }
           }
           : {}
-        return merge(acc, fleshedOutInstanceProperties, referenceProperties)
+
+        return merge(acc, fleshedOutInstanceProperties, referencedProperty)
       },
-      {}
+      startingInternals
     )
+    // @ts-ignore
     const frameworkProperties = {
-      meta: {
-        getModel: () => model,
-      },
-      functions: {
-        toObj: toObj(loadedInternals),
-        getPrimaryKey: loadedInternals[createPropertyTitle(primaryKey)],
-        validate: (options={}) => {
-          return createModelValidator(
-            loadedInternals,
-            modelValidators
-          )(instance, options)
-        },
+      getModel: () => model,
+      toObj: toObj(loadedInternals.get as Getters<any>),
+      // @ts-ignore
+      getPrimaryKey: () => instance?.get[theOptions.primaryKey](),
+      validate: (options={}) => {
+        return createModelValidator(
+          loadedInternals.validators,
+          theOptions.modelValidators
+        )(instance as IModelInstance<T>, options)
       },
     }
     const fleshedOutInstanceFunctions = Object.entries(
-      instanceFunctions
+      theOptions.instanceFunctions
     ).reduce((acc, [key, func]) => {
       return merge(acc, {
-        functions: {
-          [key]: (...args) => {
-            return func(...args, instance)
-          },
+        [key]: (...args: any[]) => {
+          return func(instance as IModelInstance<T>, ...args)
         },
       })
     }, {})
@@ -145,18 +176,20 @@ const Model = (
       fleshedOutInstanceFunctions,
       frameworkProperties,
       specialInstanceProperties1
-    )
-    if (instanceCreatedCallback) {
-      instanceCreatedCallback(instance)
+    ) as IModelInstance<T>
+    if (theOptions.instanceCreatedCallback) {
+      if (Array.isArray(theOptions.instanceCreatedCallback)) {
+        theOptions.instanceCreatedCallback.forEach(func => func(instance as IModelInstance<T>))
+      }
     }
     return instance
   }
 
-  const fleshedOutModelFunctions = Object.entries(modelFunctions).reduce(
+  const fleshedOutModelFunctions = Object.entries(theOptions.modelFunctions).reduce(
     (acc, [key, func]) => {
       return merge(acc, {
-        [key]: (...args) => {
-          return func(model)(...args)
+        [key]: (...args: any[]) => {
+          return func(model as IModel<T>, ...args)
         },
       })
     },
@@ -164,15 +197,16 @@ const Model = (
   )
 
   // This sets the model that is used by the instances later.
-  model = merge({}, fleshedOutModelFunctions, {
+  model = merge(fleshedOutModelFunctions, {
     create,
     getName: () => modelName,
-    getProperties: () => properties,
-    getPrimaryKeyName: () => primaryKey,
+    getModelDefinition: () => properties,
+    getPrimaryKeyName: () => theOptions.primaryKey,
+    getPrimaryKey: (t : T) => t[theOptions.primaryKey] as string,
   })
-  return model
+  return model as IModel<T>
 }
 
-module.exports = {
+export {
   Model,
 }
