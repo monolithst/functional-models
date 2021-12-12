@@ -25,7 +25,7 @@ const getRandomValues = () : Uint8Array => {
   return getRandomValuesFunc(array)
 }
 
-const createUuid = () : String => {
+const createUuid = () : string => {
   // eslint-disable-next-line no-magic-numbers,require-unicode-regexp
   // @ts-ignore
   // eslint-disable-next-line no-magic-numbers,require-unicode-regexp
@@ -36,11 +36,11 @@ const createUuid = () : String => {
   )
 }
 
-const toTitleCase = (string: String) => {
+const toTitleCase = (string: string) => {
   return `${string.slice(0, 1).toUpperCase()}${string.slice(1)}`
 }
 
-const loweredTitleCase = (string: String) => {
+const loweredTitleCase = (string: string) => {
   return `${string.slice(0, 1).toLowerCase()}${string.slice(1)}`
 }
 

@@ -1,10 +1,8 @@
 import isEmpty from 'lodash/isEmpty'
 import merge from 'lodash/merge'
-import isFunction from 'lodash/isFunction'
 import flatMap from 'lodash/flatMap'
-import get from 'lodash/get'
 import {
-  IModelDefinition,
+  FunctionalModel,
   IModelInstance,
   IModel,
   IModelValidator,
@@ -31,22 +29,8 @@ const TYPE_PRIMATIVES = {
   integer: 'integer',
 }
 
-function filterEmpty<T> (array: (T|undefined|null)[]) : T[]{
-  let array2 : T[] = []
-  for(const i in array){
-    const item = array[i]
-    if (item === undefined) continue
-    if (item === null) continue
-    // @ts-ignore
-    array2.push(array[i])
-  }
-  return array2
-}
-
-const notEmpty = <TValue extends unknown>(value: TValue | null | undefined): value is TValue => {
-  if (value === null || value === undefined) return false
-  const testDummy: TValue = value
-  return true
+const filterEmpty = <T>(array: readonly (T|undefined|null)[]) : readonly T[] => {
+  return array.filter(x=>x) as readonly T[]
 }
 
 const _trueOrError = (method: Function, error: string) : IPropertyValidatorComponentSync => (value: any) => {
@@ -88,7 +72,7 @@ const arrayType = (type: string) : IPropertyValidatorComponentSync => (value: Ar
     return arrayError
   }
   const validator = PRIMATIVE_TO_SPECIAL_TYPE_VALIDATOR[type] || isType(type)
-  return (value as []).reduce((acc: string|undefined, v: FunctionalType) => {
+  return (value as readonly []).reduce((acc: string|undefined, v: FunctionalType) => {
     if (acc) {
       return acc
     }
@@ -118,7 +102,7 @@ const meetsRegex =
     return _trueOrError((v: string) => reg.test(v), errorMessage)(value)
   }
 
-const choices = (choiceArray: string[]) : IPropertyValidatorComponentSync => (value: Arrayable<FunctionalType>) => {
+const choices = (choiceArray: readonly string[]) : IPropertyValidatorComponentSync => (value: Arrayable<FunctionalType>) => {
   if (Array.isArray(value)) {
     const bad = value.find(v => !choiceArray.includes(String(v)))
     if (bad) {
@@ -208,7 +192,7 @@ const minTextLength = (min: Number) : IPropertyValidatorComponentType<string> =>
   return undefined
 }
 
-const referenceTypeMatch = <TModel extends FunctionalObj>(referencedModel: MaybeFunction<IModel<TModel>>) : IPropertyValidatorComponentTypeAdvanced<IModelInstance<TModel>, TModel> => {
+const referenceTypeMatch = <TModel extends FunctionalModel>(referencedModel: MaybeFunction<IModel<TModel>>) : IPropertyValidatorComponentTypeAdvanced<IModelInstance<TModel>, TModel> => {
   return (value?: IModelInstance<TModel>) => {
     if (!value) {
       return 'Must include a value'
@@ -305,31 +289,34 @@ const createPropertyValidator = (valueGetter: IValueGetter, config: IPropertyCon
   return _propertyValidator
 }
 
-const createModelValidator = (validators: IPropertyValidators, modelValidators? : IModelComponentValidator[]) => {
+const createModelValidator = (validators: IPropertyValidators, modelValidators? : readonly IModelComponentValidator[]) => {
   const _modelValidator : IModelValidator = async (instance, options) => {
-    if (!instance) {
-      throw new Error(`Instance cannot be empty`)
-    }
-    const keysAndFunctions = Object.entries(validators)
-    const instanceData = await instance.toObj()
-    const propertyValidationErrors = await Promise.all(
-      keysAndFunctions.map(async ([key, validator]) => {
-        return [key, await validator(instance, instanceData, options)]
+    return Promise.resolve()
+      .then(async () => {
+        if (!instance) {
+          throw new Error(`Instance cannot be empty`)
+        }
+        const keysAndFunctions = Object.entries(validators)
+        const instanceData = await instance.toObj()
+        const propertyValidationErrors = await Promise.all(
+          keysAndFunctions.map(async ([key, validator]) => {
+            return [key, await validator(instance, instanceData, options)]
+          })
+        )
+        const modelValidationErrors = (
+          await Promise.all(
+            modelValidators ? modelValidators.map(validator => validator(instance, instanceData, options)) : []
+          )
+        ).filter(x => x)
+        const propertyErrors = propertyValidationErrors
+          .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
+          .reduce((acc, [key, errors]) => {
+            return { ...acc, [String(key)]: errors }
+          }, {})
+        return modelValidationErrors.length > 0
+          ? merge(propertyErrors, { overall: modelValidationErrors })
+          : propertyErrors
       })
-    )
-    const modelValidationErrors = (
-      await Promise.all(
-        modelValidators ? modelValidators.map(validator => validator(instance, instanceData, options)) : []
-      )
-    ).filter(x => x)
-    const propertyErrors = propertyValidationErrors
-      .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
-      .reduce((acc, [key, errors]) => {
-        return { ...acc, [String(key)]: errors }
-      }, {})
-    return modelValidationErrors.length > 0
-      ? merge(propertyErrors, { overall: modelValidationErrors })
-      : propertyErrors
   }
   return _modelValidator
 }

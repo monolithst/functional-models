@@ -1,10 +1,10 @@
 const assert = require('chai').assert
-const { toObj } = require('../../src/serialization')
+const { toJsonAble } = require('../../src/serialization')
 
 describe('/src/serialization.ts', () => {
   describe('#toObj()', () => {
     it('serialize a very basic input of key-value', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         key: 'value',
         key2: 'value2',
       })()
@@ -15,7 +15,7 @@ describe('/src/serialization.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should ignore "meta" properties', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         key: 'value',
         key2: 'value2',
         meta: {
@@ -29,7 +29,7 @@ describe('/src/serialization.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should ignore "functions" properties', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         key: 'value',
         key2: 'value2',
         functions: {
@@ -45,7 +45,7 @@ describe('/src/serialization.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should call "functions.toObj" on nested objects', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         key: 'value',
         key2: {
           complex: () => ({ func: 'func' }),
@@ -63,7 +63,7 @@ describe('/src/serialization.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should call "toObj" on very nested objects', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         key: 'value',
         key2: {
           functions: {
@@ -80,7 +80,7 @@ describe('/src/serialization.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should set an undefined property to null', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         key: 'value',
         key2: undefined,
       })()
@@ -91,7 +91,7 @@ describe('/src/serialization.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should get the value of a function', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         key: 'value',
         key2: () => {
           return 'funcvalue'
@@ -104,7 +104,7 @@ describe('/src/serialization.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should change property getTheValue to "theValue"', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         key: 'value',
         getTheValue: () => 'funcvalue',
       })()
@@ -115,7 +115,7 @@ describe('/src/serialization.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should return "2021-09-16T21:51:56.039Z" for the set date.', async () => {
-      const actual = await toObj({
+      const actual = await toJsonAble({
         myDate: new Date('2021-09-16T21:51:56.039Z'),
       })()
       const expected = {

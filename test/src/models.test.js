@@ -16,73 +16,86 @@ const sinon_1 = __importDefault(require("sinon"));
 const chai_1 = require("chai");
 const models_1 = require("../../src/models");
 const properties_1 = require("../../src/properties");
-const TEST_MODEL_1 = (0, models_1.Model)('MyModel', {});
+const functions_1 = require("../../src/functions");
+const properties_2 = require("../../src/properties");
+const TEST_MODEL_1 = (0, models_1.Model)('MyModel', {
+    properties: {
+        name: (0, properties_1.TextProperty)(),
+    },
+});
 describe('/src/models.ts', () => {
     describe('#Model()', () => {
-        it('should pass a functional instance to the instanceFunctions by the time the function is called by a client', () => {
-            const model = (0, models_1.Model)('ModelName', {}, {
-                instanceFunctions: {
-                    func1: (instance) => {
+        it('should pass a functional instance to the instanceMethods by the time the function is called by a client', () => {
+            const model = (0, models_1.Model)('ModelName', {
+                properties: {
+                    name: (0, properties_1.TextProperty)(),
+                },
+                instanceMethods: {
+                    func1: (0, functions_1.InstanceMethod)((instance) => {
                         // @ts-ignore
-                        return instance.functions.func2();
-                    },
+                        return instance.methods.func2();
+                    }),
                     func2: (instance) => {
                         return 'from instance func2';
                     },
-                },
+                }
             });
-            const instance = model.create({});
-            const actual = instance.functions.func1();
+            const instance = model.create({ name: 'name' });
+            const actual = instance.methods.func1();
             const expected = 'from instance func2';
             chai_1.assert.deepEqual(actual, expected);
         });
-        it('should the clients arguments before the model is passed', () => {
-            const model = (0, models_1.Model)('ModelName', {}, {
-                modelFunctions: {
-                    func1: (model) => (input) => {
-                        return `${input} ${model.func2()}`;
-                    },
-                    func2: model => () => {
+        it('should pass the clients arguments before the model is passed', () => {
+            const model = (0, models_1.Model)('ModelName', {
+                properties: {},
+                modelMethods: {
+                    func1: (0, functions_1.ModelMethod)((model, input) => {
+                        return `${input} ${model.methods.func2()}`;
+                    }),
+                    func2: (0, functions_1.ModelMethod)(model => {
                         return 'from func2';
-                    },
+                    }),
                 },
             });
-            const actual = model.func1('hello');
+            const actual = model.methods.func1('hello');
             const expected = 'hello from func2';
             chai_1.assert.deepEqual(actual, expected);
         });
         it('should pass a functional model to the modelFunction by the time the function is called by a client', () => {
-            const model = (0, models_1.Model)('ModelName', {}, {
-                modelFunctions: {
-                    func1: model => () => {
-                        return model.func2();
+            const model = (0, models_1.Model)('ModelName', {
+                properties: {},
+                modelMethods: {
+                    func1: model => {
+                        return model.methods.func2();
                     },
-                    func2: model => () => {
+                    func2: model => {
                         return 'from func2';
                     },
                 },
             });
-            const actual = model.func1();
+            const actual = model.methods.func1();
             const expected = 'from func2';
             chai_1.assert.deepEqual(actual, expected);
         });
         it('should find model.myString when modelExtension has myString function in it', () => {
-            const model = (0, models_1.Model)('ModelName', {}, {
-                modelFunctions: {
-                    myString: model => () => {
+            const model = (0, models_1.Model)('ModelName', {
+                properties: {},
+                modelMethods: {
+                    myString: model => {
                         return 'To String';
                     },
                 },
             });
-            chai_1.assert.isFunction(model.myString);
+            chai_1.assert.isFunction(model.methods.myString);
         });
         describe('#getPrimaryKeyName()', () => {
             it('should return "primaryKey" when this value is passed in as the primaryKey', () => {
                 const expected = 'primaryKey';
-                const model = (0, models_1.Model)('ModelName', {}, {
-                    primaryKey: expected,
-                    modelFunctions: {
-                        myString: model => () => {
+                const model = (0, models_1.Model)('ModelName', {
+                    getPrimaryKey: () => expected,
+                    properties: {},
+                    modelMethods: {
+                        myString: model => {
                             return 'To String';
                         },
                     },
@@ -92,50 +105,64 @@ describe('/src/models.ts', () => {
             });
         });
         describe('#create()', () => {
-            it('should have a meta.references.getTheReferenceId when the property has meta.getReferencedId and the key is theReference', () => {
+            it('should have a references.theReference when properties has a ReferenceProperty named "theReference"', () => {
                 const model = (0, models_1.Model)('ModelName', {
-                    theReference: (0, properties_1.ReferenceProperty)(TEST_MODEL_1),
+                    properties: {
+                        theReference: (0, properties_1.ReferenceProperty)(TEST_MODEL_1),
+                    }
                 });
                 const instance = model.create({});
-                chai_1.assert.isFunction(instance.meta.references.getTheReferenceId);
+                chai_1.assert.isFunction(instance.references.theReference);
             });
-            it('should have an "getId" field when no primaryKey is passed', () => {
-                const model = (0, models_1.Model)('ModelName', {}, {
-                    instanceFunctions: {
-                        toString: instance => () => {
+            it('should have an "get.id" field when no primaryKey is passed', () => {
+                const model = (0, models_1.Model)('ModelName', {
+                    properties: {},
+                });
+                const instance = model.create({});
+                chai_1.assert.isFunction(instance.get.id);
+            });
+            it('should have an "getMyPrimaryKeyId" field when "myPrimaryKeyId" is passed as the "getPrimaryKey" is passed', () => {
+                const model = (0, models_1.Model)('ModelName', {
+                    getPrimaryKey: () => 'myPrimaryKeyId',
+                    properties: {
+                        myPrimaryKeyId: (0, properties_2.UniqueId)(),
+                    },
+                });
+                const instance = model.create({ myPrimaryKeyId: 'blah' });
+                chai_1.assert.isFunction(instance.get.myPrimaryKeyId);
+            });
+            it('should find instance.methods.toString when in instanceMethods', () => {
+                const model = (0, models_1.Model)('ModelName', {
+                    properties: {},
+                    instanceMethods: {
+                        toString: instance => {
                             return 'An instance';
                         },
                     },
                 });
                 const instance = model.create({});
-                chai_1.assert.isFunction(instance.getId);
+                chai_1.assert.isFunction(instance.methods.toString);
             });
-            it('should have an "getMyPrimaryKeyId" field when "myPrimaryKeyId" is passed as the "primaryKey" is passed', () => {
-                const model = (0, models_1.Model)('ModelName', {}, {
-                    primaryKey: 'myPrimaryKeyId',
-                    instanceFunctions: {
-                        toString: instance => () => {
-                            return 'An instance';
-                        },
-                    },
+            it('should call all the instanceCreatedCallback functions when create() is called', () => {
+                const input = {
+                    properties: {
+                        myProperty: (0, properties_1.TextProperty)({ required: true }),
+                    }
+                };
+                const callbacks = [sinon_1.default.stub(), sinon_1.default.stub()];
+                const model = (0, models_1.Model)('name', input, {
+                    instanceCreatedCallback: callbacks,
                 });
-                const instance = model.create({});
-                chai_1.assert.isFunction(instance.getMyPrimaryKeyId);
-            });
-            it('should find instance.functions.toString when in instanceFunctions', () => {
-                const model = (0, models_1.Model)('ModelName', {}, {
-                    instanceFunctions: {
-                        toString: instance => () => {
-                            return 'An instance';
-                        },
-                    },
+                model.create({ myProperty: 'value' });
+                callbacks.forEach(x => {
+                    sinon_1.default.assert.calledOnce(x);
                 });
-                const instance = model.create({});
-                chai_1.assert.isFunction(instance.functions.toString);
             });
             it('should call the instanceCreatedCallback function when create() is called', () => {
                 const input = {
-                    myProperty: (0, properties_1.Property)({ required: true }),
+                    properties: {
+                        myProperty: (0, properties_1.TextProperty)({ required: true }),
+                    }
                 };
                 const callback = sinon_1.default.stub();
                 const model = (0, models_1.Model)('name', input, {
@@ -146,201 +173,204 @@ describe('/src/models.ts', () => {
             });
             it('should not throw an exception if nothing is passed into function', () => {
                 const input = {
-                    myProperty: (0, properties_1.Property)({ required: true }),
+                    properties: {
+                        myProperty: (0, properties_1.TextProperty)({ required: true }),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 chai_1.assert.doesNotThrow(() => {
-                    model.create();
+                    model.create({});
                 });
             });
-            it('should return an object that contains meta.getModel().getProperties().myProperty', () => {
+            it('should return an object that contains getModel().getModelDefinition().properties.myProperty', () => {
                 const input = {
-                    myProperty: (0, properties_1.Property)({ required: true }),
+                    properties: {
+                        myProperty: (0, properties_1.TextProperty)({ required: true })
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 const instance = model.create({ myProperty: 'value' });
-                const actual = instance.meta.getModel().getProperties().myProperty;
+                const actual = instance.getModel().getModelDefinition().properties.myProperty;
                 chai_1.assert.isOk(actual);
-            });
-            it('should combine the meta within the instance values', () => {
-                const input = {
-                    myProperty: (0, properties_1.Property)({ required: true }),
-                };
-                const model = (0, models_1.Model)('name', input);
-                const instance = model.create({
-                    myProperty: 'value',
-                    meta: { random: () => 'random' },
-                });
-                const actual = instance.meta.random();
-                const expected = 'random';
-                chai_1.assert.equal(actual, expected);
             });
             it('should flow through the additional special functions within the keyValues', () => {
                 const input = {
-                    myProperty: (0, properties_1.Property)({ required: true }),
-                    functions: {
+                    properties: {
+                        myProperty: (0, properties_1.TextProperty)({ required: true }),
+                    },
+                    instanceMethods: {
                         custom: () => 'works',
                     },
                 };
                 const model = (0, models_1.Model)('name', input);
                 const instance = model.create({ myProperty: 'value' });
-                const actual = instance.functions.custom();
+                const actual = instance.methods.custom();
                 const expected = 'works';
                 chai_1.assert.equal(actual, expected);
             });
-            it('should return an object that contains meta.getModel().getName()===test-the-name', () => {
+            it('should return an object that contains .getModel().getName()===test-the-name', () => {
                 const input = {
-                    myProperty: (0, properties_1.Property)({ required: true }),
+                    properties: {
+                        myProperty: (0, properties_1.TextProperty)({ required: true }),
+                    }
                 };
                 const model = (0, models_1.Model)('test-the-name', input);
                 const instance = model.create({ myProperty: 'value' });
-                const actual = instance.meta.getModel().getName();
+                const actual = instance.getModel().getName();
                 const expected = 'test-the-name';
                 chai_1.assert.deepEqual(actual, expected);
             });
-            it('should return an object that contains meta.getModel().getProperties().myProperty', () => {
+            it('should use the value passed in when Property.defaultValue and Property.value are not set', () => {
                 const input = {
-                    myProperty: (0, properties_1.Property)({ required: true }),
-                };
-                const model = (0, models_1.Model)('name', input);
-                const instance = model.create({ myProperty: 'value' });
-                const actual = instance.meta.getModel().getProperties().myProperty;
-                chai_1.assert.isOk(actual);
-            });
-            it('should use the value passed in when Property.defaultValue and Property.value are not set', () => __awaiter(void 0, void 0, void 0, function* () {
-                const input = {
-                    myProperty: (0, properties_1.Property)({ required: true }),
+                    properties: {
+                        myProperty: (0, properties_1.TextProperty)({ required: true }),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 const instance = model.create({ myProperty: 'passed-in' });
-                const actual = yield instance.getMyProperty();
+                const actual = instance.get.myProperty();
                 const expected = 'passed-in';
                 chai_1.assert.deepEqual(actual, expected);
-            }));
-            it('should use the value for Property.value when even if Property.defaultValue is set and a value is passed in', () => __awaiter(void 0, void 0, void 0, function* () {
+            });
+            it('should use the value for Property.value when even if Property.defaultValue is set and a value is passed in', () => {
                 const input = {
-                    myProperty: (0, properties_1.Property)('MyProperty', {
-                        value: 'value',
-                        defaultValue: 'default-value',
-                    }),
+                    properties: {
+                        myProperty: (0, properties_1.Property)('MyProperty', {
+                            value: 'value',
+                            defaultValue: 'default-value',
+                        }),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 const instance = model.create({ myProperty: 'passed-in' });
-                const actual = yield instance.getMyProperty();
+                const actual = instance.get.myProperty();
                 const expected = 'value';
                 chai_1.assert.deepEqual(actual, expected);
-            }));
+            });
             it('should use the value for Property.value when even if Property.defaultValue is not set and a value is passed in', () => __awaiter(void 0, void 0, void 0, function* () {
                 const input = {
-                    myProperty: (0, properties_1.Property)('MyProperty', { value: 'value' }),
+                    properties: {
+                        myProperty: (0, properties_1.Property)('MyProperty', { value: 'value' }),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 const instance = model.create({ myProperty: 'passed-in' });
-                const actual = yield instance.getMyProperty();
+                const actual = instance.get.myProperty();
                 const expected = 'value';
                 chai_1.assert.deepEqual(actual, expected);
             }));
             it('should use the value for Property.defaultValue when Property.value is not set and no value is passed in', () => __awaiter(void 0, void 0, void 0, function* () {
                 const input = {
-                    myProperty: (0, properties_1.Property)('MyProperty', { defaultValue: 'defaultValue' }),
+                    properties: {
+                        myProperty: (0, properties_1.Property)('MyProperty', { defaultValue: 'defaultValue' }),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
+                // @ts-ignore
                 const instance = model.create({});
-                const actual = yield instance.getMyProperty();
+                const actual = instance.get.myProperty();
                 const expected = 'defaultValue';
                 chai_1.assert.deepEqual(actual, expected);
             }));
             it('should use the value for Property.defaultValue when Property.value is not set and null is passed as a value', () => __awaiter(void 0, void 0, void 0, function* () {
                 const input = {
-                    myProperty: (0, properties_1.Property)('MyProperty', { defaultValue: 'defaultValue' }),
+                    properties: {
+                        myProperty: (0, properties_1.Property)('MyProperty', { defaultValue: 'defaultValue' }),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 const instance = model.create({ myProperty: null });
-                const actual = yield instance.getMyProperty();
+                const actual = instance.get.myProperty();
                 const expected = 'defaultValue';
                 chai_1.assert.deepEqual(actual, expected);
             }));
-            it('should return a model with getId and getType for the provided valid keyToProperty', () => {
+            it('should return a model with get.id and get.type for the provided valid keyToProperty', () => {
                 const input = {
-                    id: (0, properties_1.Property)('MyProperty', { required: true }),
-                    type: (0, properties_1.Property)('MyProperty'),
+                    properties: {
+                        id: (0, properties_2.UniqueId)({ required: true }),
+                        type: (0, properties_1.Property)('MyProperty', {}),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 const actual = model.create({ id: 'my-id', type: 'my-type' });
-                chai_1.assert.isOk(actual.getId);
-                chai_1.assert.isOk(actual.getType);
+                chai_1.assert.isOk(actual.get.id);
+                chai_1.assert.isOk(actual.get.type);
+            });
+            it('should return the id when get.id() is called', () => {
+                const expected = 'my-id';
+                const input = {
+                    properties: {
+                        type: (0, properties_1.Property)('MyProperty', {}),
+                    }
+                };
+                const model = (0, models_1.Model)('name', input);
+                const instance = model.create({ id: expected, type: 'my-type' });
+                const actual = instance.get.id();
+                chai_1.assert.equal(actual, expected);
             });
             it('should return a model where validate returns one error for id', () => __awaiter(void 0, void 0, void 0, function* () {
                 const input = {
-                    id: (0, properties_1.Property)('MyProperty', { required: true }),
-                    type: (0, properties_1.Property)('MyProperty'),
+                    properties: {
+                        id: (0, properties_1.Property)('MyId', { required: true }),
+                        type: (0, properties_1.Property)('MyProperty', {}),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 const instance = model.create({ type: 'my-type' });
-                const actual = yield instance.functions.validate();
+                const actual = yield instance.validate();
                 const expected = 1;
                 chai_1.assert.equal(Object.values(actual).length, expected);
             }));
             it('should return a model where validate returns one error for the missing text property', () => __awaiter(void 0, void 0, void 0, function* () {
                 const input = {
-                    id: (0, properties_1.Property)('MyProperty', { required: true }),
-                    text: (0, properties_1.TextProperty)({ required: true }),
+                    properties: {
+                        id: (0, properties_1.Property)('MyProperty', { required: true }),
+                        text: (0, properties_1.TextProperty)({ required: true }),
+                    }
                 };
                 const model = (0, models_1.Model)('name', input);
                 const instance = model.create({ id: 'my-id' });
-                const actual = yield instance.functions.validate();
+                const actual = yield instance.validate();
                 const expected = 1;
                 chai_1.assert.equal(Object.values(actual).length, expected);
             }));
         });
         it('should return an object with a function "create" when called once with valid data', () => {
-            const actual = (0, models_1.Model)('name', {});
+            const actual = (0, models_1.Model)('name', { properties: {} });
             chai_1.assert.isFunction(actual.create);
         });
-        it('should throw an exception if a key "model" is passed in', () => {
-            chai_1.assert.throws(() => {
-                (0, models_1.Model)('name', { model: 'weeee' }).create();
-            });
-        });
-        describe('#meta.references.getMyReferencedId()', () => {
+        describe('#references.getMyReferencedId()', () => {
             it('should return the id from the ReferenceProperty', () => {
                 const model = (0, models_1.Model)('ModelName', {
-                    myReference: (0, properties_1.ReferenceProperty)(TEST_MODEL_1),
+                    properties: {
+                        myReference: (0, properties_1.ReferenceProperty)(TEST_MODEL_1),
+                    }
                 });
                 const instance = model.create({ myReference: 'unit-test-id' });
-                const actual = instance.meta.references.getMyReferenceId();
+                const actual = instance.references.myReference();
                 const expected = 'unit-test-id';
                 chai_1.assert.deepEqual(actual, expected);
             });
         });
-        describe('#functions.getPrimaryKey()', () => {
+        describe('#getPrimaryKey()', () => {
             it('should return the id field when no primaryKey is passed', () => __awaiter(void 0, void 0, void 0, function* () {
-                const model = (0, models_1.Model)('ModelName', {}, {
-                    instanceFunctions: {
-                        toString: instance => () => {
-                            return 'An instance';
-                        },
-                    },
-                });
+                const model = (0, models_1.Model)('ModelName', { properties: {} });
                 const expected = 'my-primary-key';
                 const instance = model.create({ id: expected });
-                const actual = yield instance.functions.getPrimaryKey();
+                const actual = yield instance.getPrimaryKey();
                 chai_1.assert.equal(actual, expected);
             }));
             it('should return the primaryKey field when "primaryKey" is passed as primaryKey', () => __awaiter(void 0, void 0, void 0, function* () {
-                const model = (0, models_1.Model)('ModelName', {}, {
-                    primaryKey: 'primaryKey',
-                    instanceFunctions: {
-                        toString: instance => () => {
-                            return 'An instance';
-                        },
-                    },
+                const model = (0, models_1.Model)('ModelName', {
+                    getPrimaryKey: () => 'primaryKey',
+                    properties: {},
                 });
                 const expected = 'my-primary-key';
                 const instance = model.create({ primaryKey: expected });
-                const actual = yield instance.functions.getPrimaryKey();
+                const actual = yield instance.getPrimaryKey();
                 chai_1.assert.equal(actual, expected);
             }));
         });
     });
 });
+//# sourceMappingURL=models.test.js.map

@@ -1,5 +1,3 @@
-import { getObjToArray } from './utils'
-
 enum PROPERTY_TYPES {
   UniqueId = 'UniqueId',
   DateProperty = 'DateProperty',
@@ -13,21 +11,6 @@ enum PROPERTY_TYPES {
   EmailProperty = 'EmailProperty',
   BooleanProperty = 'BooleanProperty',
 }
-/*
-const PROPERTY_TYPES = getObjToArray([
-  'UniqueId',
-  'DateProperty',
-  'ArrayProperty',
-  'ReferenceProperty',
-  'IntegerProperty',
-  'TextProperty',
-  'ConstantValueProperty',
-  'NumberProperty',
-  'ObjectProperty',
-  'EmailProperty',
-  'BooleanProperty',
-])
- */
 
 export {
   PROPERTY_TYPES,

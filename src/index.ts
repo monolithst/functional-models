@@ -1,7 +1,7 @@
 import * as constants from './constants'
 import * as properties from './properties'
 //import * as models from './models'
-import * as functions from './functions'
+import * as methods from './methods'
 import * as errors from './errors'
 import * as validation from './validation'
 import * as serialization from './serialization'
@@ -12,7 +12,7 @@ export default {
   constants,
   ...properties,
   //...models,
-  ...functions,
+  ...methods,
   errors,
   validation,
   serialization,

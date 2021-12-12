@@ -1,6 +1,4 @@
 import identity from 'lodash/identity'
-import get from 'lodash/get'
-import isFunction from 'lodash/isFunction'
 import merge from 'lodash/merge'
 import {
   createPropertyValidator,
@@ -29,7 +27,8 @@ import {
   Maybe,
   Arrayable,
   IPropertyValidatorComponent, IPropertyValidator,
-  IReferenceProperty,
+  IReferenceProperty, CreateInstanceInput,
+  FunctionalModel,
 } from './interfaces'
 
 const createPropertyTitle = (key: string) => {
@@ -83,14 +82,14 @@ function Property<T extends Arrayable<FunctionalType>>(type: string, config : IP
     createGetter: (instanceValue: T) : IValueGetter => {
       const value = getConstantValue()
       if (value !== undefined) {
-        return () => Promise.resolve(value)
+        return () => value
       }
       const defaultValue = getDefaultValue()
       if (
         defaultValue !== undefined &&
         (instanceValue === null || instanceValue === undefined)
       ) {
-        return () => Promise.resolve(defaultValue)
+        return () => defaultValue
       }
       const method = lazyLoadMethod
         // eslint-disable-next-line no-unused-vars
@@ -98,8 +97,8 @@ function Property<T extends Arrayable<FunctionalType>>(type: string, config : IP
         : typeof instanceValue === 'function'
           ? instanceValue as () => T
           : () => instanceValue
-      return async () => {
-        return valueSelector(await method(instanceValue))
+      return () => {
+        return valueSelector(method(instanceValue))
       }
     },
     getValidator: valueGetter => {
@@ -113,7 +112,7 @@ function Property<T extends Arrayable<FunctionalType>>(type: string, config : IP
   return r
 }
 
-const DateProperty = (config?: IPropertyConfig, additionalMetadata={}) => Property<Maybe<Date>>(PROPERTY_TYPES.DateProperty, merge(
+const DateProperty = (config: IPropertyConfig={}, additionalMetadata={}) => Property<Maybe<Date>>(PROPERTY_TYPES.DateProperty, merge(
   {
     lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
       if (!value && config?.autoNow) {
@@ -127,7 +126,7 @@ const DateProperty = (config?: IPropertyConfig, additionalMetadata={}) => Proper
 additionalMetadata)
 
 
-const ReferenceProperty = <T extends FunctionalObj>(model: MaybeFunction<IModel<T>>, config : IPropertyConfig, additionalMetadata={}) => {
+const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IModel<T>>, config : IPropertyConfig={}, additionalMetadata={}) => {
   if (!model) {
     throw new Error('Must include the referenced model')
   }
@@ -142,6 +141,8 @@ const ReferenceProperty = <T extends FunctionalObj>(model: MaybeFunction<IModel<
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
   const _getId = (instanceValues: ReferenceValueType<T>) => (): string | null | undefined => {
+    console.log("GETTING REFERENCED ID")
+    console.log(instanceValues)
     if (!instanceValues) {
       return null
     }
@@ -172,7 +173,7 @@ const ReferenceProperty = <T extends FunctionalObj>(model: MaybeFunction<IModel<
 
       const instance = objIsModelInstance
         ? objToUse
-        : _getModel().create(objToUse as T)
+        : _getModel().create(objToUse as CreateInstanceInput<T>)
       return merge({}, instance, {
         functions: {
           toObj: _getId(instanceValues),
@@ -228,7 +229,7 @@ const ObjectProperty = (config = {}, additionalMetadata={}) =>
     additionalMetadata
   )
 
-const TextProperty = (config : IPropertyConfig, additionalMetadata={} ) =>
+const TextProperty = (config: IPropertyConfig={}, additionalMetadata={} ) =>
   Property<string|null>(
     PROPERTY_TYPES.TextProperty,
     merge(config, {
@@ -245,7 +246,7 @@ const TextProperty = (config : IPropertyConfig, additionalMetadata={} ) =>
     additionalMetadata
   )
 
-const IntegerProperty = (config : IPropertyConfig, additionalMetadata={}) =>
+const IntegerProperty = (config : IPropertyConfig={}, additionalMetadata={}) =>
   Property(
     PROPERTY_TYPES.IntegerProperty,
     merge(config, {
@@ -262,7 +263,7 @@ const IntegerProperty = (config : IPropertyConfig, additionalMetadata={}) =>
     additionalMetadata
   )
 
-const NumberProperty = (config : IPropertyConfig, additionalMetadata={}) =>
+const NumberProperty = (config : IPropertyConfig={}, additionalMetadata={}) =>
   Property(
     PROPERTY_TYPES.NumberProperty,
     merge(config, {
@@ -279,7 +280,7 @@ const NumberProperty = (config : IPropertyConfig, additionalMetadata={}) =>
     additionalMetadata
   )
 
-const ConstantValueProperty = (value: string, config: IPropertyConfig, additionalMetadata={}) =>
+const ConstantValueProperty = (value: string, config: IPropertyConfig={}, additionalMetadata={}) =>
   TextProperty(
     merge(config, {
       type: PROPERTY_TYPES.ConstantValueProperty,
@@ -288,7 +289,7 @@ const ConstantValueProperty = (value: string, config: IPropertyConfig, additiona
     additionalMetadata
   )
 
-const EmailProperty = (config: IPropertyConfig, additionalMetadata={}) =>
+const EmailProperty = (config: IPropertyConfig={}, additionalMetadata={}) =>
   TextProperty(
     merge(config, {
       type: PROPERTY_TYPES.EmailProperty,
@@ -297,7 +298,7 @@ const EmailProperty = (config: IPropertyConfig, additionalMetadata={}) =>
     additionalMetadata
   )
 
-const BooleanProperty = (config: IPropertyConfig, additionalMetadata={}) => Property<boolean>(
+const BooleanProperty = (config: IPropertyConfig={}, additionalMetadata={}) => Property<boolean>(
   PROPERTY_TYPES.BooleanProperty,
   merge(config, {
       isBoolean: true,
@@ -313,7 +314,7 @@ const BooleanProperty = (config: IPropertyConfig, additionalMetadata={}) => Prop
     additionalMetadata
 )
 
-const UniqueId = (config: IPropertyConfig, additionalMetadata={}) =>
+const UniqueId = (config: IPropertyConfig={}, additionalMetadata={}) =>
   Property<string>(
     PROPERTY_TYPES.UniqueId,
     merge({
@@ -326,7 +327,6 @@ const UniqueId = (config: IPropertyConfig, additionalMetadata={}) =>
     }, config),
   additionalMetadata
   )
-
 
 
 export {

@@ -25,7 +25,7 @@ const _getValue = async (value: any) : Promise<FunctionalType> => {
   return value
 }
 
-const toObj = (keyToFunc: Getters<any>) => async () => {
+const toJsonAble = (keyToFunc: Getters<any>) => async () => {
   return Object.entries(keyToFunc).reduce(async (acc, [key, value]) => {
     const realAcc = await acc
     const trueValue = await _getValue(await value)
@@ -34,5 +34,5 @@ const toObj = (keyToFunc: Getters<any>) => async () => {
 }
 
 export {
-  toObj,
+  toJsonAble,
 }

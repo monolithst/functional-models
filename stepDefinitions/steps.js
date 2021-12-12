@@ -9,7 +9,7 @@ const {
   Property,
   ArrayProperty,
   validation,
-} = require('../../index')
+} = require('../index')
 
 const instanceToString = Function(modelInstance => {
   return `${modelInstance.getModel().getName()}-Instance`
