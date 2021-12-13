@@ -55,7 +55,7 @@ const _mergeValidators = (config: IPropertyConfig|undefined, validators: readonl
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 
-function Property<T extends Arrayable<FunctionalType>>(type: string, config : IPropertyConfig, additionalMetadata = {}) {
+function Property<T extends Arrayable<FunctionalType>>(type: string, config : IPropertyConfig = {}, additionalMetadata = {}) {
   if (!type && !config?.type) {
     throw new Error(`Property type must be provided.`)
   }
@@ -141,8 +141,6 @@ const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IMode
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
   const _getId = (instanceValues: ReferenceValueType<T>) => (): string | null | undefined => {
-    console.log("GETTING REFERENCED ID")
-    console.log(instanceValues)
     if (!instanceValues) {
       return null
     }
@@ -197,7 +195,7 @@ const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IMode
   }
 
   const p: IReferenceProperty<T> = merge(
-    Property <T|string > (
+    Property <IModelInstance<T>|T|string|null> (
         PROPERTY_TYPES.ReferenceProperty,
           merge({}, config, {
             validators,

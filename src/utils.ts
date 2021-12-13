@@ -1,7 +1,5 @@
-import keyBy from 'lodash/keyBy'
 // @ts-ignore
 import getRandomValuesFunc from 'get-random-values'
-
 
 const HEX = 16
 const FOUR = 4
@@ -16,10 +14,8 @@ const getRandomValues = () : Uint8Array => {
     // @ts-ignore
     if (window.msCrypto) {
       // @ts-ignore
-      window.msCrypto.getRandomValues(array)
+      return window.msCrypto.getRandomValues(array)
     }
-    // @ts-ignore
-    return (window.crypto || window.msCrypto).getRandomValues
   }
 
   return getRandomValuesFunc(array)
@@ -44,17 +40,8 @@ const loweredTitleCase = (string: string) => {
   return `${string.slice(0, 1).toLowerCase()}${string.slice(1)}`
 }
 
-const getObjToArray = (array: readonly string[]) : Object => {
-  const obj = keyBy(array)
-  return {
-    ...obj,
-    toArray: () => array,
-  }
-}
-
 export {
   loweredTitleCase,
   toTitleCase,
   createUuid,
-  getObjToArray,
 }

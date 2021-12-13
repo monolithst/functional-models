@@ -116,7 +116,7 @@ const Model = <T extends FunctionalModel>(
     }, {}) as InterfaceMethodGetters<T>
 
     const getModel = () => model as IModel<T>
-    const toObj = toJsonAble(loadedInternals.get as Getters<any>)
+    const toObj = toJsonAble(loadedInternals.get)
     const validate = (options={}) => {
       return createModelValidator(
         loadedInternals.validators,
@@ -149,8 +149,6 @@ const Model = <T extends FunctionalModel>(
     (acc, [key, func]) => {
       return merge(acc, {
         [key]: (...args: readonly any[]) => {
-          console.log("CALLING MODEL METHOD")
-          console.log(args)
           return (func as IModelMethodTyped<T>)(model as IModel<T>, ...args)
         },
       })

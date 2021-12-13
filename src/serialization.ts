@@ -15,7 +15,7 @@ const _getValue = async (value: any) : Promise<FunctionalType> => {
   // Nested Object
   const asModel = value.toObj
   if (asModel) {
-    return _getValue(await asModel.toObj())
+    return _getValue(await asModel())
   }
   // Dates
   const asDate = value as Date

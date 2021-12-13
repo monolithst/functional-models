@@ -19,10 +19,12 @@ type ModelMethodGetters<T> = {
 type ModelMethodTypes = IModelMethod|IModelInstanceMethod
 
 type Getters<T> = {
+  // NOTE: This is NOT ModelMethodTypes, its getting everything but.
   readonly [Property in keyof T as T[Property] extends ModelMethodTypes ? never : Property]: () => T[Property]|Promise<T[Property]>
-} & readonly [keyof T]
+}
 
 type MaybeFunction<T> = T | (() => T)
+type MaybePromise<T> = T | Promise<T>
 type Nullable<T> = T | null
 type Maybe<T> = T | undefined | null
 type Arrayable<T> = T | readonly T[]
@@ -51,7 +53,15 @@ type FunctionalObj = {
     undefined,
 }
 
-type FunctionalType = Arrayable<Nullable<number>> | Arrayable<Nullable<string>> | Arrayable<boolean> | Arrayable<null> | Arrayable<undefined> | Arrayable<FunctionalObj> | Arrayable<Date> | Arrayable<FunctionalModel>
+type FunctionalType = (() => FunctionalType) |
+  Arrayable<Nullable<number>> |
+  Arrayable<Nullable<string>> |
+  Arrayable<boolean> |
+  Arrayable<null> |
+  Arrayable<undefined> |
+  Arrayable<FunctionalObj> |
+  Arrayable<Date> |
+  Arrayable<FunctionalModel>
 
 interface IPropertyValidatorComponentTypeAdvanced<TValue, TModel extends FunctionalObj|FunctionalModel> {
   (value: TValue, instance: IModelInstance<TModel>, instanceData: TModel): string | undefined
@@ -90,7 +100,7 @@ interface IModelValidator {
   (instance: IModelInstance<any>, instanceData: FunctionalObj, options?: object): Promise<IModelErrors>
 }
 
-type IValueGetter = () => Arrayable<FunctionalType>|Promise<Arrayable<FunctionalType>>
+type IValueGetter = () => MaybePromise<Arrayable<FunctionalType>>|MaybePromise<IModelInstance<any>>
 
 type IPropertyInstance<T extends Arrayable<FunctionalType>> = {
   readonly getConfig: () => object,
@@ -101,12 +111,12 @@ type IPropertyInstance<T extends Arrayable<FunctionalType>> = {
   readonly createGetter: (value: T) => IValueGetter,
   readonly getValidator: (valueGetter: IValueGetter) => IPropertyValidator,
 }
-type IPropertyInstanceType = IPropertyInstance<Arrayable<FunctionalType>>
+
 type PropertiesList<T> = {
   readonly [ P in keyof T as T[P] extends Arrayable<FunctionalType> ? P : never ] : IPropertyInstance<any>
 }
 
-interface IReferenceProperty<T extends FunctionalModel> extends IPropertyInstance<T|string> {
+interface IReferenceProperty<T extends FunctionalModel> extends IPropertyInstance<IModelInstance<T>|T|string|null> {
   readonly getReferencedId: (instanceValues: ReferenceValueType<T>) => string|null|undefined,
   readonly getReferencedModel: () => IModel<T>
 }
@@ -128,7 +138,7 @@ type IPropertyConfigContents = {
   readonly value?: Arrayable<FunctionalType>,
   readonly choices?: readonly string[],
   readonly lazyLoadMethod?: (value: Arrayable<FunctionalType>) => IMaybeLazy<Arrayable<FunctionalType>>,
-  readonly valueSelector?: (instanceValue: Arrayable<FunctionalType>|Promise<Arrayable<FunctionalType>>) => Arrayable<FunctionalType>,
+  readonly valueSelector?: (instanceValue: MaybePromise<Arrayable<FunctionalType>>) => Arrayable<FunctionalType>,
   readonly validators?: readonly IPropertyValidatorComponent[],
   readonly maxLength?: number,
   readonly minLength?: number,
@@ -158,7 +168,7 @@ type IModel<T extends FunctionalModel> = {
   readonly getPrimaryKeyName: () => string,
   readonly getModelDefinition: () => IModelDefinition<T>,
   readonly getPrimaryKey: (t: CreateInstanceInput<T>) => PrimaryKeyType,
-  readonly create: (data: CreateInstanceInput<T>) => IModelInstance<T>,
+  readonly create: (data: CreateInstanceInput<T> & { readonly id?: PrimaryKeyType}) => IModelInstance<T>,
   readonly methods: ModelMethodGetters<T>
 }
 

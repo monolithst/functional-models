@@ -1,7 +1,7 @@
 const common = [
   'features/**/*.feature',
   '--require-module ts-node/register',
-  '--require features/stepDefinitions/*.ts',
+  '--require ./stepDefinitions/*.ts',
   '--format progress-bar',
 ].join(' ')
 

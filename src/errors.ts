@@ -1,12 +1,14 @@
+type KeysToErrors = {[s: string]: string[]}
+
 /* eslint-disable functional/no-this-expression */
 /* eslint-disable functional/no-class */
 class ValidationError extends Error {
-  constructor(modelName: String, keysToErrors: Object) {
+  public modelName: String;
+  public keysToErrors: KeysToErrors
+  constructor(modelName: String, keysToErrors: KeysToErrors) {
     super(`${modelName} did not pass validation`)
     this.name = 'ValidationError'
-    // @ts-ignore
     this.modelName = modelName
-    // @ts-ignore
     this.keysToErrors = keysToErrors
   }
 }

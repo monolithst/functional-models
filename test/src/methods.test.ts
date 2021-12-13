@@ -1,44 +1,40 @@
-const assert = require('chai').assert
-const sinon = require('sinon')
-const { Function } = require('../../src/functions')
+import { assert } from 'chai'
+import sinon from 'sinon'
+import { Model } from '../../src/models'
+import { TextProperty, Property } from '../../src/properties'
+import { InstanceMethod } from '../../src/methods'
+
+type TEST_MODEL_TYPE = { text: string}
 
 describe('/src/functions.js', () => {
-  describe('#Function()', () => {
+  describe('#InstanceMethod()', () => {
     it('should return "Hello-world" when passed in', () => {
       const method = sinon.stub().callsFake(input => {
-        return `${input}-world`
+        return `${input.get.text()}-world`
       })
-      const myFunction = Function(method)
+      const myInstanceMethod = InstanceMethod<TEST_MODEL_TYPE>(method)
       const wrappedObj = 'Hello'
-      const wrappedFunc = myFunction(wrappedObj)
-      const actual = wrappedFunc()
+      const model = Model<TEST_MODEL_TYPE>('Test', {properties:{ text: TextProperty()}})
+      const modelInstance = model.create({text: 'Hello'})
+      const actual = myInstanceMethod(modelInstance)
       const expected = 'Hello-world'
       assert.equal(actual, expected)
     })
-    it('should call the method when Function()()() called', () => {
+    it('should call the method when InstanceMethod()() called', () => {
       const method = sinon.stub().callsFake(input => {
         return `${input}-world`
       })
-      const myFunction = Function(method)
-      const wrappedObj = 'Hello'
-      const wrappedFunc = myFunction(wrappedObj)
-      const result = wrappedFunc()
+      const myInstanceMethod = InstanceMethod<TEST_MODEL_TYPE>(method)
+      const model = Model<TEST_MODEL_TYPE>('Test', {properties:{ text: TextProperty()}})
+      const modelInstance = model.create({text: 'Hello'})
+      const actual = myInstanceMethod(modelInstance)
       sinon.assert.calledOnce(method)
     })
-    it('should not call the method when Function()() called', () => {
+    it('should not call the method when InstanceMethod() called', () => {
       const method = sinon.stub().callsFake(input => {
         return `${input}-world`
       })
-      const myFunction = Function(method)
-      const wrappedObj = 'Hello'
-      const wrappedFunc = myFunction(wrappedObj)
-      sinon.assert.notCalled(method)
-    })
-    it('should not call the method when Function() called', () => {
-      const method = sinon.stub().callsFake(input => {
-        return `${input}-world`
-      })
-      const myFunction = Function(method)
+      const myInstanceMethod = InstanceMethod<TEST_MODEL_TYPE>(method)
       sinon.assert.notCalled(method)
     })
   })
