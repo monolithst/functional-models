@@ -5,7 +5,7 @@ const lazyValue = (method: Function) => {
   const key = createUuid()
   const lock = new AsyncLock()
   /* eslint-disable functional/no-let */
-  let value : any = undefined
+  let value: any = undefined
   let called = false
   return async (...args: readonly any[]) => {
     return lock.acquire(key, async () => {
@@ -21,6 +21,4 @@ const lazyValue = (method: Function) => {
   /* eslint-enable functional/no-let */
 }
 
-export {
-  lazyValue,
-}
+export { lazyValue }

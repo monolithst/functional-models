@@ -26,35 +26,30 @@ import {
   createPropertyValidator,
   TYPE_PRIMATIVES,
 } from '../../src/validation'
-import {
-  IModelComponentValidator
-} from '../../src/interfaces'
+import { IModelComponentValidator } from '../../src/interfaces'
 
 const assert = chai.assert
 
 const TestModel1 = Model('TestModel1', {
-  properties: {
-  }
+  properties: {},
 })
 
 const TestModel2 = Model('TestModel2', {
-  properties: {
-  }
+  properties: {},
 })
 
 const createTestModel3 = (modelValidators: IModelComponentValidator[]) =>
-  Model<{name: string}>(
-    'TestModel3',
-    {
-      properties: {
-        name: TextProperty(),
-      },
-      modelValidators,
+  Model<{ name: string }>('TestModel3', {
+    properties: {
+      name: TextProperty(),
     },
-  )
+    modelValidators,
+  })
 
 type EMPTY_MODEL = {}
-const EMPTY_MODEL_INSTANCE = Model<EMPTY_MODEL>('EmptyModel',{properties: {}}).create({})
+const EMPTY_MODEL_INSTANCE = Model<EMPTY_MODEL>('EmptyModel', {
+  properties: {},
+}).create({})
 
 describe('/src/validation.ts', () => {
   describe('#isDate()', () => {
@@ -79,21 +74,53 @@ describe('/src/validation.ts', () => {
     })
   })
   describe('#referenceTypeMatch()', () => {
+    it('should return an error if undefined is passed as a value', () => {
+      const myModel = TestModel1.create({})
+      const actual = referenceTypeMatch(TestModel1)(
+        // @ts-ignore
+        undefined,
+        EMPTY_MODEL_INSTANCE,
+        {}
+      )
+      assert.isOk(actual)
+    })
+    it('should return an error if null is passed as a value', () => {
+      const myModel = TestModel1.create({})
+      const actual = referenceTypeMatch(TestModel1)(
+        // @ts-ignore
+        null,
+        EMPTY_MODEL_INSTANCE,
+        {}
+      )
+      assert.isOk(actual)
+    })
     it('should allow a function for a model', () => {
-      const myModel = TestModel1.create({ })
-      const actual = referenceTypeMatch(() => TestModel1)(myModel, EMPTY_MODEL_INSTANCE, {})
+      const myModel = TestModel1.create({})
+      const actual = referenceTypeMatch(() => TestModel1)(
+        myModel,
+        EMPTY_MODEL_INSTANCE,
+        {}
+      )
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should validate when the correct object matches the model', () => {
       const myModel = TestModel1.create({})
-      const actual = referenceTypeMatch(TestModel1)(myModel, EMPTY_MODEL_INSTANCE, {})
+      const actual = referenceTypeMatch(TestModel1)(
+        myModel,
+        EMPTY_MODEL_INSTANCE,
+        {}
+      )
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return an error when the input does not match the model', () => {
       const myModel = TestModel2.create({})
-      const actual = referenceTypeMatch(TestModel1)(myModel, EMPTY_MODEL_INSTANCE, {})
+      const actual = referenceTypeMatch(TestModel1)(
+        myModel,
+        EMPTY_MODEL_INSTANCE,
+        {}
+      )
       assert.isOk(actual)
     })
   })
@@ -227,6 +254,11 @@ describe('/src/validation.ts', () => {
   })
   describe('#minTextLength()', () => {
     it('should return error if min=5 and value=5', () => {
+      // @ts-ignore
+      const actual = minTextLength(5)(5, EMPTY_MODEL_INSTANCE, {})
+      assert.isOk(actual)
+    })
+    it('should return error if min=5 and value=5', () => {
       const actual = minTextLength(5)('5', EMPTY_MODEL_INSTANCE, {})
       assert.isOk(actual)
     })
@@ -244,6 +276,11 @@ describe('/src/validation.ts', () => {
     })
   })
   describe('#maxTextLength()', () => {
+    it('should return error if length=5 and value=5', () => {
+      // @ts-ignore
+      const actual = maxTextLength(5)(5, EMPTY_MODEL_INSTANCE, {})
+      assert.isOk(actual)
+    })
     it('should return error if length=5 and value="hello world"', () => {
       const actual = maxTextLength(5)('hello world', EMPTY_MODEL_INSTANCE, {})
       assert.isOk(actual)
@@ -259,7 +296,11 @@ describe('/src/validation.ts', () => {
   })
   describe('#meetsRegex()', () => {
     it('should return an error with regex=/asdf/ flags="g" and value="hello world"', () => {
-      const actual = meetsRegex(/asdf/, 'g')('hello world', EMPTY_MODEL_INSTANCE, {})
+      const actual = meetsRegex(/asdf/, 'g')(
+        'hello world',
+        EMPTY_MODEL_INSTANCE,
+        {}
+      )
       assert.isOk(actual)
     })
     it('should return undefined with regex=/asdf/ flags="g" and value="hello asdf world"', () => {
@@ -271,14 +312,18 @@ describe('/src/validation.ts', () => {
     it('should return two errors when two validators are passed, and the value fails both', async () => {
       const validators = [minTextLength(10), isNumber]
       const value = 'asdf'
-      const actual = (await aggregateValidator(value, validators)(EMPTY_MODEL_INSTANCE, {})).length
+      const actual = (
+        await aggregateValidator(value, validators)(EMPTY_MODEL_INSTANCE, {})
+      ).length
       const expected = 2
       assert.equal(actual, expected)
     })
     it('should return one error when one validator is passed, and the value fails', async () => {
       const validators = minTextLength(10)
       const value = 'asdf'
-      const actual = (await aggregateValidator(value, validators)(EMPTY_MODEL_INSTANCE, {})).length
+      const actual = (
+        await aggregateValidator(value, validators)(EMPTY_MODEL_INSTANCE, {})
+      ).length
       const expected = 1
       assert.equal(actual, expected)
     })
@@ -343,8 +388,8 @@ describe('/src/validation.ts', () => {
         testModel3.create({
           id: 'test-id',
           name: 'my-name',
-        })
-        ,{
+        }),
+        {
           id: 'test-id',
           name: 'my-name',
         }
@@ -431,7 +476,7 @@ describe('/src/validation.ts', () => {
         type: sinon.stub().returns(undefined),
       }
       const validator = createModelValidator(properties)
-      const testModel3 = Model('Model', { properties: {}})
+      const testModel3 = Model('Model', { properties: {} })
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -447,7 +492,7 @@ describe('/src/validation.ts', () => {
         model: sinon.stub().returns(undefined),
       }
       const validator = createModelValidator(properties)
-      const testModel3 = Model('Model', { properties: {}})
+      const testModel3 = Model('Model', { properties: {} })
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -461,7 +506,7 @@ describe('/src/validation.ts', () => {
         type: sinon.stub().returns(['error2']),
       }
       const validator = createModelValidator(properties)
-      const testModel3 = Model('Model', { properties: {}})
+      const testModel3 = Model('Model', { properties: {} })
       const instance = testModel3.create({
         id: 'test-id',
         type: 'my-name',
@@ -479,7 +524,7 @@ describe('/src/validation.ts', () => {
         type: sinon.stub().returns(['error2']),
       }
       const validator = createModelValidator(properties)
-      const testModel3 = Model('Model', { properties: {}})
+      const testModel3 = Model('Model', { properties: {} })
       const instance = testModel3.create({
         id: 'test-id',
         type: 'my-name',
@@ -492,25 +537,35 @@ describe('/src/validation.ts', () => {
     })
   })
   describe('#createPropertyValidator()', () => {
-    it('should accept unhandled configurations without exception', async () => {
+    it('should accept an undefined configuration', async () => {
       // @ts-ignore
-      const validator = createPropertyValidator(() => null, { notarealarg: false })
+      const validator = createPropertyValidator(() => null, undefined)
       const actual = await validator(EMPTY_MODEL_INSTANCE, {})
-      const expected : readonly string[]= []
+      const expected: readonly string[] = []
+      assert.deepEqual(actual, expected)
+    })
+
+    it('should accept unhandled configurations without exception', async () => {
+      const validator = createPropertyValidator(() => null, {
+        // @ts-ignore
+        notarealarg: false,
+      })
+      const actual = await validator(EMPTY_MODEL_INSTANCE, {})
+      const expected: readonly string[] = []
       assert.deepEqual(actual, expected)
     })
     it('should not include isRequired if required=false, returning []', async () => {
       const validator = createPropertyValidator(() => null, { required: false })
       // @ts-ignore
       const actual = await validator(null, {})
-      const expected : readonly string[]= []
+      const expected: readonly string[] = []
       assert.deepEqual(actual, expected)
     })
     it('should return [] if no configs are provided', async () => {
       const validator = createPropertyValidator(() => null, {})
       // @ts-ignore
       const actual = await validator(null, {})
-      const expected : readonly string[] = []
+      const expected: readonly string[] = []
       assert.deepEqual(actual, expected)
     })
     it('should use isRequired if required=false, returning one error', async () => {
@@ -521,7 +576,9 @@ describe('/src/validation.ts', () => {
       assert.equal(actual.length, expected)
     })
     it('should use validators.isRequired returning one error', async () => {
-      const validator = createPropertyValidator(() => null, { validators: [isRequired] })
+      const validator = createPropertyValidator(() => null, {
+        validators: [isRequired],
+      })
       // @ts-ignore
       const actual = await validator(null, {})
       const expected = 1
@@ -571,27 +628,51 @@ describe('/src/validation.ts', () => {
     })
     describe('#(integer)()', () => {
       it('should return an error for null', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(null, EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+          null,
+          EMPTY_MODEL_INSTANCE,
+          {}
+        )
         assert.isOk(actual)
       })
       it('should return an error for undefined', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(undefined, EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+          undefined,
+          EMPTY_MODEL_INSTANCE,
+          {}
+        )
         assert.isOk(actual)
       })
       it('should return an error for 1', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(1, EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+          1,
+          EMPTY_MODEL_INSTANCE,
+          {}
+        )
         assert.isOk(actual)
       })
       it('should return an error for "1"', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)('1', EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+          '1',
+          EMPTY_MODEL_INSTANCE,
+          {}
+        )
         assert.isOk(actual)
       })
       it('should return undefined for [1,2,3]', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)([1, 2, 3], EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+          [1, 2, 3],
+          EMPTY_MODEL_INSTANCE,
+          {}
+        )
         assert.isUndefined(actual)
       })
       it('should return an error for [1,"2",3]', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)([1, '2', 3], EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+          [1, '2', 3],
+          EMPTY_MODEL_INSTANCE,
+          {}
+        )
         assert.isOk(actual)
       })
     })

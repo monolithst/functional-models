@@ -4,6 +4,7 @@ import {
   UniqueId,
   Property,
   DateProperty,
+  BooleanProperty,
   ReferenceProperty,
   ArrayProperty,
   ConstantValueProperty,
@@ -15,13 +16,13 @@ import {
 } from '../../src/properties'
 import { TYPE_PRIMATIVES, arrayType } from '../../src/validation'
 import { Model } from '../../src/models'
-import {IModelInstance} from "../../src/interfaces"
+import { IModelInstance } from '../../src/interfaces'
 
 type TestModelType = { name: string }
 const TestModel1 = Model<TestModelType>('TestModel1', {
   properties: {
     name: TextProperty(),
-  }
+  },
 })
 
 describe('/src/properties.ts', () => {
@@ -44,6 +45,24 @@ describe('/src/properties.ts', () => {
       it('should return and validate successful with basic input', async () => {
         const PropertyInstance = EmailProperty({})
         const getter = PropertyInstance.createGetter('testme@email.com')
+        const validator = PropertyInstance.getValidator(getter)
+        // @ts-ignore
+        const actual = await validator(null, {})
+        const expected = 0
+        assert.equal(actual.length, expected)
+      })
+    })
+  })
+  describe('#BooleanProperty()', () => {
+    it('should be able to create without a config', () => {
+      assert.doesNotThrow(() => {
+        BooleanProperty()
+      })
+    })
+    describe('#getValidator()', () => {
+      it('should return and validate successful with basic input', async () => {
+        const PropertyInstance = BooleanProperty({})
+        const getter = PropertyInstance.createGetter(true)
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
         const actual = await validator(null, {})
@@ -113,6 +132,12 @@ describe('/src/properties.ts', () => {
       it('should be able to create without a config', () => {
         assert.doesNotThrow(() => {
           NumberProperty()
+        })
+      })
+      it('should be able to create even with a null config', () => {
+        assert.doesNotThrow(() => {
+          // @ts-ignore
+          NumberProperty(null)
         })
       })
       it('should be able to get the number passed in', async () => {
@@ -189,6 +214,12 @@ describe('/src/properties.ts', () => {
   })
 
   describe('#IntegerProperty()', () => {
+    it('should be able to create even with a null config', () => {
+      assert.doesNotThrow(() => {
+        // @ts-ignore
+        IntegerProperty(null)
+      })
+    })
     describe('#createGetter()', () => {
       it('should be able to create without a config', () => {
         assert.doesNotThrow(() => {
@@ -262,6 +293,12 @@ describe('/src/properties.ts', () => {
   })
 
   describe('#TextProperty()', () => {
+    it('should be able to create even with a null config', () => {
+      assert.doesNotThrow(() => {
+        // @ts-ignore
+        TextProperty(null)
+      })
+    })
     describe('#createGetter()', () => {
       it('should be able to create without a config', () => {
         assert.doesNotThrow(() => {
@@ -347,7 +384,7 @@ describe('/src/properties.ts', () => {
         // @ts-ignore
         const getter = theProperty.createGetter(null)
         const actual = await getter()
-        const expected : any[] = []
+        const expected: any[] = []
         assert.deepEqual(actual, expected)
       })
       it('should return the passed in defaultValue if set in config and null is passed', async () => {
@@ -366,7 +403,7 @@ describe('/src/properties.ts', () => {
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
         const actual = await validator()
-        const expected : any[] = []
+        const expected: any[] = []
         assert.deepEqual(actual, expected)
       })
       it('should error an array passed in when it doesnt have the right types', async () => {
@@ -386,7 +423,7 @@ describe('/src/properties.ts', () => {
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
         const actual = await validator()
-        const expected : any[] = []
+        const expected: any[] = []
         assert.deepEqual(actual, expected)
       })
       it('should return errors when an array with [4,4,3,5,5,6,6] when choices are [4,5,6]', async () => {
@@ -401,6 +438,18 @@ describe('/src/properties.ts', () => {
     })
   })
   describe('#Property()', () => {
+    it('should throw an exception if a type is not provided', () => {
+      assert.throws(() => {
+        // @ts-ignore
+        Property(undefined, {})
+      })
+    })
+    it('should throw an exception if a type is not provided, and config is null', () => {
+      assert.throws(() => {
+        // @ts-ignore
+        Property(undefined, null)
+      })
+    })
     it('should throw an exception if config.valueSelector is not a function but is set', () => {
       assert.throws(() => {
         // @ts-ignore
@@ -410,6 +459,77 @@ describe('/src/properties.ts', () => {
     it('should not throw an exception if config.valueSelector is a function', () => {
       assert.doesNotThrow(() => {
         Property('MyProperty', { valueSelector: () => ({}) })
+      })
+    })
+    it('should not throw an exception if config is null', () => {
+      assert.doesNotThrow(() => {
+        // @ts-ignore
+        Property('MyProperty', null)
+      })
+    })
+    describe('#getConstantValue()', () => {
+      it('should provide undefined if no config', () => {
+        // @ts-ignore
+        const instance = Property('MyTYpe', null)
+        const actual = instance.getConstantValue()
+        const expected = undefined
+        assert.deepEqual(actual, expected)
+      })
+    })
+    describe('#getPropertyType()', () => {
+      it('should use the type that is passed in via config', () => {
+        const instance = Property('OverrideMe', { type: 'ExtendedType' })
+        const actual = instance.getPropertyType()
+        const expected = 'ExtendedType'
+        assert.equal(actual, expected)
+      })
+    })
+    describe('#getConfig()', () => {
+      it('should provide the config that is passed in ', () => {
+        // @ts-ignore
+        const instance = Property('MyTYpe', { custom: 'value' })
+        const actual = instance.getConfig()
+        const expected = { custom: 'value' }
+        assert.deepEqual(actual, expected)
+      })
+      it('should provide {} if no config', () => {
+        // @ts-ignore
+        const instance = Property('MyTYpe', null)
+        const actual = instance.getConfig()
+        const expected = {}
+        assert.deepEqual(actual, expected)
+      })
+    })
+    describe('#getDefaultValue()', () => {
+      it('should provide undefined if no config', () => {
+        // @ts-ignore
+        const instance = Property('MyTYpe', null)
+        const actual = instance.getDefaultValue()
+        const expected = undefined
+        assert.deepEqual(actual, expected)
+      })
+      it('should provide the defaultValue that is passed in if no value', () => {
+        // @ts-ignore
+        const instance = Property('MyTYpe', { defaultValue: 'test-me' })
+        const actual = instance.getDefaultValue()
+        const expected = 'test-me'
+        assert.deepEqual(actual, expected)
+      })
+    })
+    describe('#getChoices()', () => {
+      it('should provide [] if no config', () => {
+        // @ts-ignore
+        const instance = Property('MyTYpe', null)
+        const actual = instance.getChoices()
+        const expected: any[] = []
+        assert.deepEqual(actual, expected)
+      })
+      it('should provide the choices that are passed in ', () => {
+        // @ts-ignore
+        const instance = Property('MyTYpe', { choices: [1, 2, 3] })
+        const actual = instance.getChoices()
+        const expected = [1, 2, 3]
+        assert.deepEqual(actual, expected)
       })
     })
     describe('#createGetter()', () => {
@@ -480,6 +600,15 @@ describe('/src/properties.ts', () => {
       const expected = date
       assert.deepEqual(actual, expected)
     })
+    it('should return null, if null config is passed and no value created.', async () => {
+      // @ts-ignore
+      const proto = DateProperty(null)
+      const date = null
+      const instance = proto.createGetter(date)
+      const actual = await instance()
+      const expected = null
+      assert.deepEqual(actual, expected)
+    })
   })
 
   describe('#ReferenceProperty()', () => {
@@ -522,17 +651,40 @@ describe('/src/properties.ts', () => {
       it('should return "obj-id" from {}.id when no fetcher is used', async () => {
         const actual = await ReferenceProperty(TestModel1, {}).createGetter(
           // @ts-ignore
-          { id: 'obj-id'}
+          { id: 'obj-id' }
         )()
         const expected = 'obj-id'
         assert.equal(actual, expected)
       })
+
+      it('should throw an exception when there is instanceValues as an object, but it does not have a value for the primaryKey.', async () => {
+        await assert.isRejected(
+          ReferenceProperty(TestModel1, {
+            // @ts-ignore
+          }).createGetter({ notPrimaryKey: 'ok' })() as Promise<any>
+        )
+      })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
-        const actual = await ReferenceProperty(TestModel1, {
+        const actual = (await ReferenceProperty(TestModel1, {
           fetcher: async () => ({ id: 'obj-id', name: 'switch-a-roo' }),
-        }).createGetter('obj-id')() as IModelInstance<TestModelType>
+        }).createGetter('obj-id')()) as IModelInstance<TestModelType>
         const expected = 'switch-a-roo'
         assert.deepEqual(actual.get.name(), expected)
+      })
+      it('should return "obj-id" if no config passed', async () => {
+        // @ts-ignore
+        const actual = (await ReferenceProperty(TestModel1, null).createGetter(
+          'obj-id'
+        )()) as string
+        const expected = 'obj-id'
+        assert.deepEqual(actual, expected)
+      })
+      it('should return null when fetcher is used, but the instance value passed in is empty', async () => {
+        const actual = (await ReferenceProperty(TestModel1, {
+          fetcher: async () => ({ id: 'obj-id', name: 'switch-a-roo' }),
+        }).createGetter(null)()) as IModelInstance<TestModelType>
+        const expected = null
+        assert.deepEqual(actual, expected)
       })
       it('should provide the passed in model and the instance values when switch-a-roo fetcher is used', async () => {
         const input = 'obj-id'
@@ -549,13 +701,14 @@ describe('/src/properties.ts', () => {
         const proto = Model<TestModelType>('name', {
           properties: {
             id: UniqueId({ value: id }),
-            name: TextProperty({})
-          }
+            name: TextProperty({}),
+          },
         })
         const input = proto.create({ id, name: 'name' })
-        const instance = await ReferenceProperty<TestModelType>(TestModel1, {}).createGetter(
-          input
-        )() as IModelInstance<TestModelType>
+        const instance = (await ReferenceProperty<TestModelType>(
+          TestModel1,
+          {}
+        ).createGetter(input)()) as IModelInstance<TestModelType>
         const actual = await instance.get.id()
         const expected = 'obj-id'
         assert.deepEqual(actual, expected)
@@ -565,22 +718,24 @@ describe('/src/properties.ts', () => {
           const proto = Model<TestModelType>('name', {
             properties: {
               id: UniqueId({ value: 'obj-id' }),
-              name: TextProperty({})
-            }
+              name: TextProperty({}),
+            },
           })
           const input = proto.create({ id: 'obj-id', name: 'name' })
-          const instance = await ReferenceProperty<TestModelType>(TestModel1, {}).createGetter(
-            input
-          )() as IModelInstance<{}>
+          const instance = (await ReferenceProperty<TestModelType>(
+            TestModel1,
+            {}
+          ).createGetter(input)()) as IModelInstance<{}>
           const actual = await instance.toObj()
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)
         })
         it('should return "obj-id" when switch-a-roo fetcher is used and toObj is called', async () => {
           const input = 'obj-id'
-          const instance = await ReferenceProperty(TestModel1, {
-            fetcher: () => Promise.resolve({ id: 'obj-id', prop: 'switch-a-roo' }),
-          }).createGetter(input)() as IModelInstance<{}>
+          const instance = (await ReferenceProperty(TestModel1, {
+            fetcher: () =>
+              Promise.resolve({ id: 'obj-id', prop: 'switch-a-roo' }),
+          }).createGetter(input)()) as IModelInstance<{}>
           const actual = await instance.toObj()
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)

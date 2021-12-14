@@ -7,7 +7,6 @@ import * as validation from './validation'
 import * as serialization from './serialization'
 import * as utils from './utils'
 
-
 export default {
   constants,
   ...properties,

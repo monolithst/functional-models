@@ -13,10 +13,9 @@ import {
 } from './validation'
 import { PROPERTY_TYPES } from './constants'
 import { lazyValue } from './lazy'
-import { toTitleCase, createUuid } from './utils'
+import { createUuid } from './utils'
 import {
   ReferenceValueType,
-  FunctionalObj,
   IModelInstance,
   IModel,
   IPropertyInstance,
@@ -26,24 +25,21 @@ import {
   MaybeFunction,
   Maybe,
   Arrayable,
-  IPropertyValidatorComponent, IPropertyValidator,
-  IReferenceProperty, CreateInstanceInput,
+  IPropertyValidatorComponent,
+  IPropertyValidator,
+  IReferenceProperty,
+  CreateInstanceInput,
   FunctionalModel,
 } from './interfaces'
-
-const createPropertyTitle = (key: string) => {
-  const goodName = toTitleCase(key)
-  return `get${goodName}`
-}
 
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
 
 function _getValidatorFromConfigElseEmpty<T>(
-    input: T|undefined,
-    // eslint-disable-next-line no-unused-vars
-    validatorGetter: (t: T) => IPropertyValidatorComponent
-){
+  input: T | undefined,
+  // eslint-disable-next-line no-unused-vars
+  validatorGetter: (t: T) => IPropertyValidatorComponent
+) {
   if (input !== undefined) {
     const validator = validatorGetter(input)
     return validator
@@ -51,35 +47,43 @@ function _getValidatorFromConfigElseEmpty<T>(
   return emptyValidator
 }
 
-const _mergeValidators = (config: IPropertyConfig|undefined, validators: readonly IPropertyValidatorComponent[]) => {
+const _mergeValidators = (
+  config: IPropertyConfig | undefined,
+  validators: readonly IPropertyValidatorComponent[]
+) => {
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 
-function Property<T extends Arrayable<FunctionalType>>(type: string, config : IPropertyConfig = {}, additionalMetadata = {}) {
+function Property<T extends Arrayable<FunctionalType>>(
+  type: string,
+  config: IPropertyConfig = {},
+  additionalMetadata = {}
+) {
   if (!type && !config?.type) {
     throw new Error(`Property type must be provided.`)
   }
   if (config?.type) {
     type = config.type
   }
-  const getConstantValue = () => (config?.value !== undefined ? config?.value : undefined) as T
-  const getDefaultValue = () => (config?.defaultValue !== undefined ? config?.defaultValue : undefined) as T
-  const getChoices = () => config?.choices ? config?.choices : []
+  const getConstantValue = () =>
+    (config?.value !== undefined ? config.value : undefined) as T
+  const getDefaultValue = () =>
+    (config?.defaultValue !== undefined ? config.defaultValue : undefined) as T
+  const getChoices = () => config?.choices || []
   const lazyLoadMethod = config?.lazyLoadMethod || false
   const valueSelector = config?.valueSelector || identity
   if (typeof valueSelector !== 'function') {
     throw new Error(`valueSelector must be a function`)
   }
 
-
-  const r : IPropertyInstance<T> = {
+  const r: IPropertyInstance<T> = {
     ...additionalMetadata,
     getConfig: () => config || {},
     getChoices,
     getDefaultValue,
     getConstantValue,
     getPropertyType: () => type,
-    createGetter: (instanceValue: T) : IValueGetter => {
+    createGetter: (instanceValue: T): IValueGetter => {
       const value = getConstantValue()
       if (value !== undefined) {
         return () => value
@@ -92,18 +96,21 @@ function Property<T extends Arrayable<FunctionalType>>(type: string, config : IP
         return () => defaultValue
       }
       const method = lazyLoadMethod
-        // eslint-disable-next-line no-unused-vars
-        ? lazyValue(lazyLoadMethod) as ((value: T) => Promise<T>)
+        ? // eslint-disable-next-line no-unused-vars
+          (lazyValue(lazyLoadMethod) as (value: T) => Promise<T>)
         : typeof instanceValue === 'function'
-          ? instanceValue as () => T
-          : () => instanceValue
+        ? (instanceValue as () => T)
+        : () => instanceValue
       return () => {
         return valueSelector(method(instanceValue))
       }
     },
     getValidator: valueGetter => {
       const validator = createPropertyValidator(valueGetter, config)
-      const _propertyValidatorWrapper : IPropertyValidator = async (instance, instanceData) => {
+      const _propertyValidatorWrapper: IPropertyValidator = async (
+        instance,
+        instanceData
+      ) => {
         return validator(instance, instanceData)
       }
       return _propertyValidatorWrapper
@@ -112,21 +119,28 @@ function Property<T extends Arrayable<FunctionalType>>(type: string, config : IP
   return r
 }
 
-const DateProperty = (config: IPropertyConfig={}, additionalMetadata={}) => Property<Maybe<Date>>(PROPERTY_TYPES.DateProperty, merge(
-  {
-    lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
-      if (!value && config?.autoNow) {
-        return new Date()
-      }
-      return value
-    },
-  },
-  config
-),
-additionalMetadata)
+const DateProperty = (config: IPropertyConfig = {}, additionalMetadata = {}) =>
+  Property<Maybe<Date>>(
+    PROPERTY_TYPES.DateProperty,
+    merge(
+      {
+        lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
+          if (!value && config?.autoNow) {
+            return new Date()
+          }
+          return value
+        },
+      },
+      config
+    ),
+    additionalMetadata
+  )
 
-
-const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IModel<T>>, config : IPropertyConfig={}, additionalMetadata={}) => {
+const ReferenceProperty = <T extends FunctionalModel>(
+  model: MaybeFunction<IModel<T>>,
+  config: IPropertyConfig = {},
+  additionalMetadata = {}
+) => {
   if (!model) {
     throw new Error('Must include the referenced model')
   }
@@ -140,33 +154,37 @@ const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IMode
 
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
-  const _getId = (instanceValues: ReferenceValueType<T>) => (): string | null | undefined => {
-    if (!instanceValues) {
-      return null
-    }
-    if (typeof instanceValues === 'string') {
-      return instanceValues
-    }
-    if ((instanceValues as IModelInstance<T>).getPrimaryKey) {
-      return (instanceValues as IModelInstance<T>).getPrimaryKey()
-    }
+  const _getId =
+    (instanceValues: ReferenceValueType<T>) =>
+    (): string | null | undefined => {
+      if (!instanceValues) {
+        return null
+      }
+      if (typeof instanceValues === 'string') {
+        return instanceValues
+      }
+      if ((instanceValues as IModelInstance<T>).getPrimaryKey) {
+        return (instanceValues as IModelInstance<T>).getPrimaryKey()
+      }
 
-    const theModel = _getModel()
-    const primaryKey = theModel.getPrimaryKeyName()
+      const theModel = _getModel()
+      const primaryKey = theModel.getPrimaryKeyName()
 
-    // @ts-ignore
-    const id = (instanceValues as CreateInstanceInput<T>)[primaryKey]
-    if (typeof id === 'string') {
-      return id
+      // @ts-ignore
+      const id = (instanceValues as CreateInstanceInput<T>)[primaryKey]
+      if (typeof id === 'string') {
+        return id
+      }
+      throw new Error(`Unexpectedly no key to return.`)
     }
-    throw new Error(`Unexpectedly no key to return.`)
-  }
 
   const lazyLoadMethod = async (instanceValues: ReferenceValueType<T>) => {
-    const valueIsModelInstance = instanceValues && (instanceValues as IModelInstance<T>).getPrimaryKey
+    const valueIsModelInstance =
+      instanceValues && (instanceValues as IModelInstance<T>).getPrimaryKey
     const _getInstanceReturn = (objToUse: ReferenceValueType<T>) => {
       // We need to determine if the object we just go is an actual model instance to determine if we need to make one.
-      const objIsModelInstance = instanceValues && (instanceValues as IModelInstance<T>).getPrimaryKey
+      const objIsModelInstance =
+        instanceValues && (instanceValues as IModelInstance<T>).getPrimaryKey
 
       const instance = objIsModelInstance
         ? objToUse
@@ -192,30 +210,38 @@ const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IMode
   }
 
   const p: IReferenceProperty<T> = merge(
-    Property <IModelInstance<T>|T|string|null> (
-        PROPERTY_TYPES.ReferenceProperty,
-          merge({}, config, {
-            validators,
-            lazyLoadMethod,
-          }),
-      additionalMetadata,
-      ), {
-    getReferencedId: (instanceValues: ReferenceValueType<T>) => _getId(instanceValues)(),
-    getReferencedModel: _getModel,
-  })
+    Property<IModelInstance<T> | T | string | null>(
+      PROPERTY_TYPES.ReferenceProperty,
+      merge({}, config, {
+        validators,
+        lazyLoadMethod,
+      }),
+      additionalMetadata
+    ),
+    {
+      getReferencedId: (instanceValues: ReferenceValueType<T>) =>
+        _getId(instanceValues)(),
+      getReferencedModel: _getModel,
+    }
+  )
   return p
 }
 
-const ArrayProperty = <T extends FunctionalType>(config = {}, additionalMetadata={}) =>
+const ArrayProperty = <T extends FunctionalType>(
+  config = {},
+  additionalMetadata = {}
+) =>
   Property<readonly T[]>(
     PROPERTY_TYPES.ArrayProperty,
     {
-    defaultValue: [],
-    ...config,
-    isArray: true,
-  }, additionalMetadata)
+      defaultValue: [],
+      ...config,
+      isArray: true,
+    },
+    additionalMetadata
+  )
 
-const ObjectProperty = (config = {}, additionalMetadata={}) =>
+const ObjectProperty = (config = {}, additionalMetadata = {}) =>
   Property(
     PROPERTY_TYPES.ObjectProperty,
     merge(config, {
@@ -224,8 +250,8 @@ const ObjectProperty = (config = {}, additionalMetadata={}) =>
     additionalMetadata
   )
 
-const TextProperty = (config: IPropertyConfig={}, additionalMetadata={} ) =>
-  Property<string|null>(
+const TextProperty = (config: IPropertyConfig = {}, additionalMetadata = {}) =>
+  Property<string | null>(
     PROPERTY_TYPES.TextProperty,
     merge(config, {
       isString: true,
@@ -241,7 +267,10 @@ const TextProperty = (config: IPropertyConfig={}, additionalMetadata={} ) =>
     additionalMetadata
   )
 
-const IntegerProperty = (config : IPropertyConfig={}, additionalMetadata={}) =>
+const IntegerProperty = (
+  config: IPropertyConfig = {},
+  additionalMetadata = {}
+) =>
   Property(
     PROPERTY_TYPES.IntegerProperty,
     merge(config, {
@@ -258,7 +287,10 @@ const IntegerProperty = (config : IPropertyConfig={}, additionalMetadata={}) =>
     additionalMetadata
   )
 
-const NumberProperty = (config : IPropertyConfig={}, additionalMetadata={}) =>
+const NumberProperty = (
+  config: IPropertyConfig = {},
+  additionalMetadata = {}
+) =>
   Property(
     PROPERTY_TYPES.NumberProperty,
     merge(config, {
@@ -275,7 +307,11 @@ const NumberProperty = (config : IPropertyConfig={}, additionalMetadata={}) =>
     additionalMetadata
   )
 
-const ConstantValueProperty = (value: string, config: IPropertyConfig={}, additionalMetadata={}) =>
+const ConstantValueProperty = (
+  value: string,
+  config: IPropertyConfig = {},
+  additionalMetadata = {}
+) =>
   TextProperty(
     merge(config, {
       type: PROPERTY_TYPES.ConstantValueProperty,
@@ -284,7 +320,7 @@ const ConstantValueProperty = (value: string, config: IPropertyConfig={}, additi
     additionalMetadata
   )
 
-const EmailProperty = (config: IPropertyConfig={}, additionalMetadata={}) =>
+const EmailProperty = (config: IPropertyConfig = {}, additionalMetadata = {}) =>
   TextProperty(
     merge(config, {
       type: PROPERTY_TYPES.EmailProperty,
@@ -293,36 +329,34 @@ const EmailProperty = (config: IPropertyConfig={}, additionalMetadata={}) =>
     additionalMetadata
   )
 
-const BooleanProperty = (config: IPropertyConfig={}, additionalMetadata={}) => Property<boolean>(
-  PROPERTY_TYPES.BooleanProperty,
-  merge(config, {
+const BooleanProperty = (
+  config: IPropertyConfig = {},
+  additionalMetadata = {}
+) =>
+  Property<boolean>(
+    PROPERTY_TYPES.BooleanProperty,
+    merge(config, {
       isBoolean: true,
-      validators: _mergeValidators(config, [
-        _getValidatorFromConfigElseEmpty(config?.minValue, value =>
-          minNumber(value)
-        ),
-        _getValidatorFromConfigElseEmpty(config?.maxValue, value =>
-          maxNumber(value)
-        ),
-      ]),
     }),
     additionalMetadata
-)
-
-const UniqueId = (config: IPropertyConfig={}, additionalMetadata={}) =>
-  Property<string>(
-    PROPERTY_TYPES.UniqueId,
-    merge({
-      lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
-        if (!value) {
-          return createUuid()
-        }
-        return value
-      },
-    }, config),
-  additionalMetadata
   )
 
+const UniqueId = (config: IPropertyConfig = {}, additionalMetadata = {}) =>
+  Property<string>(
+    PROPERTY_TYPES.UniqueId,
+    merge(
+      {
+        lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
+          if (!value) {
+            return createUuid()
+          }
+          return value
+        },
+      },
+      config
+    ),
+    additionalMetadata
+  )
 
 export {
   Property,
@@ -337,5 +371,4 @@ export {
   ObjectProperty,
   EmailProperty,
   BooleanProperty,
-  createPropertyTitle,
 }

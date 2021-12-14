@@ -1,4 +1,4 @@
-import {assert} from 'chai'
+import { assert } from 'chai'
 import { toJsonAble } from '../../src/serialization'
 
 describe('/src/serialization.ts', () => {

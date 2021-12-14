@@ -1,7 +1,7 @@
 import merge from 'lodash/merge'
 import { toJsonAble } from './serialization'
 import { createModelValidator } from './validation'
-import { UniqueId } from'./properties'
+import { UniqueId } from './properties'
 import {
   IModel,
   InterfaceMethodGetters,
@@ -16,38 +16,41 @@ import {
   ReferenceValueType,
   IPropertyValidators,
   FunctionalModel,
-  CreateInstanceInput, IModelInstanceMethodTyped, IModelMethodTyped, ModelMethodGetters,
+  CreateInstanceInput,
+  IModelInstanceMethodTyped,
+  IModelMethodTyped,
+  ModelMethodGetters,
 } from './interfaces'
 
-
-const _defaultOptions = () : ModelOptions => ({
+const _defaultOptions = (): ModelOptions => ({
   instanceCreatedCallback: null,
 })
 
 const _convertOptions = (options?: OptionalModelOptions) => {
-  const r : ModelOptions = merge({}, _defaultOptions(), options)
+  const r: ModelOptions = merge({}, _defaultOptions(), options)
   return r
 }
 
-const _createModelDefWithPrimaryKey = <T extends FunctionalModel>(keyToProperty: IModelDefinition<T>) : IModelDefinition<T> => {
+const _createModelDefWithPrimaryKey = <T extends FunctionalModel>(
+  keyToProperty: IModelDefinition<T>
+): IModelDefinition<T> => {
   return {
     getPrimaryKey: () => 'id',
     modelMethods: keyToProperty.modelMethods,
     instanceMethods: keyToProperty.instanceMethods,
     properties: {
-      id: UniqueId({required: true}),
-      ...keyToProperty.properties
+      id: UniqueId({ required: true }),
+      ...keyToProperty.properties,
     },
     modelValidators: keyToProperty.modelValidators,
   }
 }
 
-
 const Model = <T extends FunctionalModel>(
   modelName: string,
   keyToProperty: IModelDefinition<T>,
   //keyToProperty: IModelDefinition2<T>,
-  options?: OptionalModelOptions,
+  options?: OptionalModelOptions
 ) => {
   /*
    * This non-functional approach is specifically used to
@@ -57,7 +60,7 @@ const Model = <T extends FunctionalModel>(
    * throughout instance methods.
    */
   // eslint-disable-next-line functional/no-let
-  let model : Nullable<IModel<T>> = null
+  let model: Nullable<IModel<T>> = null
   const theOptions = _convertOptions(options)
   keyToProperty = !keyToProperty.getPrimaryKey
     ? _createModelDefWithPrimaryKey(keyToProperty)
@@ -65,18 +68,22 @@ const Model = <T extends FunctionalModel>(
 
   // @ts-ignore
   const getPrimaryKeyName = () => keyToProperty.getPrimaryKey()
-  // @ts-ignore
-  const getPrimaryKey = (t : CreateInstanceInput<T>) => t[getPrimaryKeyName()] as string
+  const getPrimaryKey = (t: CreateInstanceInput<T>) =>
+    // @ts-ignore
+    t[getPrimaryKeyName()] as string
 
-  // @ts-ignore
-    //keyToProperty.getPrimaryKey = () => UniqueId({ required: true })
-  //[theOptions.primaryKey]: theOptions.getPrimaryKeyProperty(),
-
-  const create = (instanceValues : CreateInstanceInput<T>) => {
+  const create = (instanceValues: CreateInstanceInput<T>) => {
     // eslint-disable-next-line functional/no-let
-    let instance : Nullable<IModelInstance<T>> = null
-    const startingInternals: { readonly get: Getters<T> & { readonly id: () => string}, readonly validators: IPropertyValidators, readonly references: ReferenceFunctions} =
-      {get: {} as Getters<T> & { readonly id: () => string}, validators: {}, references: {}}
+    let instance: Nullable<IModelInstance<T>> = null
+    const startingInternals: {
+      readonly get: Getters<T> & { readonly id: () => string }
+      readonly validators: IPropertyValidators
+      readonly references: ReferenceFunctions
+    } = {
+      get: {} as Getters<T> & { readonly id: () => string },
+      validators: {},
+      references: {},
+    }
     const loadedInternals = Object.entries(keyToProperty.properties).reduce(
       (acc, [key, property]) => {
         // @ts-ignore
@@ -94,45 +101,50 @@ const Model = <T extends FunctionalModel>(
         const asReferenced = property as IReferenceProperty<any>
         const referencedProperty = asReferenced.getReferencedId
           ? {
-            references: {
-              // @ts-ignore
-              [key]: () => asReferenced.getReferencedId(instanceValues[key] as ReferenceValueType<any>)
+              references: {
+                [key]: () =>
+                  asReferenced.getReferencedId(
+                    // @ts-ignore
+                    instanceValues[key] as ReferenceValueType<any>
+                  ),
+              },
             }
-          }
           : {}
 
         return merge(acc, fleshedOutInstanceProperties, referencedProperty)
       },
       startingInternals
     )
-    const methods = Object.entries(
-      keyToProperty.instanceMethods || {}
-    ).reduce((acc, [key, func]) => {
-      return merge(acc, {
-        [key]: (...args: readonly any[]) => {
-          return (func as IModelInstanceMethodTyped<T>)(instance as IModelInstance<T>, ...args)
-        },
-      })
-    }, {}) as InterfaceMethodGetters<T>
+    const methods = Object.entries(keyToProperty.instanceMethods || {}).reduce(
+      (acc, [key, func]) => {
+        return merge(acc, {
+          [key]: (...args: readonly any[]) => {
+            return (func as IModelInstanceMethodTyped<T>)(
+              instance as IModelInstance<T>,
+              ...args
+            )
+          },
+        })
+      },
+      {}
+    ) as InterfaceMethodGetters<T>
 
     const getModel = () => model as IModel<T>
     const toObj = toJsonAble(loadedInternals.get)
-    const validate = (options={}) => {
+    const validate = (options = {}) => {
       return createModelValidator(
         loadedInternals.validators,
-        keyToProperty.modelValidators || [],
+        keyToProperty.modelValidators || []
       )(instance as IModelInstance<T>, options)
     }
 
-    instance = merge(
-      loadedInternals, {
-        getModel,
-        toObj,
-        getPrimaryKey: () => getPrimaryKey(instanceValues),
-        validate,
-        methods,
-      }
-    )
+    instance = merge(loadedInternals, {
+      getModel,
+      toObj,
+      getPrimaryKey: () => getPrimaryKey(instanceValues),
+      validate,
+      methods,
+    })
 
     if (theOptions.instanceCreatedCallback) {
       const toCall = Array.isArray(theOptions.instanceCreatedCallback)
@@ -145,30 +157,27 @@ const Model = <T extends FunctionalModel>(
 
   const fleshedOutModelFunctions = Object.entries(
     keyToProperty.modelMethods || {}
-  ).reduce(
-    (acc, [key, func]) => {
-      return merge(acc, {
-        [key]: (...args: readonly any[]) => {
-          return (func as IModelMethodTyped<T>)(model as IModel<T>, ...args)
-        },
-      })
-    },
-    {}
-  ) as ModelMethodGetters<T>
-
+  ).reduce((acc, [key, func]) => {
+    return merge(acc, {
+      [key]: (...args: readonly any[]) => {
+        return (func as IModelMethodTyped<T>)(model as IModel<T>, ...args)
+      },
+    })
+  }, {}) as ModelMethodGetters<T>
 
   // This sets the model that is used by the instances later.
-  model = merge({}, {
-    create,
-    getName: () => modelName,
-    getModelDefinition: () => keyToProperty,
-    getPrimaryKeyName,
-    getPrimaryKey,
-    methods: fleshedOutModelFunctions,
-  })
+  model = merge(
+    {},
+    {
+      create,
+      getName: () => modelName,
+      getModelDefinition: () => keyToProperty,
+      getPrimaryKeyName,
+      getPrimaryKey,
+      methods: fleshedOutModelFunctions,
+    }
+  )
   return model as IModel<T>
 }
 
-export {
-  Model,
-}
+export { Model }

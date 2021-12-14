@@ -12,6 +12,4 @@ enum PROPERTY_TYPES {
   BooleanProperty = 'BooleanProperty',
 }
 
-export {
-  PROPERTY_TYPES,
-}
+export { PROPERTY_TYPES }

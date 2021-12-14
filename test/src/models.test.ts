@@ -7,8 +7,9 @@ import {
   IModelInstanceMethod,
   IModelInstance,
   IModelInstanceMethodTyped,
-  Arrayable, FunctionalType
-} from "../../src/interfaces"
+  Arrayable,
+  FunctionalType,
+} from '../../src/interfaces'
 
 import _ from 'lodash'
 import sinon from 'sinon'
@@ -16,10 +17,10 @@ import { assert } from 'chai'
 import { Model } from '../../src/models'
 import { Property, TextProperty, ReferenceProperty } from '../../src/properties'
 import { InstanceMethod, ModelMethod } from '../../src/methods'
-import {UniqueId} from "../../src/properties"
+import { UniqueId } from '../../src/properties'
 
 type TEST_MODEL_TYPE = {
-  name: string,
+  name: string
 }
 
 const TEST_MODEL_1 = Model<TEST_MODEL_TYPE>('MyModel', {
@@ -32,33 +33,30 @@ describe('/src/models.ts', () => {
   describe('#Model()', () => {
     it('should pass a functional instance to the instanceMethods by the time the function is called by a client', () => {
       const model = Model<{
-        name: string,
-        func1: IModelInstanceMethod,
-        func2: IModelInstanceMethod,
-      }>(
-        'ModelName',
-        {
-          properties: {
-            name: TextProperty(),
+        name: string
+        func1: IModelInstanceMethod
+        func2: IModelInstanceMethod
+      }>('ModelName', {
+        properties: {
+          name: TextProperty(),
+        },
+        instanceMethods: {
+          func1: InstanceMethod((instance: IModelInstance<any>) => {
+            // @ts-ignore
+            return instance.methods.func2()
+          }),
+          func2: (instance: IModelInstance<any>) => {
+            return 'from instance func2'
           },
-          instanceMethods: {
-            func1: InstanceMethod((instance: IModelInstance<any>) => {
-              // @ts-ignore
-              return instance.methods.func2()
-            }),
-            func2: (instance: IModelInstance<any>) => {
-              return 'from instance func2'
-            },
-          }
-        }
-      )
-      const instance = model.create({ name: 'name'})
+        },
+      })
+      const instance = model.create({ name: 'name' })
       const actual = instance.methods.func1()
       const expected = 'from instance func2'
       assert.deepEqual(actual, expected)
     })
     it('should pass the clients arguments before the model is passed', () => {
-      const model = Model<{ func1: IModelMethod, func2: IModelMethod}>(
+      const model = Model<{ func1: IModelMethod; func2: IModelMethod }>(
         'ModelName',
         {
           properties: {},
@@ -77,7 +75,7 @@ describe('/src/models.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should pass a functional model to the modelFunction by the time the function is called by a client', () => {
-      const model = Model<{ func1: IModelMethod, func2: IModelMethod}>(
+      const model = Model<{ func1: IModelMethod; func2: IModelMethod }>(
         'ModelName',
         {
           properties: {},
@@ -96,86 +94,70 @@ describe('/src/models.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should find model.myString when modelExtension has myString function in it', () => {
-      const model = Model<{ myString: IModelMethod}>(
-        'ModelName',
-        {
+      const model = Model<{ myString: IModelMethod }>('ModelName', {
+        properties: {},
+        modelMethods: {
+          myString: model => {
+            return 'To String'
+          },
+        },
+      })
+      assert.isFunction(model.methods.myString)
+    })
+    describe('#getPrimaryKeyName()', () => {
+      it('should return "primaryKey" when this value is passed in as the primaryKey', () => {
+        const expected = 'primaryKey'
+        const model = Model<{ myString: IModelMethod }>('ModelName', {
+          getPrimaryKey: () => expected,
           properties: {},
           modelMethods: {
             myString: model => {
               return 'To String'
             },
           },
-        }
-      )
-      assert.isFunction(model.methods.myString)
-    })
-    describe('#getPrimaryKeyName()', () => {
-      it('should return "primaryKey" when this value is passed in as the primaryKey', () => {
-        const expected = 'primaryKey'
-        const model = Model<{myString: IModelMethod}>(
-          'ModelName',
-          {
-            getPrimaryKey: () => expected,
-            properties: {},
-            modelMethods: {
-              myString: model => {
-                return 'To String'
-              },
-            },
-          }
-        )
+        })
         const actual = model.getPrimaryKeyName()
         assert.equal(actual, expected)
       })
     })
     describe('#create()', () => {
       it('should have a references.theReference when properties has a ReferenceProperty named "theReference"', () => {
-        const model = Model<{theReference?: ReferenceValueType<TEST_MODEL_TYPE>}>(
-          'ModelName',
-          {
-            properties: {
-              theReference: ReferenceProperty(TEST_MODEL_1),
-            }
+        const model = Model<{
+          theReference?: ReferenceValueType<TEST_MODEL_TYPE>
+        }>('ModelName', {
+          properties: {
+            theReference: ReferenceProperty(TEST_MODEL_1),
           },
-        )
+        })
         const instance = model.create({})
         assert.isFunction(instance.references.theReference)
       })
       it('should have an "get.id" field when no primaryKey is passed', () => {
-        const model = Model<{}>(
-          'ModelName',
-          {
-            properties: {},
-          }
-        )
+        const model = Model<{}>('ModelName', {
+          properties: {},
+        })
         const instance = model.create({})
         assert.isFunction(instance.get.id)
       })
       it('should have an "getMyPrimaryKeyId" field when "myPrimaryKeyId" is passed as the "getPrimaryKey" is passed', () => {
-        const model = Model<{myPrimaryKeyId: string}>(
-          'ModelName',
-          {
-            getPrimaryKey: () => 'myPrimaryKeyId',
-            properties: {
-              myPrimaryKeyId: UniqueId(),
-            },
-          }
-        )
-        const instance = model.create({myPrimaryKeyId: 'blah'})
+        const model = Model<{ myPrimaryKeyId: string }>('ModelName', {
+          getPrimaryKey: () => 'myPrimaryKeyId',
+          properties: {
+            myPrimaryKeyId: UniqueId(),
+          },
+        })
+        const instance = model.create({ myPrimaryKeyId: 'blah' })
         assert.isFunction(instance.get.myPrimaryKeyId)
       })
       it('should find instance.methods.toString when in instanceMethods', () => {
-        const model = Model<{toString: IModelInstanceMethod}>(
-          'ModelName',
-          {
-            properties: {},
-            instanceMethods: {
-              toString: instance => {
-                return 'An instance'
-              },
+        const model = Model<{ toString: IModelInstanceMethod }>('ModelName', {
+          properties: {},
+          instanceMethods: {
+            toString: instance => {
+              return 'An instance'
             },
-          }
-        )
+          },
+        })
         const instance = model.create({})
         assert.isFunction(instance.methods.toString)
       })
@@ -183,7 +165,7 @@ describe('/src/models.ts', () => {
         const input = {
           properties: {
             myProperty: TextProperty({ required: true }),
-          }
+          },
         }
         const callbacks = [sinon.stub(), sinon.stub()]
         const model = Model('name', input, {
@@ -198,7 +180,7 @@ describe('/src/models.ts', () => {
         const input = {
           properties: {
             myProperty: TextProperty({ required: true }),
-          }
+          },
         }
         const callback = sinon.stub()
         const model = Model('name', input, {
@@ -211,7 +193,7 @@ describe('/src/models.ts', () => {
         const input = {
           properties: {
             myProperty: TextProperty({ required: true }),
-          }
+          },
         }
         const model = Model('name', input)
         assert.doesNotThrow(() => {
@@ -219,16 +201,17 @@ describe('/src/models.ts', () => {
         })
       })
       it('should return an object that contains getModel().getModelDefinition().properties.myProperty', () => {
-        type MyType = {myProperty: string}
-        const input : IModelDefinition<MyType> = {
+        type MyType = { myProperty: string }
+        const input: IModelDefinition<MyType> = {
           properties: {
-            myProperty: TextProperty({required: true})
-          }
+            myProperty: TextProperty({ required: true }),
+          },
         }
 
         const model = Model<MyType>('name', input)
         const instance = model.create({ myProperty: 'value' })
-        const actual = instance.getModel().getModelDefinition().properties.myProperty
+        const actual = instance.getModel().getModelDefinition()
+          .properties.myProperty
         assert.isOk(actual)
       })
       it('should flow through the additional special functions within the keyValues', () => {
@@ -240,7 +223,10 @@ describe('/src/models.ts', () => {
             custom: () => 'works',
           },
         }
-        const model = Model<{myProperty: string, custom: IModelInstanceMethod}>('name', input)
+        const model = Model<{
+          myProperty: string
+          custom: IModelInstanceMethod
+        }>('name', input)
         const instance = model.create({ myProperty: 'value' })
         const actual = instance.methods.custom()
         const expected = 'works'
@@ -250,7 +236,7 @@ describe('/src/models.ts', () => {
         const input = {
           properties: {
             myProperty: TextProperty({ required: true }),
-          }
+          },
         }
         const model = Model('test-the-name', input)
         const instance = model.create({ myProperty: 'value' })
@@ -262,9 +248,9 @@ describe('/src/models.ts', () => {
         const input = {
           properties: {
             myProperty: TextProperty({ required: true }),
-          }
+          },
         }
-        const model = Model<{myProperty: string}>('name', input)
+        const model = Model<{ myProperty: string }>('name', input)
         const instance = model.create({ myProperty: 'passed-in' })
         const actual = instance.get.myProperty()
         const expected = 'passed-in'
@@ -277,7 +263,7 @@ describe('/src/models.ts', () => {
               value: 'value',
               defaultValue: 'default-value',
             }),
-          }
+          },
         }
         const model = Model('name', input)
         const instance = model.create({ myProperty: 'passed-in' })
@@ -289,9 +275,9 @@ describe('/src/models.ts', () => {
         const input = {
           properties: {
             myProperty: Property('MyProperty', { value: 'value' }),
-          }
+          },
         }
-        const model = Model<{myProperty: string}>('name', input)
+        const model = Model<{ myProperty: string }>('name', input)
         const instance = model.create({ myProperty: 'passed-in' })
         const actual = instance.get.myProperty()
         const expected = 'value'
@@ -300,10 +286,12 @@ describe('/src/models.ts', () => {
       it('should use the value for Property.defaultValue when Property.value is not set and no value is passed in', async () => {
         const input = {
           properties: {
-            myProperty: Property('MyProperty', { defaultValue: 'defaultValue' }),
-          }
+            myProperty: Property('MyProperty', {
+              defaultValue: 'defaultValue',
+            }),
+          },
         }
-        const model = Model<{myProperty: string}>('name', input)
+        const model = Model<{ myProperty: string }>('name', input)
         // @ts-ignore
         const instance = model.create({})
         const actual = instance.get.myProperty()
@@ -313,8 +301,10 @@ describe('/src/models.ts', () => {
       it('should use the value for Property.defaultValue when Property.value is not set and null is passed as a value', async () => {
         const input = {
           properties: {
-            myProperty: Property('MyProperty', { defaultValue: 'defaultValue' }),
-          }
+            myProperty: Property('MyProperty', {
+              defaultValue: 'defaultValue',
+            }),
+          },
         }
         const model = Model('name', input)
         const instance = model.create({ myProperty: null })
@@ -327,7 +317,7 @@ describe('/src/models.ts', () => {
           properties: {
             id: UniqueId({ required: true }),
             type: Property('MyProperty', {}),
-          }
+          },
         }
         const model = Model('name', input)
         const actual = model.create({ id: 'my-id', type: 'my-type' })
@@ -340,7 +330,7 @@ describe('/src/models.ts', () => {
           properties: {
             id: Property<string>('myid', {}),
             type: Property('MyProperty', {}),
-          }
+          },
         }
         const model = Model('name', input)
         const instance = model.create({ id: expected, type: 'my-type' })
@@ -352,7 +342,7 @@ describe('/src/models.ts', () => {
         const input = {
           properties: {
             type: Property('MyProperty', {}),
-          }
+          },
         }
         const model = Model('name', input)
         const instance = model.create({ id: expected, type: 'my-type' })
@@ -365,7 +355,7 @@ describe('/src/models.ts', () => {
           properties: {
             id: Property<string>('MyId', { required: true }),
             type: Property('MyProperty', {}),
-          }
+          },
         }
         const model = Model('name', input)
         const instance = model.create({ type: 'my-type' })
@@ -377,8 +367,8 @@ describe('/src/models.ts', () => {
         const input = {
           properties: {
             id: Property<string>('MyProperty', { required: true }),
-            text: TextProperty({required: true}),
-          }
+            text: TextProperty({ required: true }),
+          },
         }
         const model = Model('name', input)
         const instance = model.create({ id: 'my-id' })
@@ -388,19 +378,18 @@ describe('/src/models.ts', () => {
       })
     })
     it('should return an object with a function "create" when called once with valid data', () => {
-      const actual = Model<{}>('name', {properties: {}})
+      const actual = Model<{}>('name', { properties: {} })
       assert.isFunction(actual.create)
     })
     describe('#references.getMyReferencedId()', () => {
       it('should return the id from the ReferenceProperty', () => {
-        const model = Model<{myReference: ReferenceValueType<TEST_MODEL_TYPE>}>(
-          'ModelName',
-          {
-            properties: {
-              myReference: ReferenceProperty(TEST_MODEL_1),
-            }
+        const model = Model<{
+          myReference: ReferenceValueType<TEST_MODEL_TYPE>
+        }>('ModelName', {
+          properties: {
+            myReference: ReferenceProperty(TEST_MODEL_1),
           },
-        )
+        })
         const instance = model.create({ myReference: 'unit-test-id' })
         const actual = instance.references.myReference()
         const expected = 'unit-test-id'
@@ -409,23 +398,17 @@ describe('/src/models.ts', () => {
     })
     describe('#getPrimaryKey()', () => {
       it('should return the id field when no primaryKey is passed', async () => {
-        const model = Model(
-          'ModelName',
-          {properties: {}},
-        )
+        const model = Model('ModelName', { properties: {} })
         const expected = 'my-primary-key'
         const instance = model.create({ id: expected })
         const actual = await instance.getPrimaryKey()
         assert.equal(actual, expected)
       })
       it('should return the primaryKey field when "primaryKey" is passed as primaryKey', async () => {
-        const model = Model(
-          'ModelName',
-          {
-            getPrimaryKey: () => 'primaryKey',
-            properties: {},
-          },
-        )
+        const model = Model('ModelName', {
+          getPrimaryKey: () => 'primaryKey',
+          properties: {},
+        })
         const expected = 'my-primary-key'
         const instance = model.create({ primaryKey: expected })
         const actual = await instance.getPrimaryKey()

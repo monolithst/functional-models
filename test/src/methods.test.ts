@@ -4,7 +4,7 @@ import { Model } from '../../src/models'
 import { TextProperty, Property } from '../../src/properties'
 import { InstanceMethod } from '../../src/methods'
 
-type TEST_MODEL_TYPE = { text: string}
+type TEST_MODEL_TYPE = { text: string }
 
 describe('/src/methods.js', () => {
   describe('#InstanceMethod()', () => {
@@ -14,8 +14,10 @@ describe('/src/methods.js', () => {
       })
       const myInstanceMethod = InstanceMethod<TEST_MODEL_TYPE>(method)
       const wrappedObj = 'Hello'
-      const model = Model<TEST_MODEL_TYPE>('Test', {properties:{ text: TextProperty()}})
-      const modelInstance = model.create({text: 'Hello'})
+      const model = Model<TEST_MODEL_TYPE>('Test', {
+        properties: { text: TextProperty() },
+      })
+      const modelInstance = model.create({ text: 'Hello' })
       const actual = myInstanceMethod(modelInstance)
       const expected = 'Hello-world'
       assert.equal(actual, expected)
@@ -25,8 +27,10 @@ describe('/src/methods.js', () => {
         return `${input}-world`
       })
       const myInstanceMethod = InstanceMethod<TEST_MODEL_TYPE>(method)
-      const model = Model<TEST_MODEL_TYPE>('Test', {properties:{ text: TextProperty()}})
-      const modelInstance = model.create({text: 'Hello'})
+      const model = Model<TEST_MODEL_TYPE>('Test', {
+        properties: { text: TextProperty() },
+      })
+      const modelInstance = model.create({ text: 'Hello' })
       const actual = myInstanceMethod(modelInstance)
       sinon.assert.calledOnce(method)
     })
