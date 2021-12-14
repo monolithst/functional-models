@@ -6,7 +6,7 @@ import { InstanceMethod } from '../../src/methods'
 
 type TEST_MODEL_TYPE = { text: string}
 
-describe('/src/functions.js', () => {
+describe('/src/methods.js', () => {
   describe('#InstanceMethod()', () => {
     it('should return "Hello-world" when passed in', () => {
       const method = sinon.stub().callsFake(input => {

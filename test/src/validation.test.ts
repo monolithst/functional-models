@@ -244,10 +244,6 @@ describe('/src/validation.ts', () => {
     })
   })
   describe('#maxTextLength()', () => {
-    it('should return error if max=5 and value=5', () => {
-      const actual = maxTextLength(5)('5', EMPTY_MODEL_INSTANCE, {})
-      assert.isOk(actual)
-    })
     it('should return error if length=5 and value="hello world"', () => {
       const actual = maxTextLength(5)('hello world', EMPTY_MODEL_INSTANCE, {})
       assert.isOk(actual)
@@ -332,7 +328,8 @@ describe('/src/validation.ts', () => {
         name: sinon.stub().returns(undefined),
       }
       const validator = createModelValidator(properties, [modelValidator])
-      assert.isRejected(validator(EMPTY_MODEL_INSTANCE, {}))
+      // @ts-ignore
+      assert.isRejected(validator(undefined, {}))
     })
     it('should call the model validator passed in', async () => {
       const modelValidator = sinon.stub().returns(undefined)
@@ -458,10 +455,10 @@ describe('/src/validation.ts', () => {
       await validator(instance, {})
       sinon.assert.called(properties.model)
     })
-    it('should combine results for both functions.validators for two objects that error', async () => {
+    it('should combine results for both validators for two objects that error', async () => {
       const properties = {
-        id: sinon.stub().returns('error1'),
-        type: sinon.stub().returns('error2'),
+        id: sinon.stub().returns(['error1']),
+        type: sinon.stub().returns(['error2']),
       }
       const validator = createModelValidator(properties)
       const testModel3 = Model('Model', { properties: {}})
@@ -479,7 +476,7 @@ describe('/src/validation.ts', () => {
     it('should take the error of the one of two functions', async () => {
       const properties = {
         id: sinon.stub().returns(undefined),
-        type: sinon.stub().returns('error2'),
+        type: sinon.stub().returns(['error2']),
       }
       const validator = createModelValidator(properties)
       const testModel3 = Model('Model', { properties: {}})
@@ -495,6 +492,13 @@ describe('/src/validation.ts', () => {
     })
   })
   describe('#createPropertyValidator()', () => {
+    it('should accept unhandled configurations without exception', async () => {
+      // @ts-ignore
+      const validator = createPropertyValidator(() => null, { notarealarg: false })
+      const actual = await validator(EMPTY_MODEL_INSTANCE, {})
+      const expected : readonly string[]= []
+      assert.deepEqual(actual, expected)
+    })
     it('should not include isRequired if required=false, returning []', async () => {
       const validator = createPropertyValidator(() => null, { required: false })
       // @ts-ignore

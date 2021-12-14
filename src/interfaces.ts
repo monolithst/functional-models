@@ -5,7 +5,7 @@ type ValueIsOfType<T,V> = {
 }
 
 type ValueIsNotOfType<T,V> = {
-  readonly [ P in keyof T as T[P] extends V ? never : P ] : T[P]
+  readonly [ P in keyof T as T[P] extends V ? never : P] : T[P]
 }
 
 type InterfaceMethodGetters<T> = {
@@ -50,10 +50,11 @@ type FunctionalObj = {
     Arrayable<null> |
     Arrayable<FunctionalObj> |
     Arrayable<Date> |
-    undefined,
-}
+    undefined
+} | JsonAble
 
-type FunctionalType = (() => FunctionalType) |
+type FunctionalType =
+  (() => FunctionalType) |
   Arrayable<Nullable<number>> |
   Arrayable<Nullable<string>> |
   Arrayable<boolean> |
@@ -61,22 +62,23 @@ type FunctionalType = (() => FunctionalType) |
   Arrayable<undefined> |
   Arrayable<FunctionalObj> |
   Arrayable<Date> |
-  Arrayable<FunctionalModel>
+  Arrayable<FunctionalModel> |
+  Arrayable<{ readonly [s: string] : JsonAble }>
 
-interface IPropertyValidatorComponentTypeAdvanced<TValue, TModel extends FunctionalObj|FunctionalModel> {
-  (value: TValue, instance: IModelInstance<TModel>, instanceData: TModel): string | undefined
-}
+type JsonAble =
+  number |
+  string |
+  boolean |
+  null |
+  Arrayable<{ readonly [s: string] : JsonAble }>
 
-interface IPropertyValidatorComponentType<TValue> {
-  (value: TValue, instance: IModelInstance<any>, instanceData: FunctionalObj): string | undefined
-}
+type IPropertyValidatorComponentTypeAdvanced<TValue, TModel extends FunctionalModel> = (value: TValue, instance: IModelInstance<TModel>, instanceData: FunctionalObj) => string | undefined
 
-interface IPropertyValidatorComponentSync extends IPropertyValidatorComponentTypeAdvanced<any, any> {
-}
+type IPropertyValidatorComponentType<TValue> = (value: TValue, instance: IModelInstance<any>, instanceData: FunctionalObj) => string | undefined
 
-interface IPropertyValidatorComponentAsync {
-  (value: Arrayable<FunctionalType>, instance: IModelInstance<any>, instanceData: FunctionalObj): Promise<string | undefined>
-}
+type IPropertyValidatorComponentSync = IPropertyValidatorComponentType<any>
+
+type IPropertyValidatorComponentAsync = (value: Arrayable<FunctionalType>, instance: IModelInstance<any>, instanceData: FunctionalObj) => Promise<string | undefined>
 
 type IPropertyValidatorComponent = IPropertyValidatorComponentSync | IPropertyValidatorComponentAsync
 
@@ -84,21 +86,15 @@ type ValidationError = string|undefined
 type ValidationErrors = readonly ValidationError[]
 
 
-interface IPropertyValidator {
-  (instance: IModelInstance<any>, instanceData: FunctionalObj, options?: object): Promise<ValidationErrors>
-}
+type IPropertyValidator = (instance: IModelInstance<any>, instanceData: FunctionalObj) => Promise<ValidationErrors>
 
-interface IModelErrors {
+type IModelErrors = {
   readonly [s: string]: readonly string[]
 }
 
-interface IModelComponentValidator {
-  (instance: IModelInstance<any>, instanceData: FunctionalObj, options?: object): Promise<ValidationErrors>
-}
+type IModelComponentValidator = (instance: IModelInstance<any>, instanceData: FunctionalObj, options?: object) => Promise<ValidationErrors>
 
-interface IModelValidator {
-  (instance: IModelInstance<any>, instanceData: FunctionalObj, options?: object): Promise<IModelErrors>
-}
+type IModelValidator = (instance: IModelInstance<any>, instanceData: FunctionalObj, options?: object) => Promise<IModelErrors>
 
 type IValueGetter = () => MaybePromise<Arrayable<FunctionalType>>|MaybePromise<IModelInstance<any>>
 
@@ -180,11 +176,13 @@ type IPropertyValidators = {
   readonly [s: string]: IPropertyValidator
 }
 
+type IToObj = () => Promise<JsonAble>
+
 type IModelInstance<T extends FunctionalModel> = {
   readonly get: Getters<T> & { readonly id: () => PrimaryKeyType|Promise<PrimaryKeyType>},
   readonly methods: InterfaceMethodGetters<T>,
   readonly references: ReferenceFunctions,
-  readonly toObj: () => Promise<FunctionalObj>,
+  readonly toObj: IToObj,
   readonly getPrimaryKey: () => string,
   readonly validators: IPropertyValidators,
   readonly validate: (options?: {}) => Promise<IModelErrors>,
@@ -197,7 +195,7 @@ type IModelMethodClient = (...args: readonly any[]) => any
 type IModelInstanceMethodTyped<T extends FunctionalModel> = (instance: IModelInstance<T>, args?: readonly any[]) => any
 type IModelInstanceMethod = IModelInstanceMethodTyped<any>
 type IModelInstanceMethodClient = (...args: readonly any[]) => any
-type IModelInstanceList<T extends FunctionalObj> = {
+type IModelInstanceList<T extends FunctionalModel> = {
   readonly [s: string]: IModelInstanceMethodTyped<T>
 }
 
@@ -248,5 +246,7 @@ export {
   InterfaceMethodGetters,
   ReferenceFunctions,
   IModelErrors,
+  JsonAble,
+  IToObj,
 }
 /* eslint-enable no-unused-vars */

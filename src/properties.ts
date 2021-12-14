@@ -103,8 +103,8 @@ function Property<T extends Arrayable<FunctionalType>>(type: string, config : IP
     },
     getValidator: valueGetter => {
       const validator = createPropertyValidator(valueGetter, config)
-      const _propertyValidatorWrapper : IPropertyValidator = async (instance, instanceData, options={}) => {
-        return validator(instance, instanceData, options)
+      const _propertyValidatorWrapper : IPropertyValidator = async (instance, instanceData) => {
+        return validator(instance, instanceData)
       }
       return _propertyValidatorWrapper
     },
@@ -154,7 +154,8 @@ const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IMode
     const theModel = _getModel()
     const primaryKey = theModel.getPrimaryKeyName()
 
-    const id = (instanceValues as FunctionalObj)[primaryKey]
+    // @ts-ignore
+    const id = (instanceValues as CreateInstanceInput<T>)[primaryKey]
     if (typeof id === 'string') {
       return id
     }
@@ -162,9 +163,7 @@ const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IMode
   }
 
   const lazyLoadMethod = async (instanceValues: ReferenceValueType<T>) => {
-
     const valueIsModelInstance = instanceValues && (instanceValues as IModelInstance<T>).getPrimaryKey
-
     const _getInstanceReturn = (objToUse: ReferenceValueType<T>) => {
       // We need to determine if the object we just go is an actual model instance to determine if we need to make one.
       const objIsModelInstance = instanceValues && (instanceValues as IModelInstance<T>).getPrimaryKey
@@ -173,9 +172,7 @@ const ReferenceProperty = <T extends FunctionalModel>(model: MaybeFunction<IMode
         ? objToUse
         : _getModel().create(objToUse as CreateInstanceInput<T>)
       return merge({}, instance, {
-        functions: {
-          toObj: _getId(instanceValues),
-        },
+        toObj: _getId(instanceValues),
       })
     }
 

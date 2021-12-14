@@ -1,6 +1,7 @@
-import { FunctionalType, Getters } from './interfaces'
+import merge from 'lodash/merge'
+import { Getters, JsonAble, IToObj } from './interfaces'
 
-const _getValue = async (value: any) : Promise<FunctionalType> => {
+const _getValue = async (value: any) : Promise<JsonAble> => {
   if (value === undefined) {
     return null
   }
@@ -25,11 +26,11 @@ const _getValue = async (value: any) : Promise<FunctionalType> => {
   return value
 }
 
-const toJsonAble = (keyToFunc: Getters<any>) => async () => {
+const toJsonAble = (keyToFunc: Getters<any>) : IToObj => async () => {
   return Object.entries(keyToFunc).reduce(async (acc, [key, value]) => {
     const realAcc = await acc
     const trueValue = await _getValue(await value)
-    return { ...realAcc, [key]: trueValue }
+    return merge(realAcc, { [key]: trueValue })
   }, Promise.resolve({}))
 }
 

@@ -5,7 +5,6 @@ import {
   FunctionalModel,
   IModelInstance,
   IModel,
-  IModelValidator,
   IModelComponentValidator,
   IPropertyValidatorComponent,
   IPropertyValidatorComponentType,
@@ -18,7 +17,7 @@ import {
   MaybeFunction,
   IPropertyValidators, IValueGetter,
   Arrayable,
-  FunctionalType,
+  FunctionalType, IModelErrors,
 } from './interfaces'
 
 const TYPE_PRIMATIVES = {
@@ -81,7 +80,7 @@ const arrayType = (type: string) : IPropertyValidatorComponentSync => (value: Ar
   }, undefined)
 }
 
-const multiplePropertiesMustMatch = <T extends FunctionalObj>(
+const multiplePropertiesMustMatch = <T extends FunctionalModel>(
   getKeyA: (instance: IModelInstance<T>) => string,
   getKeyB: (instance: IModelInstance<T>) => string,
   errorMessage: string='Properties do not match'
@@ -102,14 +101,14 @@ const meetsRegex =
     return _trueOrError((v: string) => reg.test(v), errorMessage)(value)
   }
 
-const choices = (choiceArray: readonly string[]) : IPropertyValidatorComponentSync => (value: Arrayable<FunctionalType>) => {
+const choices = (choiceArray: readonly FunctionalType[]) : IPropertyValidatorComponentSync => (value: Arrayable<FunctionalType>) => {
   if (Array.isArray(value)) {
-    const bad = value.find(v => !choiceArray.includes(String(v)))
+    const bad = value.find(v => !choiceArray.includes(v))
     if (bad) {
       return `${bad} is not a valid choice`
     }
   } else {
-    if (!choiceArray.includes(String(value))) {
+    if (!choiceArray.includes(value as FunctionalType)) {
       return `${value} is not a valid choice`
     }
   }
@@ -217,10 +216,10 @@ const aggregateValidator = (value: any, methodOrMethods: IPropertyValidatorCompo
     ? methodOrMethods
     : [methodOrMethods]
 
-  const _aggregativeValidator : IPropertyValidator = async (instance: IModelInstance<any>, data: Object) => {
+  const _aggregativeValidator : IPropertyValidator = async (instance: IModelInstance<any>, instanceData: FunctionalObj) => {
     const values = await Promise.all(
       toDo.map(method => {
-        return method(value, instance, data)
+        return method(value, instance, instanceData)
       })
     )
     return filterEmpty(values)
@@ -231,7 +230,9 @@ const aggregateValidator = (value: any, methodOrMethods: IPropertyValidatorCompo
 const emptyValidator : IPropertyValidatorComponentSync = () => undefined
 
 const _boolChoice = (method: (configValue: any) => IPropertyValidatorComponentSync) => (configValue: any) => {
-  const func = configValue ? method(configValue) : undefined
+  const func = configValue
+    ? method(configValue)
+    : undefined
   const validatorWrapper : IPropertyValidatorComponentSync = (value: any, modelInstance: IModelInstance<any>, modelData: FunctionalObj) => {
     if (!func){
       return undefined
@@ -242,11 +243,11 @@ const _boolChoice = (method: (configValue: any) => IPropertyValidatorComponentSy
 }
 
 type MethodConfigDict = {
-  readonly [s: string]: (config: any) => IPropertyValidatorComponentSync | undefined
+  readonly [s: string]: (config: any) => IPropertyValidatorComponentSync
 }
 
 const simpleFuncWrap = (validator: IPropertyValidatorComponentSync) => () => {
-    return validator
+  return validator
 }
 
 const CONFIG_TO_VALIDATE_METHOD : MethodConfigDict = {
@@ -260,16 +261,12 @@ const CONFIG_TO_VALIDATE_METHOD : MethodConfigDict = {
 }
 
 const createPropertyValidator = (valueGetter: IValueGetter, config: IPropertyConfig) : IPropertyValidator => {
-  const _propertyValidator : IPropertyValidator = async (instance, instanceData={}, options) => {
+  const _propertyValidator : IPropertyValidator = async (instance, instanceData: FunctionalObj) => {
     const validators : readonly IPropertyValidatorComponent[] = [
       ...Object.entries(config as {}).map(([key, value]) => {
         const method = CONFIG_TO_VALIDATE_METHOD[key]
         if (method) {
-          const validator = method(value)
-          if (validator === undefined) {
-            return emptyValidator
-          }
-          return validator
+          return method(value)
         }
         return emptyValidator
       }),
@@ -290,7 +287,7 @@ const createPropertyValidator = (valueGetter: IValueGetter, config: IPropertyCon
 }
 
 const createModelValidator = (validators: IPropertyValidators, modelValidators? : readonly IModelComponentValidator[]) => {
-  const _modelValidator : IModelValidator = async (instance, options) => {
+  const _modelValidator = async (instance: IModelInstance<any>, options: object) : Promise<IModelErrors> => {
     return Promise.resolve()
       .then(async () => {
         if (!instance) {
@@ -300,7 +297,7 @@ const createModelValidator = (validators: IPropertyValidators, modelValidators? 
         const instanceData = await instance.toObj()
         const propertyValidationErrors = await Promise.all(
           keysAndFunctions.map(async ([key, validator]) => {
-            return [key, await validator(instance, instanceData, options)]
+            return [key, await validator(instance, instanceData)]
           })
         )
         const modelValidationErrors = (
@@ -309,9 +306,9 @@ const createModelValidator = (validators: IPropertyValidators, modelValidators? 
           )
         ).filter(x => x)
         const propertyErrors = propertyValidationErrors
-          .filter(([_, errors]) => Boolean(errors) && errors.length > 0)
+          .filter(([, errors]) => Boolean(errors) && errors.length > 0)
           .reduce((acc, [key, errors]) => {
-            return { ...acc, [String(key)]: errors }
+            return merge(acc, {[String(key)]: errors })
           }, {})
         return modelValidationErrors.length > 0
           ? merge(propertyErrors, { overall: modelValidationErrors })
