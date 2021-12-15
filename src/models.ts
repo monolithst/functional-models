@@ -9,6 +9,7 @@ import {
   ModelDefinition,
   ModelInstance,
   ModelOptions,
+  ModelFactory,
   ReferenceFunctions,
   PropertyGetters,
   OptionalModelOptions,
@@ -46,7 +47,7 @@ const _createModelDefWithPrimaryKey = <T extends FunctionalModel>(
   }
 }
 
-const BaseModel = <T extends FunctionalModel>(
+const BaseModel : ModelFactory = <T extends FunctionalModel>(
   modelName: string,
   modelDefinition: ModelDefinition<T>,
   //keyToProperty: IModelDefinition2<T>,

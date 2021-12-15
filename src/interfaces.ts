@@ -218,6 +218,8 @@ type ModelDefinition<T extends FunctionalModel> = {
   readonly modelValidators?: readonly ModelComponentValidator[]
 }
 
+type ModelFactory = <T extends FunctionalModel>(modelName: string, modelDefinition: ModelDefinition<T>, options?: OptionalModelOptions) => Model<T>
+
 type Model<T extends FunctionalModel> = {
   readonly getName: () => string
   readonly getPrimaryKeyName: () => string
@@ -319,5 +321,6 @@ export {
   ModelErrors,
   MaybeEmpty,
   PrimaryKeyType,
+  ModelFactory,
 }
 /* eslint-enable no-unused-vars */
