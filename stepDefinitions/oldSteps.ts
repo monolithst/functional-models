@@ -1,72 +1,90 @@
-const assert = require('chai').assert
-const flatMap = require('lodash/flatMap')
-const { Given, When, Then } = require('@cucumber/cucumber')
-const {
-  Model,
+import { assert } from 'chai'
+import flatMap from 'lodash/flatMap'
+import { Given, When, Then } from '@cucumber/cucumber'
+import {
+  BaseModel,
   UniqueId,
   TextProperty,
-  Function,
   Property,
+  WrapperModelMethod,
+  WrapperInstanceMethod,
   ArrayProperty,
   validation,
-} = require('../index')
+} from '../src'
+import { ModelInstanceMethod, ModelMethod } from '../src/interfaces'
 
-const instanceToString = Function(modelInstance => {
+const instanceToString = WrapperInstanceMethod(modelInstance => {
   return `${modelInstance.getModel().getName()}-Instance`
 })
 
-const instanceToJson = Function(async modelInstance => {
-  return JSON.stringify(await modelInstance.functions.toObj())
+const instanceToJson = WrapperInstanceMethod(async modelInstance => {
+  return JSON.stringify(await modelInstance.toObj())
 })
 
-const modelToString = Function(model => {
-  return `${model.getName()}-[${Object.keys(model.getProperties()).join(',')}]`
+const modelToString = WrapperModelMethod(model => {
+  return `${model.getName()}-[${Object.keys(
+    model.getModelDefinition().properties
+  ).join(',')}]`
 })
 
-const modelWrapper = Function(model => {
+const modelWrapper = WrapperModelMethod(model => {
   return model
 })
 
 const MODEL_DEFINITIONS = {
-  FunctionModel1: Model(
-    'FunctionModel1',
-    {
+  FunctionModel1: BaseModel<{
+    name: string
+    modelWrapper: ModelMethod
+    toString: ModelInstanceMethod
+    toJson: ModelInstanceMethod
+  }>('FunctionModel1', {
+    properties: {
       id: UniqueId({ required: true }),
       name: TextProperty({ required: true }),
     },
+    modelMethods: {
+      modelWrapper,
+    },
+    instanceMethods: {
+      toString: instanceToString,
+      toJson: instanceToJson,
+    },
+  }),
+  TestModel1: BaseModel<{ name: string; type: string; flag: number }>(
+    'TestModel1',
     {
-      modelFunctions: {
-        modelWrapper,
-        toString: modelToString,
-      },
-      instanceFunctions: {
-        toString: instanceToString,
-        toJson: instanceToJson,
+      properties: {
+        name: Property('Text', { required: true }),
+        type: Property('Type', { required: true, isString: true }),
+        flag: Property('Flag', { required: true, isNumber: true }),
       },
     }
   ),
-  TestModel1: Model('TestModel1', {
-    name: Property({ required: true }),
-    type: Property({ required: true, isString: true }),
-    flag: Property({ required: true, isNumber: true }),
+  ArrayModel1: BaseModel<{ ArrayProperty: readonly number[] }>('ArrayModel1', {
+    properties: {
+      ArrayProperty: Property('Array', {
+        isArray: true,
+        validators: [validation.arrayType(validation.TYPE_PRIMITIVES.integer)],
+      }),
+    },
   }),
-  ArrayModel1: Model('ArrayModel1', {
-    ArrayProperty: Property({
-      isArray: true,
-      validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
-    }),
+  ArrayModel2: BaseModel('ArrayModel2', {
+    properties: {
+      ArrayProperty: Property('Array', { isArray: true }),
+    },
   }),
-  ArrayModel2: Model('ArrayModel2', {
-    ArrayProperty: Property({ isArray: true }),
+  ArrayModel3: BaseModel('ArrayModel3', {
+    properties: {
+      ArrayProperty: ArrayProperty({}),
+    },
   }),
-  ArrayModel3: Model('ArrayModel3', {
-    ArrayProperty: ArrayProperty({}),
-  }),
-  ArrayModel4: Model('ArrayModel4', {
-    ArrayProperty: ArrayProperty({
-      choices: [4, 5, 6],
-      validators: [validation.arrayType(validation.TYPE_PRIMATIVES.integer)],
-    }),
+  ArrayModel4: BaseModel('ArrayModel4', {
+    properties: {
+      ArrayProperty: ArrayProperty({
+        choices: [4, 5, 6],
+        validators: [validation.arrayType(validation.TYPE_PRIMITIVES.integer)],
+      }),
+    },
   }),
 }
 
@@ -106,15 +124,17 @@ const MODEL_INPUT_VALUES = {
 }
 
 const EXPECTED_FIELDS = {
-  TestModel1b: ['getName', 'getType', 'getFlag', 'meta', 'functions'],
+  TestModel1b: ['name', 'type', 'flag'],
 }
 
 Given(
   'the {word} has been created, with {word} inputs provided',
   function (modelDefinition, modelInputValues) {
+    // @ts-ignore
     const def = MODEL_DEFINITIONS[modelDefinition]
     this.model = def
 
+    // @ts-ignore
     const input = MODEL_INPUT_VALUES[modelInputValues]
     if (!def) {
       throw new Error(`${modelDefinition} did not result in a definition`)
@@ -127,7 +147,8 @@ Given(
 )
 
 When('functions.validate is called', function () {
-  return this.instance.functions.validate().then(x => {
+  // @ts-ignore
+  return this.instance.validate().then(x => {
     this.errors = x
   })
 })
@@ -141,6 +162,7 @@ Then('an array of {int} errors is shown', function (errorCount) {
 })
 
 Given('{word} model is used', function (modelDefinition) {
+  // @ts-ignore
   const def = MODEL_DEFINITIONS[modelDefinition]
   if (!def) {
     throw new Error(`${modelDefinition} did not result in a definition`)
@@ -150,6 +172,7 @@ Given('{word} model is used', function (modelDefinition) {
 })
 
 When('{word} data is inserted', function (modelInputValues) {
+  // @ts-ignore
   const input = MODEL_INPUT_VALUES[modelInputValues]
   if (!input) {
     throw new Error(`${modelInputValues} did not result in an input`)
@@ -158,36 +181,36 @@ When('{word} data is inserted', function (modelInputValues) {
 })
 
 Then('{word} expected property is found', function (properties) {
+  // @ts-ignore
   const propertyArray = EXPECTED_FIELDS[properties]
   if (!propertyArray) {
     throw new Error(`${properties} did not result in properties`)
   }
+  // @ts-ignore
   propertyArray.forEach(key => {
-    if (!(key in this.instance)) {
+    if (!(key in this.instance.get)) {
       throw new Error(`Did not find ${key} in model`)
     }
   })
 })
 
 Then('the {word} property is called on the model', function (property) {
-  return this.instance[property]().then(result => {
-    this.results = result
-  })
+  this.results = this.instance.get[property]()
 })
 
-Then('the array values match', function (table) {
+Then('the array values match', async function (table) {
   const expected = JSON.parse(table.rowsHash().array)
-  assert.deepEqual(this.results, expected)
+  assert.deepEqual(await this.results, expected)
 })
 
 Then('{word} property is found', function (propertyKey) {
-  assert.isFunction(this.instance[propertyKey])
+  assert.isFunction(this.instance.get[propertyKey])
 })
 
 Then('{word} instance function is found', function (instanceFunctionKey) {
-  assert.isFunction(this.instance.functions[instanceFunctionKey])
+  assert.isFunction(this.instance.methods[instanceFunctionKey])
 })
 
 Then('{word} model function is found', function (modelFunctionKey) {
-  assert.isFunction(this.model[modelFunctionKey])
+  assert.isFunction(this.model.methods[modelFunctionKey])
 })
