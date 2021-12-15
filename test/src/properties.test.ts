@@ -14,12 +14,12 @@ import {
   IntegerProperty,
   EmailProperty,
 } from '../../src/properties'
-import { TYPE_PRIMATIVES, arrayType } from '../../src/validation'
-import { Model } from '../../src/models'
-import { IModelInstance } from '../../src/interfaces'
+import { TYPE_PRIMITIVES, arrayType } from '../../src/validation'
+import { BaseModel } from '../../src/models'
+import { ModelInstance } from '../../src/interfaces'
 
 type TestModelType = { name: string }
-const TestModel1 = Model<TestModelType>('TestModel1', {
+const TestModel1 = BaseModel<TestModelType>('TestModel1', {
   properties: {
     name: TextProperty(),
   },
@@ -176,6 +176,7 @@ describe('/src/properties.ts', () => {
       })
       it('should return with errors with a non integer input', async () => {
         const PropertyInstance = NumberProperty({})
+        // @ts-ignore
         const getter = PropertyInstance.createGetter('string')
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -255,6 +256,7 @@ describe('/src/properties.ts', () => {
       })
       it('should return with errors with a non integer input', async () => {
         const PropertyInstance = IntegerProperty({})
+        // @ts-ignore
         const getter = PropertyInstance.createGetter('string')
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -408,7 +410,7 @@ describe('/src/properties.ts', () => {
       })
       it('should error an array passed in when it doesnt have the right types', async () => {
         const theProperty = ArrayProperty({
-          validators: [arrayType(TYPE_PRIMATIVES.integer)],
+          validators: [arrayType(TYPE_PRIMITIVES.integer)],
         })
         const getter = theProperty.createGetter([1, 'string', 3])
         const validator = theProperty.getValidator(getter)
@@ -667,7 +669,7 @@ describe('/src/properties.ts', () => {
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
         const actual = (await ReferenceProperty(TestModel1, {
           fetcher: async () => ({ id: 'obj-id', name: 'switch-a-roo' }),
-        }).createGetter('obj-id')()) as IModelInstance<TestModelType>
+        }).createGetter('obj-id')()) as ModelInstance<TestModelType>
         const expected = 'switch-a-roo'
         assert.deepEqual(actual.get.name(), expected)
       })
@@ -682,7 +684,7 @@ describe('/src/properties.ts', () => {
       it('should return null when fetcher is used, but the instance value passed in is empty', async () => {
         const actual = (await ReferenceProperty(TestModel1, {
           fetcher: async () => ({ id: 'obj-id', name: 'switch-a-roo' }),
-        }).createGetter(null)()) as IModelInstance<TestModelType>
+        }).createGetter(null)()) as ModelInstance<TestModelType>
         const expected = null
         assert.deepEqual(actual, expected)
       })
@@ -698,7 +700,7 @@ describe('/src/properties.ts', () => {
       })
       it('should take the smartObject as a value', async () => {
         const id = 'obj-id'
-        const proto = Model<TestModelType>('name', {
+        const proto = BaseModel<TestModelType>('name', {
           properties: {
             id: UniqueId({ value: id }),
             name: TextProperty({}),
@@ -708,14 +710,14 @@ describe('/src/properties.ts', () => {
         const instance = (await ReferenceProperty<TestModelType>(
           TestModel1,
           {}
-        ).createGetter(input)()) as IModelInstance<TestModelType>
+        ).createGetter(input)()) as ModelInstance<TestModelType>
         const actual = await instance.get.id()
         const expected = 'obj-id'
         assert.deepEqual(actual, expected)
       })
       describe('#toObj()', () => {
         it('should use the getId of the smartObject passed in when toObj is called', async () => {
-          const proto = Model<TestModelType>('name', {
+          const proto = BaseModel<TestModelType>('name', {
             properties: {
               id: UniqueId({ value: 'obj-id' }),
               name: TextProperty({}),
@@ -725,7 +727,7 @@ describe('/src/properties.ts', () => {
           const instance = (await ReferenceProperty<TestModelType>(
             TestModel1,
             {}
-          ).createGetter(input)()) as IModelInstance<{}>
+          ).createGetter(input)()) as ModelInstance<{}>
           const actual = await instance.toObj()
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)
@@ -735,7 +737,7 @@ describe('/src/properties.ts', () => {
           const instance = (await ReferenceProperty(TestModel1, {
             fetcher: () =>
               Promise.resolve({ id: 'obj-id', prop: 'switch-a-roo' }),
-          }).createGetter(input)()) as IModelInstance<{}>
+          }).createGetter(input)()) as ModelInstance<{}>
           const actual = await instance.toObj()
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)

@@ -1,16 +1,16 @@
 import {
-  IModelInstanceMethodTyped,
-  IModelInstance,
+  ModelInstanceMethodTyped,
+  ModelInstance,
   FunctionalModel,
-  IModel,
-  IModelMethodTyped,
+  Model,
+  ModelMethodTyped,
 } from './interfaces'
 
-const InstanceMethod = <T extends FunctionalModel>(
-  method: (instance: IModelInstance<T>, args?: readonly any[]) => any
+const WrapperInstanceMethod = <T extends FunctionalModel>(
+  method: (instance: ModelInstance<T>, args?: readonly any[]) => any
 ) => {
-  const r: IModelInstanceMethodTyped<T> = (
-    instance: IModelInstance<T>,
+  const r: ModelInstanceMethodTyped<T> = (
+    instance: ModelInstance<T>,
     ...args: readonly any[]
   ) => {
     return method(instance, ...args)
@@ -18,11 +18,11 @@ const InstanceMethod = <T extends FunctionalModel>(
   return r
 }
 
-const ModelMethod = <T extends FunctionalModel>(
-  method: (model: IModel<T>, args?: readonly any[]) => any
+const WrapperModelMethod = <T extends FunctionalModel>(
+  method: (model: Model<T>, args?: readonly any[]) => any
 ) => {
-  const r: IModelMethodTyped<T> = (
-    model: IModel<T>,
+  const r: ModelMethodTyped<T> = (
+    model: Model<T>,
     ...args: readonly any[]
   ) => {
     return method(model, ...args)
@@ -30,4 +30,4 @@ const ModelMethod = <T extends FunctionalModel>(
   return r
 }
 
-export { InstanceMethod, ModelMethod }
+export { WrapperInstanceMethod, WrapperModelMethod }

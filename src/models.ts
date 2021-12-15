@@ -3,22 +3,22 @@ import { toJsonAble } from './serialization'
 import { createModelValidator } from './validation'
 import { UniqueId } from './properties'
 import {
-  IModel,
-  InterfaceMethodGetters,
+  Model,
+  InstanceMethodGetters,
   Nullable,
-  IModelDefinition,
-  IModelInstance,
+  ModelDefinition,
+  ModelInstance,
   ModelOptions,
   ReferenceFunctions,
-  Getters,
+  PropertyGetters,
   OptionalModelOptions,
-  IReferenceProperty,
+  ReferenceProperty,
   ReferenceValueType,
-  IPropertyValidators,
+  PropertyValidators,
   FunctionalModel,
-  CreateInstanceInput,
-  IModelInstanceMethodTyped,
-  IModelMethodTyped,
+  ModelInstanceInputData,
+  ModelInstanceMethodTyped,
+  ModelMethodTyped,
   ModelMethodGetters,
 } from './interfaces'
 
@@ -32,8 +32,8 @@ const _convertOptions = (options?: OptionalModelOptions) => {
 }
 
 const _createModelDefWithPrimaryKey = <T extends FunctionalModel>(
-  keyToProperty: IModelDefinition<T>
-): IModelDefinition<T> => {
+  keyToProperty: ModelDefinition<T>
+): ModelDefinition<T> => {
   return {
     getPrimaryKey: () => 'id',
     modelMethods: keyToProperty.modelMethods,
@@ -46,9 +46,9 @@ const _createModelDefWithPrimaryKey = <T extends FunctionalModel>(
   }
 }
 
-const Model = <T extends FunctionalModel>(
+const BaseModel = <T extends FunctionalModel>(
   modelName: string,
-  keyToProperty: IModelDefinition<T>,
+  modelDefinition: ModelDefinition<T>,
   //keyToProperty: IModelDefinition2<T>,
   options?: OptionalModelOptions
 ) => {
@@ -60,31 +60,31 @@ const Model = <T extends FunctionalModel>(
    * throughout instance methods.
    */
   // eslint-disable-next-line functional/no-let
-  let model: Nullable<IModel<T>> = null
+  let model: Nullable<Model<T>> = null
   const theOptions = _convertOptions(options)
-  keyToProperty = !keyToProperty.getPrimaryKey
-    ? _createModelDefWithPrimaryKey(keyToProperty)
-    : keyToProperty
+  modelDefinition = !modelDefinition.getPrimaryKey
+    ? _createModelDefWithPrimaryKey(modelDefinition)
+    : modelDefinition
 
   // @ts-ignore
-  const getPrimaryKeyName = () => keyToProperty.getPrimaryKey()
-  const getPrimaryKey = (t: CreateInstanceInput<T>) =>
+  const getPrimaryKeyName = () => modelDefinition.getPrimaryKey()
+  const getPrimaryKey = (t: ModelInstanceInputData<T>) =>
     // @ts-ignore
     t[getPrimaryKeyName()] as string
 
-  const create = (instanceValues: CreateInstanceInput<T>) => {
+  const create = (instanceValues: ModelInstanceInputData<T>) => {
     // eslint-disable-next-line functional/no-let
-    let instance: Nullable<IModelInstance<T>> = null
+    let instance: Nullable<ModelInstance<T>> = null
     const startingInternals: {
-      readonly get: Getters<T> & { readonly id: () => string }
-      readonly validators: IPropertyValidators
+      readonly get: PropertyGetters<T> & { readonly id: () => string }
+      readonly validators: PropertyValidators
       readonly references: ReferenceFunctions
     } = {
-      get: {} as Getters<T> & { readonly id: () => string },
+      get: {} as PropertyGetters<T> & { readonly id: () => string },
       validators: {},
       references: {},
     }
-    const loadedInternals = Object.entries(keyToProperty.properties).reduce(
+    const loadedInternals = Object.entries(modelDefinition.properties).reduce(
       (acc, [key, property]) => {
         // @ts-ignore
         const propertyGetter = property.createGetter(instanceValues[key])
@@ -98,7 +98,7 @@ const Model = <T extends FunctionalModel>(
             [key]: propertyValidator,
           },
         }
-        const asReferenced = property as IReferenceProperty<any>
+        const asReferenced = property as ReferenceProperty<any>
         const referencedProperty = asReferenced.getReferencedId
           ? {
               references: {
@@ -115,27 +115,27 @@ const Model = <T extends FunctionalModel>(
       },
       startingInternals
     )
-    const methods = Object.entries(keyToProperty.instanceMethods || {}).reduce(
+    const methods = Object.entries(modelDefinition.instanceMethods || {}).reduce(
       (acc, [key, func]) => {
         return merge(acc, {
           [key]: (...args: readonly any[]) => {
-            return (func as IModelInstanceMethodTyped<T>)(
-              instance as IModelInstance<T>,
+            return (func as ModelInstanceMethodTyped<T>)(
+              instance as ModelInstance<T>,
               ...args
             )
           },
         })
       },
       {}
-    ) as InterfaceMethodGetters<T>
+    ) as InstanceMethodGetters<T>
 
-    const getModel = () => model as IModel<T>
+    const getModel = () => model as Model<T>
     const toObj = toJsonAble(loadedInternals.get)
     const validate = (options = {}) => {
       return createModelValidator(
         loadedInternals.validators,
-        keyToProperty.modelValidators || []
-      )(instance as IModelInstance<T>, options)
+        modelDefinition.modelValidators || []
+      )(instance as ModelInstance<T>, options)
     }
 
     instance = merge(loadedInternals, {
@@ -150,17 +150,17 @@ const Model = <T extends FunctionalModel>(
       const toCall = Array.isArray(theOptions.instanceCreatedCallback)
         ? theOptions.instanceCreatedCallback
         : [theOptions.instanceCreatedCallback]
-      toCall.map(func => func(instance as IModelInstance<T>))
+      toCall.map(func => func(instance as ModelInstance<T>))
     }
     return instance
   }
 
   const fleshedOutModelFunctions = Object.entries(
-    keyToProperty.modelMethods || {}
+    modelDefinition.modelMethods || {}
   ).reduce((acc, [key, func]) => {
     return merge(acc, {
       [key]: (...args: readonly any[]) => {
-        return (func as IModelMethodTyped<T>)(model as IModel<T>, ...args)
+        return (func as ModelMethodTyped<T>)(model as Model<T>, ...args)
       },
     })
   }, {}) as ModelMethodGetters<T>
@@ -171,13 +171,13 @@ const Model = <T extends FunctionalModel>(
     {
       create,
       getName: () => modelName,
-      getModelDefinition: () => keyToProperty,
+      getModelDefinition: () => modelDefinition,
       getPrimaryKeyName,
       getPrimaryKey,
       methods: fleshedOutModelFunctions,
     }
   )
-  return model as IModel<T>
+  return model as Model<T>
 }
 
-export { Model }
+export { BaseModel }

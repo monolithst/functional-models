@@ -2,8 +2,8 @@ import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 chai.use(chaiAsPromised)
 import sinon from 'sinon'
-import { Model } from '../../src/models'
-import { UniqueId, TextProperty } from '../../src/properties'
+import { BaseModel } from '../../src/models'
+import { TextProperty } from '../../src/properties'
 import {
   isNumber,
   isBoolean,
@@ -24,32 +24,33 @@ import {
   emptyValidator,
   createModelValidator,
   createPropertyValidator,
-  TYPE_PRIMATIVES,
+  TYPE_PRIMITIVES,
 } from '../../src/validation'
-import { IModelComponentValidator } from '../../src/interfaces'
+import { ModelComponentValidator } from '../../src/interfaces'
 
 const assert = chai.assert
 
-const TestModel1 = Model('TestModel1', {
+const TestModel1 = BaseModel('TestModel1', {
   properties: {},
 })
 
-const TestModel2 = Model('TestModel2', {
+const TestModel2 = BaseModel('TestModel2', {
   properties: {},
 })
 
-const createTestModel3 = (modelValidators: IModelComponentValidator[]) =>
-  Model<{ name: string }>('TestModel3', {
+const createTestModel3 = (modelValidators: ModelComponentValidator[]) =>
+  BaseModel<{ name: string }>('TestModel3', {
     properties: {
       name: TextProperty(),
     },
     modelValidators,
   })
 
-type EMPTY_MODEL = {}
-const EMPTY_MODEL_INSTANCE = Model<EMPTY_MODEL>('EmptyModel', {
+type EMPTY_MODEL_TYPE = {}
+const EMPTY_MODEL = BaseModel<EMPTY_MODEL_TYPE>('EmptyModel', {
   properties: {},
-}).create({})
+})
+const EMPTY_MODEL_INSTANCE = EMPTY_MODEL.create({})
 
 describe('/src/validation.ts', () => {
   describe('#isDate()', () => {
@@ -94,31 +95,32 @@ describe('/src/validation.ts', () => {
       )
       assert.isOk(actual)
     })
-    it('should allow a function for a model', () => {
-      const myModel = TestModel1.create({})
-      const actual = referenceTypeMatch(() => TestModel1)(
+    it('should allow a function for a model', async () => {
+      const myModel = EMPTY_MODEL.create({})
+      const actual = referenceTypeMatch<EMPTY_MODEL_TYPE>(() => EMPTY_MODEL)(
         myModel,
-        EMPTY_MODEL_INSTANCE,
-        {}
+        myModel,
+        await myModel.toObj(),
       )
       const expected = undefined
       assert.equal(actual, expected)
     })
-    it('should validate when the correct object matches the model', () => {
-      const myModel = TestModel1.create({})
-      const actual = referenceTypeMatch(TestModel1)(
+    it('should validate when the correct object matches the model', async () => {
+      const myModel = EMPTY_MODEL.create({})
+      const actual = referenceTypeMatch<EMPTY_MODEL_TYPE>(EMPTY_MODEL)(
         myModel,
-        EMPTY_MODEL_INSTANCE,
-        {}
+        myModel,
+        await myModel.toObj(),
       )
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return an error when the input does not match the model', () => {
-      const myModel = TestModel2.create({})
+      const myModel = EMPTY_MODEL.create({})
       const actual = referenceTypeMatch(TestModel1)(
+        // @ts-ignore
         myModel,
-        EMPTY_MODEL_INSTANCE,
+        myModel,
         {}
       )
       assert.isOk(actual)
@@ -476,7 +478,7 @@ describe('/src/validation.ts', () => {
         type: sinon.stub().returns(undefined),
       }
       const validator = createModelValidator(properties)
-      const testModel3 = Model('Model', { properties: {} })
+      const testModel3 = BaseModel('Model', { properties: {} })
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -492,7 +494,7 @@ describe('/src/validation.ts', () => {
         model: sinon.stub().returns(undefined),
       }
       const validator = createModelValidator(properties)
-      const testModel3 = Model('Model', { properties: {} })
+      const testModel3 = BaseModel('Model', { properties: {} })
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -506,7 +508,7 @@ describe('/src/validation.ts', () => {
         type: sinon.stub().returns(['error2']),
       }
       const validator = createModelValidator(properties)
-      const testModel3 = Model('Model', { properties: {} })
+      const testModel3 = BaseModel('Model', { properties: {} })
       const instance = testModel3.create({
         id: 'test-id',
         type: 'my-name',
@@ -524,7 +526,7 @@ describe('/src/validation.ts', () => {
         type: sinon.stub().returns(['error2']),
       }
       const validator = createModelValidator(properties)
-      const testModel3 = Model('Model', { properties: {} })
+      const testModel3 = BaseModel('Model', { properties: {} })
       const instance = testModel3.create({
         id: 'test-id',
         type: 'my-name',
@@ -628,7 +630,7 @@ describe('/src/validation.ts', () => {
     })
     describe('#(integer)()', () => {
       it('should return an error for null', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+        const actual = arrayType(TYPE_PRIMITIVES.integer)(
           null,
           EMPTY_MODEL_INSTANCE,
           {}
@@ -636,7 +638,7 @@ describe('/src/validation.ts', () => {
         assert.isOk(actual)
       })
       it('should return an error for undefined', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+        const actual = arrayType(TYPE_PRIMITIVES.integer)(
           undefined,
           EMPTY_MODEL_INSTANCE,
           {}
@@ -644,7 +646,7 @@ describe('/src/validation.ts', () => {
         assert.isOk(actual)
       })
       it('should return an error for 1', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+        const actual = arrayType(TYPE_PRIMITIVES.integer)(
           1,
           EMPTY_MODEL_INSTANCE,
           {}
@@ -652,7 +654,7 @@ describe('/src/validation.ts', () => {
         assert.isOk(actual)
       })
       it('should return an error for "1"', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+        const actual = arrayType(TYPE_PRIMITIVES.integer)(
           '1',
           EMPTY_MODEL_INSTANCE,
           {}
@@ -660,7 +662,7 @@ describe('/src/validation.ts', () => {
         assert.isOk(actual)
       })
       it('should return undefined for [1,2,3]', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+        const actual = arrayType(TYPE_PRIMITIVES.integer)(
           [1, 2, 3],
           EMPTY_MODEL_INSTANCE,
           {}
@@ -668,7 +670,7 @@ describe('/src/validation.ts', () => {
         assert.isUndefined(actual)
       })
       it('should return an error for [1,"2",3]', () => {
-        const actual = arrayType(TYPE_PRIMATIVES.integer)(
+        const actual = arrayType(TYPE_PRIMITIVES.integer)(
           [1, '2', 3],
           EMPTY_MODEL_INSTANCE,
           {}

@@ -1,31 +1,27 @@
 import { Given, When, Then } from '@cucumber/cucumber'
 import { assert } from 'chai'
-import { Model } from '../src/models'
-import { InstanceMethod, ModelMethod } from '../src/methods'
+import { BaseModel } from '../src/models'
+import { WrapperInstanceMethod, WrapperModelMethod } from '../src/methods'
 import {
-  IModel,
-  IModelInstanceMethod,
+  Model,
   FunctionalModel,
-  FunctionalObj,
-  IModelInstanceList,
-  IModelInstance,
-  IModelInstanceMethodTyped,
-  IModelMethodTyped,
-  CreateInstanceInput,
+  ModelInstanceMethodTyped,
+  ModelMethodTyped,
+  ModelInstanceInputData,
   Nullable,
 } from '../src/interfaces'
 import { ObjectProperty, TextProperty, UniqueId } from '../src/properties'
 
 type MyTSType = {
   name: string
-  data: FunctionalObj
+  data: FunctionalModel
   notRequired?: Nullable<string>
-  myMethod: IModelInstanceMethodTyped<MyTSType>
-  myModelMethod: IModelMethodTyped<MyTSType>
+  myMethod: ModelInstanceMethodTyped<MyTSType>
+  myModelMethod: ModelMethodTyped<MyTSType>
 }
 
 const TE_FULL_TEST = () => {
-  const m = Model<MyTSType>('TSFullTests', {
+  const m = BaseModel<MyTSType>('TSFullTests', {
     properties: {
       id: UniqueId({ value: 'my-unique-id' }),
       name: TextProperty({ required: true }),
@@ -33,12 +29,12 @@ const TE_FULL_TEST = () => {
       notRequired: TextProperty({}),
     },
     instanceMethods: {
-      myMethod: InstanceMethod<MyTSType>((instance, args) => {
+      myMethod: WrapperInstanceMethod<MyTSType>((instance, args) => {
         return 'InstanceMethod'
       }),
     },
     modelMethods: {
-      myModelMethod: ModelMethod<MyTSType>((model, args) => {
+      myModelMethod: WrapperModelMethod<MyTSType>((model, args) => {
         return 'ModelMethod'
       }),
     },
@@ -55,11 +51,11 @@ const TE_FULL_TEST_1 = () => {
   }
 }
 
-const DATA_SET: { [s: string]: () => CreateInstanceInput<MyTSType> } = {
+const DATA_SET: { [s: string]: () => ModelInstanceInputData<MyTSType> } = {
   TE_FULL_TEST_1,
 }
 
-const MODEL_SET: { [s: string]: () => IModel<MyTSType> } = {
+const MODEL_SET: { [s: string]: () => Model<MyTSType> } = {
   TE_FULL_TEST,
 }
 

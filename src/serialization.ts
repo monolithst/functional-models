@@ -1,5 +1,5 @@
 import merge from 'lodash/merge'
-import { Getters, JsonAble, IToObj } from './interfaces'
+import { PropertyGetters, JsonAble, toObj } from './interfaces'
 
 const _getValue = async (value: any): Promise<JsonAble> => {
   if (value === undefined) {
@@ -27,7 +27,7 @@ const _getValue = async (value: any): Promise<JsonAble> => {
 }
 
 const toJsonAble =
-  (keyToFunc: Getters<any>): IToObj =>
+  (keyToFunc: PropertyGetters<any>): toObj =>
   async () => {
     return Object.entries(keyToFunc).reduce(async (acc, [key, value]) => {
       const realAcc = await acc

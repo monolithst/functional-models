@@ -1,8 +1,8 @@
 import { assert } from 'chai'
 import sinon from 'sinon'
-import { Model } from '../../src/models'
+import { BaseModel } from '../../src/models'
 import { TextProperty, Property } from '../../src/properties'
-import { InstanceMethod } from '../../src/methods'
+import { WrapperInstanceMethod } from '../../src/methods'
 
 type TEST_MODEL_TYPE = { text: string }
 
@@ -12,9 +12,9 @@ describe('/src/methods.js', () => {
       const method = sinon.stub().callsFake(input => {
         return `${input.get.text()}-world`
       })
-      const myInstanceMethod = InstanceMethod<TEST_MODEL_TYPE>(method)
+      const myInstanceMethod = WrapperInstanceMethod<TEST_MODEL_TYPE>(method)
       const wrappedObj = 'Hello'
-      const model = Model<TEST_MODEL_TYPE>('Test', {
+      const model = BaseModel<TEST_MODEL_TYPE>('Test', {
         properties: { text: TextProperty() },
       })
       const modelInstance = model.create({ text: 'Hello' })
@@ -26,8 +26,8 @@ describe('/src/methods.js', () => {
       const method = sinon.stub().callsFake(input => {
         return `${input}-world`
       })
-      const myInstanceMethod = InstanceMethod<TEST_MODEL_TYPE>(method)
-      const model = Model<TEST_MODEL_TYPE>('Test', {
+      const myInstanceMethod = WrapperInstanceMethod<TEST_MODEL_TYPE>(method)
+      const model = BaseModel<TEST_MODEL_TYPE>('Test', {
         properties: { text: TextProperty() },
       })
       const modelInstance = model.create({ text: 'Hello' })
@@ -38,7 +38,7 @@ describe('/src/methods.js', () => {
       const method = sinon.stub().callsFake(input => {
         return `${input}-world`
       })
-      const myInstanceMethod = InstanceMethod<TEST_MODEL_TYPE>(method)
+      const myInstanceMethod = WrapperInstanceMethod<TEST_MODEL_TYPE>(method)
       sinon.assert.notCalled(method)
     })
   })

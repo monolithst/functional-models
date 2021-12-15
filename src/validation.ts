@@ -3,26 +3,24 @@ import merge from 'lodash/merge'
 import flatMap from 'lodash/flatMap'
 import {
   FunctionalModel,
-  IModelInstance,
-  IModel,
-  IModelComponentValidator,
-  IPropertyValidatorComponent,
-  IPropertyValidatorComponentType,
-  IPropertyValidatorComponentAsync,
-  IPropertyValidatorComponentSync,
-  IPropertyValidatorComponentTypeAdvanced,
-  IPropertyValidator,
-  IPropertyConfig,
-  FunctionalObj,
+  ModelInstance,
+  Model,
+  ModelComponentValidator,
+  PropertyValidatorComponent,
+  PropertyValidatorComponentType,
+  PropertyValidatorComponentSync,
+  PropertyValidatorComponentTypeAdvanced,
+  PropertyValidator,
+  PropertyConfig,
   MaybeFunction,
-  IPropertyValidators,
-  IValueGetter,
+  PropertyValidators,
+  ValueGetter,
   Arrayable,
   FunctionalType,
-  IModelErrors,
+  ModelErrors,
 } from './interfaces'
 
-const TYPE_PRIMATIVES = {
+const TYPE_PRIMITIVES = {
   boolean: 'boolean',
   string: 'string',
   object: 'object',
@@ -37,7 +35,7 @@ const filterEmpty = <T>(
 }
 
 const _trueOrError =
-  (method: Function, error: string): IPropertyValidatorComponentSync =>
+  (method: Function, error: string): PropertyValidatorComponentSync =>
   (value: any) => {
     if (method(value) === false) {
       return error
@@ -46,7 +44,7 @@ const _trueOrError =
   }
 
 const _typeOrError =
-  (type: string, errorMessage: string): IPropertyValidatorComponentSync =>
+  (type: string, errorMessage: string): PropertyValidatorComponentSync =>
   (value: any) => {
     if (typeof value !== type) {
       return errorMessage
@@ -55,7 +53,7 @@ const _typeOrError =
   }
 
 const isType =
-  (type: string): IPropertyValidatorComponentSync =>
+  (type: string): PropertyValidatorComponentSync =>
   (value: any) => {
     // @ts-ignore
     return _typeOrError(type, `Must be a ${type}`)(value)
@@ -70,22 +68,22 @@ const isArray = _trueOrError(
   'Value is not an array'
 )
 
-const PRIMATIVE_TO_SPECIAL_TYPE_VALIDATOR = {
-  [TYPE_PRIMATIVES.boolean]: isBoolean,
-  [TYPE_PRIMATIVES.string]: isString,
-  [TYPE_PRIMATIVES.integer]: isInteger,
-  [TYPE_PRIMATIVES.number]: isNumber,
+const PRIMITIVE_TO_SPECIAL_TYPE_VALIDATOR = {
+  [TYPE_PRIMITIVES.boolean]: isBoolean,
+  [TYPE_PRIMITIVES.string]: isString,
+  [TYPE_PRIMITIVES.integer]: isInteger,
+  [TYPE_PRIMITIVES.number]: isNumber,
 }
 
 const arrayType =
-  (type: string): IPropertyValidatorComponentSync =>
+  (type: string): PropertyValidatorComponentSync =>
   (value: Arrayable<FunctionalType>) => {
     // @ts-ignore
     const arrayError = isArray(value)
     if (arrayError) {
       return arrayError
     }
-    const validator = PRIMATIVE_TO_SPECIAL_TYPE_VALIDATOR[type] || isType(type)
+    const validator = PRIMITIVE_TO_SPECIAL_TYPE_VALIDATOR[type] || isType(type)
     return (value as readonly []).reduce(
       (acc: string | undefined, v: FunctionalType) => {
         if (acc) {
@@ -103,7 +101,7 @@ const meetsRegex =
     regex: string | RegExp,
     flags?: string,
     errorMessage: string = 'Format was invalid'
-  ): IPropertyValidatorComponentSync =>
+  ): PropertyValidatorComponentSync =>
   (value: FunctionalType) => {
     const reg = new RegExp(regex, flags)
     // @ts-ignore
@@ -111,7 +109,7 @@ const meetsRegex =
   }
 
 const choices =
-  (choiceArray: readonly FunctionalType[]): IPropertyValidatorComponentSync =>
+  (choiceArray: readonly FunctionalType[]): PropertyValidatorComponentSync =>
   (value: Arrayable<FunctionalType>) => {
     if (Array.isArray(value)) {
       const bad = value.find(v => !choiceArray.includes(v))
@@ -126,7 +124,7 @@ const choices =
     return undefined
   }
 
-const isDate: IPropertyValidatorComponentType<Date> = (value: Date) => {
+const isDate: PropertyValidatorComponentType<Date> = (value: Date) => {
   if (!value) {
     return 'Date value is empty'
   }
@@ -136,7 +134,7 @@ const isDate: IPropertyValidatorComponentType<Date> = (value: Date) => {
   return undefined
 }
 
-const isRequired: IPropertyValidatorComponentSync = (value?: any) => {
+const isRequired: PropertyValidatorComponentSync = (value?: any) => {
   if (value === true || value === false) {
     return undefined
   }
@@ -155,7 +153,7 @@ const isRequired: IPropertyValidatorComponentSync = (value?: any) => {
 }
 
 const maxNumber =
-  (max: Number): IPropertyValidatorComponentType<number> =>
+  (max: Number): PropertyValidatorComponentType<number> =>
   (value: number) => {
     // @ts-ignore
     const numberError = isNumber(value)
@@ -169,7 +167,7 @@ const maxNumber =
   }
 
 const minNumber =
-  (min: Number): IPropertyValidatorComponentType<number> =>
+  (min: Number): PropertyValidatorComponentType<number> =>
   (value: Number) => {
     // @ts-ignore
     const numberError = isNumber(value)
@@ -183,7 +181,7 @@ const minNumber =
   }
 
 const maxTextLength =
-  (max: Number): IPropertyValidatorComponentType<string> =>
+  (max: Number): PropertyValidatorComponentType<string> =>
   (value: string) => {
     // @ts-ignore
     const stringError = isString(value)
@@ -197,7 +195,7 @@ const maxTextLength =
   }
 
 const minTextLength =
-  (min: Number): IPropertyValidatorComponentType<string> =>
+  (min: Number): PropertyValidatorComponentType<string> =>
   (value: string) => {
     // @ts-ignore
     const stringError = isString(value)
@@ -211,9 +209,9 @@ const minTextLength =
   }
 
 const referenceTypeMatch = <TModel extends FunctionalModel>(
-  referencedModel: MaybeFunction<IModel<TModel>>
-): IPropertyValidatorComponentTypeAdvanced<IModelInstance<TModel>, TModel> => {
-  return (value?: IModelInstance<TModel>) => {
+  referencedModel: MaybeFunction<Model<TModel>>
+): PropertyValidatorComponentTypeAdvanced<ModelInstance<TModel>, TModel> => {
+  return (value?: ModelInstance<TModel>) => {
     if (!value) {
       return 'Must include a value'
     }
@@ -236,16 +234,16 @@ const referenceTypeMatch = <TModel extends FunctionalModel>(
 const aggregateValidator = (
   value: any,
   methodOrMethods:
-    | IPropertyValidatorComponent
-    | readonly IPropertyValidatorComponent[]
+    | PropertyValidatorComponent
+    | readonly PropertyValidatorComponent[]
 ) => {
   const toDo = Array.isArray(methodOrMethods)
     ? methodOrMethods
     : [methodOrMethods]
 
-  const _aggregativeValidator: IPropertyValidator = async (
-    instance: IModelInstance<any>,
-    instanceData: FunctionalObj
+  const _aggregativeValidator: PropertyValidator = async (
+    instance: ModelInstance<any>,
+    instanceData: FunctionalModel
   ) => {
     const values = await Promise.all(
       toDo.map(method => {
@@ -257,16 +255,16 @@ const aggregateValidator = (
   return _aggregativeValidator
 }
 
-const emptyValidator: IPropertyValidatorComponentSync = () => undefined
+const emptyValidator: PropertyValidatorComponentSync = () => undefined
 
 const _boolChoice =
-  (method: (configValue: any) => IPropertyValidatorComponentSync) =>
+  (method: (configValue: any) => PropertyValidatorComponentSync) =>
   (configValue: any) => {
     const func = method(configValue)
-    const validatorWrapper: IPropertyValidatorComponentSync = (
+    const validatorWrapper: PropertyValidatorComponentSync = (
       value: any,
-      modelInstance: IModelInstance<any>,
-      modelData: FunctionalObj
+      modelInstance: ModelInstance<any>,
+      modelData: FunctionalModel
     ) => {
       return func(value, modelInstance, modelData)
     }
@@ -274,10 +272,10 @@ const _boolChoice =
   }
 
 type MethodConfigDict = {
-  readonly [s: string]: (config: any) => IPropertyValidatorComponentSync
+  readonly [s: string]: (config: any) => PropertyValidatorComponentSync
 }
 
-const simpleFuncWrap = (validator: IPropertyValidatorComponentSync) => () => {
+const simpleFuncWrap = (validator: PropertyValidatorComponentSync) => () => {
   return validator
 }
 
@@ -292,17 +290,17 @@ const CONFIG_TO_VALIDATE_METHOD: MethodConfigDict = {
 }
 
 const createPropertyValidator = (
-  valueGetter: IValueGetter,
-  config: IPropertyConfig
-): IPropertyValidator => {
-  const _propertyValidator: IPropertyValidator = async (
+  valueGetter: ValueGetter,
+  config: PropertyConfig
+): PropertyValidator => {
+  const _propertyValidator: PropertyValidator = async (
     instance,
-    instanceData: FunctionalObj
+    instanceData: FunctionalModel
   ) => {
     if (!config) {
       config = {}
     }
-    const validators: readonly IPropertyValidatorComponent[] = [
+    const validators: readonly PropertyValidatorComponent[] = [
       ...Object.entries(config).map(([key, value]) => {
         const method = CONFIG_TO_VALIDATE_METHOD[key]
         if (method) {
@@ -327,13 +325,13 @@ const createPropertyValidator = (
 }
 
 const createModelValidator = (
-  validators: IPropertyValidators,
-  modelValidators?: readonly IModelComponentValidator[]
+  validators: PropertyValidators,
+  modelValidators?: readonly ModelComponentValidator[]
 ) => {
   const _modelValidator = async (
-    instance: IModelInstance<any>,
+    instance: ModelInstance<any>,
     options: object
-  ): Promise<IModelErrors> => {
+  ): Promise<ModelErrors> => {
     return Promise.resolve().then(async () => {
       if (!instance) {
         throw new Error(`Instance cannot be empty`)
@@ -388,5 +386,5 @@ export {
   createModelValidator,
   arrayType,
   referenceTypeMatch,
-  TYPE_PRIMATIVES,
+  TYPE_PRIMITIVES,
 }
