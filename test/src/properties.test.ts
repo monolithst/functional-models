@@ -658,13 +658,12 @@ describe('/src/properties.ts', () => {
         const expected = 'obj-id'
         assert.equal(actual, expected)
       })
-
-      it('should throw an exception when there is instanceValues as an object, but it does not have a value for the primaryKey.', async () => {
-        await assert.isRejected(
-          ReferenceProperty(TestModel1, {
-            // @ts-ignore
-          }).createGetter({ notPrimaryKey: 'ok' })() as Promise<any>
-        )
+      it('should return 123 from {}.id when no fetcher is used', async () => {
+        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
+          123
+        )()
+        const expected = 123
+        assert.equal(actual, expected)
       })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
         const actual = (await ReferenceProperty(TestModel1, {

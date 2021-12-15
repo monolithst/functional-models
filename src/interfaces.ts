@@ -16,7 +16,6 @@ type JsonAble =
 type VeryPrimitivesTypes = null | string | number | boolean
 type toObj = () => Promise<JsonAble>
 
-
 type ValueIsOfType<T, V> = {
   readonly [P in keyof T as T[P] extends V ? P : never]: T[P]
 }
@@ -37,7 +36,11 @@ type ModelMethodGetters<T> = {
     : never]: ModelMethodClient
 }
 
-type ModelMethodTypes<T extends FunctionalModel> = ModelMethod | ModelInstanceMethod | ModelMethodTyped<T> | ModelInstanceMethodTyped<T>
+type ModelMethodTypes<T extends FunctionalModel> =
+  | ModelMethod
+  | ModelInstanceMethod
+  | ModelMethodTyped<T>
+  | ModelInstanceMethodTyped<T>
 
 type PropertyGetters<T extends FunctionalModel> = {
   readonly // NOTE: This is NOT ModelMethodTypes, its getting everything but.
@@ -46,19 +49,21 @@ type PropertyGetters<T extends FunctionalModel> = {
     : Property]: () => T[Property] | Promise<T[Property]>
 }
 
-type FunctionalModel = {
-  readonly [s: string]:
-    | Arrayable<number>
-    | Arrayable<string>
-    | Arrayable<boolean>
-    | Arrayable<null>
-    | Arrayable<FunctionalModel>
-    | Arrayable<Date>
-    | Arrayable<undefined>
-    | ReferenceValueType<any>
-    | ModelInstanceMethod
-    | ModelMethod
-} | JsonAble
+type FunctionalModel =
+  | {
+      readonly [s: string]:
+        | Arrayable<number>
+        | Arrayable<string>
+        | Arrayable<boolean>
+        | Arrayable<null>
+        | Arrayable<FunctionalModel>
+        | Arrayable<Date>
+        | Arrayable<undefined>
+        | ReferenceValueType<any>
+        | ModelInstanceMethod
+        | ModelMethod
+    }
+  | JsonAble
 
 type FunctionalType =
   | JsonAble
@@ -68,8 +73,10 @@ type FunctionalType =
   | Arrayable<FunctionalModel>
   | Arrayable<{ readonly [s: string]: JsonAble }>
 
-type ModelInstanceInputData<T extends FunctionalModel> =
-  ValueIsNotOfType<T, ModelMethodTypes<T>>
+type ModelInstanceInputData<T extends FunctionalModel> = ValueIsNotOfType<
+  T,
+  ModelMethodTypes<T>
+>
 
 type PropertyValidatorComponentTypeAdvanced<
   TValue,
@@ -133,15 +140,14 @@ type PropertyInstance<T extends Arrayable<FunctionalType>> = {
 type PropertiesList<T> = {
   readonly [P in keyof T as T[P] extends Arrayable<FunctionalType>
     ? P
-    : never
-  ]: PropertyInstance<any>
+    : never]: PropertyInstance<any>
 }
 
-interface ReferenceProperty<T extends FunctionalModel>
-  extends PropertyInstance<ModelInstance<T> | T | string | null> {
+interface ReferencePropertyInstance<T extends FunctionalModel>
+  extends PropertyInstance<ModelInstance<T> | T | MaybeEmpty<PrimaryKeyType>> {
   readonly getReferencedId: (
     instanceValues: ReferenceValueType<T>
-  ) => string | null | undefined
+  ) => MaybeEmpty<PrimaryKeyType>
   readonly getReferencedModel: () => Model<T>
 }
 
@@ -149,8 +155,9 @@ type ReferenceValueType<T extends FunctionalModel> =
   | ModelInstance<T>
   | ModelInstanceInputData<T>
   | string
-  | undefined
+  | number
   | null
+  | undefined
 
 type DefaultPropertyValidators = {
   readonly required?: boolean
@@ -178,7 +185,10 @@ type PropertyConfigContents = {
   readonly maxValue?: number
   readonly minValue?: number
   readonly autoNow?: boolean
-  readonly fetcher?: (model: Model<any>, primaryKey: string) => Promise<any>
+  readonly fetcher?: (
+    model: Model<any>,
+    primaryKey: PrimaryKeyType
+  ) => Promise<any>
 }
 
 type PropertyConfig =
@@ -190,10 +200,16 @@ type PrimaryKeyPropertyInstanceType =
   | PropertyInstance<number>
 type PrimaryKeyType = string | number
 
-type ModelMethods<T extends FunctionalModel> = ValueIsOfType<T, ModelMethod|ModelMethodTyped<T>>
-type InstanceMethods<T extends FunctionalModel> = ValueIsOfType<T, ModelInstanceMethod|ModelInstanceMethodTyped<T>>
+type ModelMethods<T extends FunctionalModel> = ValueIsOfType<
+  T,
+  ModelMethod | ModelMethodTyped<T>
+>
+type InstanceMethods<T extends FunctionalModel> = ValueIsOfType<
+  T,
+  ModelInstanceMethod | ModelInstanceMethodTyped<T>
+>
 type ModelDefinition<T extends FunctionalModel> = {
-  readonly getPrimaryKey?: () => string
+  readonly getPrimaryKeyName?: () => string
   readonly properties: PropertiesList<T> & {
     readonly id?: PrimaryKeyPropertyInstanceType
   }
@@ -201,7 +217,6 @@ type ModelDefinition<T extends FunctionalModel> = {
   readonly modelMethods?: ModelMethods<T>
   readonly modelValidators?: readonly ModelComponentValidator[]
 }
-
 
 type Model<T extends FunctionalModel> = {
   readonly getName: () => string
@@ -229,7 +244,8 @@ type ModelInstance<T extends FunctionalModel> = {
   readonly methods: InstanceMethodGetters<T>
   readonly references: ReferenceFunctions
   readonly toObj: toObj
-  readonly getPrimaryKey: () => string
+  readonly getPrimaryKeyName: () => string
+  readonly getPrimaryKey: () => PrimaryKeyType
   readonly validators: PropertyValidators
   readonly validate: (options?: {}) => Promise<ModelErrors>
   readonly getModel: () => Model<T>
@@ -254,12 +270,13 @@ type ModelOptions = {
   >
 }
 
-type OptionalModelOptions = {
-  readonly instanceCreatedCallback?: Nullable<
-    Arrayable<(instance: ModelInstance<any>) => void>
-    >
-  } |
-  undefined
+type OptionalModelOptions =
+  | {
+      readonly instanceCreatedCallback?: Nullable<
+        Arrayable<(instance: ModelInstance<any>) => void>
+      >
+    }
+  | undefined
 
 export {
   MaybeFunction,
@@ -270,7 +287,6 @@ export {
   MaybeLazy,
   JsonAble,
   toObj,
-
   ModelInstance,
   Model,
   PropertyValidatorComponent,
@@ -288,7 +304,7 @@ export {
   ModelOptions,
   ModelMethod,
   OptionalModelOptions,
-  ReferenceProperty,
+  ReferencePropertyInstance,
   PropertyGetters,
   PropertyValidators,
   PropertyValidatorComponentTypeAdvanced,
@@ -302,5 +318,6 @@ export {
   ReferenceFunctions,
   ModelErrors,
   MaybeEmpty,
+  PrimaryKeyType,
 }
 /* eslint-enable no-unused-vars */

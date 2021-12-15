@@ -21,10 +21,7 @@ const WrapperInstanceMethod = <T extends FunctionalModel>(
 const WrapperModelMethod = <T extends FunctionalModel>(
   method: (model: Model<T>, args?: readonly any[]) => any
 ) => {
-  const r: ModelMethodTyped<T> = (
-    model: Model<T>,
-    ...args: readonly any[]
-  ) => {
+  const r: ModelMethodTyped<T> = (model: Model<T>, ...args: readonly any[]) => {
     return method(model, ...args)
   }
   return r

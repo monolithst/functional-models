@@ -12,7 +12,7 @@ import {
   ReferenceFunctions,
   PropertyGetters,
   OptionalModelOptions,
-  ReferenceProperty,
+  ReferencePropertyInstance,
   ReferenceValueType,
   PropertyValidators,
   FunctionalModel,
@@ -35,7 +35,7 @@ const _createModelDefWithPrimaryKey = <T extends FunctionalModel>(
   keyToProperty: ModelDefinition<T>
 ): ModelDefinition<T> => {
   return {
-    getPrimaryKey: () => 'id',
+    getPrimaryKeyName: () => 'id',
     modelMethods: keyToProperty.modelMethods,
     instanceMethods: keyToProperty.instanceMethods,
     properties: {
@@ -62,12 +62,12 @@ const BaseModel = <T extends FunctionalModel>(
   // eslint-disable-next-line functional/no-let
   let model: Nullable<Model<T>> = null
   const theOptions = _convertOptions(options)
-  modelDefinition = !modelDefinition.getPrimaryKey
+  modelDefinition = !modelDefinition.getPrimaryKeyName
     ? _createModelDefWithPrimaryKey(modelDefinition)
     : modelDefinition
 
   // @ts-ignore
-  const getPrimaryKeyName = () => modelDefinition.getPrimaryKey()
+  const getPrimaryKeyName = () => modelDefinition.getPrimaryKeyName()
   const getPrimaryKey = (t: ModelInstanceInputData<T>) =>
     // @ts-ignore
     t[getPrimaryKeyName()] as string
@@ -98,7 +98,7 @@ const BaseModel = <T extends FunctionalModel>(
             [key]: propertyValidator,
           },
         }
-        const asReferenced = property as ReferenceProperty<any>
+        const asReferenced = property as ReferencePropertyInstance<any>
         const referencedProperty = asReferenced.getReferencedId
           ? {
               references: {
@@ -115,19 +115,18 @@ const BaseModel = <T extends FunctionalModel>(
       },
       startingInternals
     )
-    const methods = Object.entries(modelDefinition.instanceMethods || {}).reduce(
-      (acc, [key, func]) => {
-        return merge(acc, {
-          [key]: (...args: readonly any[]) => {
-            return (func as ModelInstanceMethodTyped<T>)(
-              instance as ModelInstance<T>,
-              ...args
-            )
-          },
-        })
-      },
-      {}
-    ) as InstanceMethodGetters<T>
+    const methods = Object.entries(
+      modelDefinition.instanceMethods || {}
+    ).reduce((acc, [key, func]) => {
+      return merge(acc, {
+        [key]: (...args: readonly any[]) => {
+          return (func as ModelInstanceMethodTyped<T>)(
+            instance as ModelInstance<T>,
+            ...args
+          )
+        },
+      })
+    }, {}) as InstanceMethodGetters<T>
 
     const getModel = () => model as Model<T>
     const toObj = toJsonAble(loadedInternals.get)
@@ -142,6 +141,7 @@ const BaseModel = <T extends FunctionalModel>(
       getModel,
       toObj,
       getPrimaryKey: () => getPrimaryKey(instanceValues),
+      getPrimaryKeyName,
       validate,
       methods,
     })

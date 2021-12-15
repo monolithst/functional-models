@@ -18,6 +18,8 @@ import {
   ReferenceValueType,
   ModelInstance,
   MaybeEmpty,
+  Nullable,
+  PrimaryKeyType,
   Model,
   PropertyInstance,
   FunctionalType,
@@ -27,9 +29,10 @@ import {
   Arrayable,
   PropertyValidatorComponent,
   PropertyValidator,
-  ReferenceProperty,
+  ReferencePropertyInstance,
   ModelInstanceInputData,
-  FunctionalModel, JsonAble,
+  FunctionalModel,
+  JsonAble,
 } from './interfaces'
 
 const EMAIL_REGEX =
@@ -151,7 +154,7 @@ const ArrayProperty = <T extends FunctionalType>(
   )
 
 const ObjectProperty = (config = {}, additionalMetadata = {}) =>
-  Property<{ readonly [s: string]: JsonAble}>(
+  Property<{ readonly [s: string]: JsonAble }>(
     PROPERTY_TYPES.ObjectProperty,
     merge(config, {
       validators: _mergeValidators(config, [isType('object')]),
@@ -196,10 +199,7 @@ const IntegerProperty = (
     additionalMetadata
   )
 
-const NumberProperty = (
-  config: PropertyConfig = {},
-  additionalMetadata = {}
-) =>
+const NumberProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
   Property<MaybeEmpty<number>>(
     PROPERTY_TYPES.NumberProperty,
     merge(config, {
@@ -287,35 +287,36 @@ const ReferenceProperty = <T extends FunctionalModel>(
 
   const _getId =
     (instanceValues: ReferenceValueType<T>) =>
-      (): string | null | undefined => {
-        if (!instanceValues) {
-          return null
-        }
-        if (typeof instanceValues === 'string') {
-          return instanceValues
-        }
-        if ((instanceValues as ModelInstance<T>).getPrimaryKey) {
-          return (instanceValues as ModelInstance<T>).getPrimaryKey()
-        }
-
-        const theModel = _getModel()
-        const primaryKey = theModel.getPrimaryKeyName()
-
-        // @ts-ignore
-        const id = (instanceValues as ModelInstanceInputData<T>)[primaryKey]
-        if (typeof id === 'string') {
-          return id
-        }
-        throw new Error(`Unexpectedly no key to return.`)
+    (): MaybeEmpty<PrimaryKeyType> => {
+      if (!instanceValues) {
+        return null
       }
+      if (typeof instanceValues === 'number') {
+        return instanceValues
+      }
+      if (typeof instanceValues === 'string') {
+        return instanceValues
+      }
+      if ((instanceValues as ModelInstance<T>).getPrimaryKey) {
+        return (instanceValues as ModelInstance<T>).getPrimaryKey()
+      }
+
+      const theModel = _getModel()
+      const primaryKey = theModel.getPrimaryKeyName()
+
+      // @ts-ignore
+      return (instanceValues as ModelInstanceInputData<T>)[
+        primaryKey
+      ] as PrimaryKeyType
+    }
 
   const lazyLoadMethod = async (instanceValues: ReferenceValueType<T>) => {
     const valueIsModelInstance =
-      instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKey
+      instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKeyName
     const _getInstanceReturn = (objToUse: ReferenceValueType<T>) => {
       // We need to determine if the object we just go is an actual model instance to determine if we need to make one.
       const objIsModelInstance =
-        instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKey
+        instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKeyName
 
       const instance = objIsModelInstance
         ? objToUse
@@ -340,8 +341,8 @@ const ReferenceProperty = <T extends FunctionalModel>(
     return _getId(instanceValues)()
   }
 
-  const p: ReferenceProperty<T> = merge(
-    Property<ModelInstance<T> | T | string | null>(
+  const p: ReferencePropertyInstance<T> = merge(
+    Property<ModelInstance<T> | T | MaybeEmpty<PrimaryKeyType>>(
       PROPERTY_TYPES.ReferenceProperty,
       merge({}, config, {
         validators,
@@ -357,7 +358,6 @@ const ReferenceProperty = <T extends FunctionalModel>(
   )
   return p
 }
-
 
 export {
   Property,

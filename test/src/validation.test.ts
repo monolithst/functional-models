@@ -100,7 +100,7 @@ describe('/src/validation.ts', () => {
       const actual = referenceTypeMatch<EMPTY_MODEL_TYPE>(() => EMPTY_MODEL)(
         myModel,
         myModel,
-        await myModel.toObj(),
+        await myModel.toObj()
       )
       const expected = undefined
       assert.equal(actual, expected)
@@ -110,7 +110,7 @@ describe('/src/validation.ts', () => {
       const actual = referenceTypeMatch<EMPTY_MODEL_TYPE>(EMPTY_MODEL)(
         myModel,
         myModel,
-        await myModel.toObj(),
+        await myModel.toObj()
       )
       const expected = undefined
       assert.equal(actual, expected)

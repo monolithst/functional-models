@@ -103,7 +103,7 @@ describe('/src/models.ts', () => {
       it('should return "primaryKey" when this value is passed in as the primaryKey', () => {
         const expected = 'primaryKey'
         const model = BaseModel<{ myString: ModelMethod }>('ModelName', {
-          getPrimaryKey: () => expected,
+          getPrimaryKeyName: () => expected,
           properties: {},
           modelMethods: {
             myString: model => {
@@ -136,7 +136,7 @@ describe('/src/models.ts', () => {
       })
       it('should have an "getMyPrimaryKeyId" field when "myPrimaryKeyId" is passed as the "getPrimaryKey" is passed', () => {
         const model = BaseModel<{ myPrimaryKeyId: string }>('ModelName', {
-          getPrimaryKey: () => 'myPrimaryKeyId',
+          getPrimaryKeyName: () => 'myPrimaryKeyId',
           properties: {
             myPrimaryKeyId: UniqueId(),
           },
@@ -145,14 +145,17 @@ describe('/src/models.ts', () => {
         assert.isFunction(instance.get.myPrimaryKeyId)
       })
       it('should find instance.methods.toString when in instanceMethods', () => {
-        const model = BaseModel<{ toString: ModelInstanceMethod }>('ModelName', {
-          properties: {},
-          instanceMethods: {
-            toString: instance => {
-              return 'An instance'
+        const model = BaseModel<{ toString: ModelInstanceMethod }>(
+          'ModelName',
+          {
+            properties: {},
+            instanceMethods: {
+              toString: instance => {
+                return 'An instance'
+              },
             },
-          },
-        })
+          }
+        )
         const instance = model.create({})
         assert.isFunction(instance.methods.toString)
       })
@@ -260,7 +263,7 @@ describe('/src/models.ts', () => {
             }),
           },
         }
-        const model = BaseModel<{myProperty: string}>('name', input)
+        const model = BaseModel<{ myProperty: string }>('name', input)
         const instance = model.create({ myProperty: 'passed-in' })
         const actual = instance.get.myProperty()
         const expected = 'value'
@@ -301,7 +304,7 @@ describe('/src/models.ts', () => {
             }),
           },
         }
-        const model = BaseModel<{myProperty: string|null}>('name', input)
+        const model = BaseModel<{ myProperty: string | null }>('name', input)
         const instance = model.create({ myProperty: null })
         const actual = instance.get.myProperty()
         const expected = 'defaultValue'
@@ -314,7 +317,7 @@ describe('/src/models.ts', () => {
             type: Property('MyProperty', {}),
           },
         }
-        const model = BaseModel<{type: string}>('name', input)
+        const model = BaseModel<{ type: string }>('name', input)
         const actual = model.create({ id: 'my-id', type: 'my-type' })
         assert.isOk(actual.get.id)
         assert.isOk(actual.get.type)
@@ -401,7 +404,7 @@ describe('/src/models.ts', () => {
       })
       it('should return the primaryKey field when "primaryKey" is passed as primaryKey', async () => {
         const model = BaseModel('ModelName', {
-          getPrimaryKey: () => 'primaryKey',
+          getPrimaryKeyName: () => 'primaryKey',
           properties: {},
         })
         const expected = 'my-primary-key'
