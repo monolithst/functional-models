@@ -23,12 +23,12 @@ import {
   ModelMethodGetters,
 } from './interfaces'
 
-const _defaultOptions = (): ModelOptions => ({
+const _defaultOptions = <T extends FunctionalModel>(): ModelOptions<T> => ({
   instanceCreatedCallback: null,
 })
 
-const _convertOptions = (options?: OptionalModelOptions) => {
-  const r: ModelOptions = merge({}, _defaultOptions(), options)
+const _convertOptions = <T extends FunctionalModel>(options?: OptionalModelOptions<T>) => {
+  const r: ModelOptions<T> = merge({}, _defaultOptions(), options)
   return r
 }
 
@@ -50,7 +50,7 @@ const _createModelDefWithPrimaryKey = <T extends FunctionalModel>(
 const BaseModel: ModelFactory = <T extends FunctionalModel>(
   modelName: string,
   modelDefinition: ModelDefinition<T>,
-  options?: OptionalModelOptions
+  options?: OptionalModelOptions<T>
 ) => {
   /*
    * This non-functional approach is specifically used to

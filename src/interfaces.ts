@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 
+import {Func} from "mocha"
+
 type MaybeFunction<T> = T | (() => T)
 type MaybePromise<T> = T | Promise<T>
 type Nullable<T> = T | null
@@ -222,7 +224,7 @@ type ModelDefinition<T extends FunctionalModel> = {
 type ModelFactory = <T extends FunctionalModel>(
   modelName: string,
   modelDefinition: ModelDefinition<T>,
-  options?: OptionalModelOptions
+  options?: OptionalModelOptions<T>
 ) => Model<T>
 
 type CreateParams<T extends FunctionalModel> =
@@ -234,7 +236,7 @@ type Model<T extends FunctionalModel> = {
   readonly getPrimaryKeyName: () => string
   readonly getModelDefinition: () => ModelDefinition<T>
   readonly getPrimaryKey: (t: ModelInstanceInputData<T>) => PrimaryKeyType
-  readonly getOptions: () => object & ModelOptions
+  readonly getOptions: () => object & ModelOptions<T>
   readonly create: (data: CreateParams<T>) => ModelInstance<T>
   readonly methods: ModelMethodGetters<T>
 }
@@ -274,17 +276,17 @@ type ModelInstanceMethodTyped<T extends FunctionalModel> = (
 type ModelInstanceMethod = ModelInstanceMethodTyped<any>
 type ModelInstanceMethodClient = (...args: readonly any[]) => any
 
-type ModelOptions = {
+type ModelOptions<T extends FunctionalModel> = {
   readonly instanceCreatedCallback: Nullable<
-    Arrayable<(instance: ModelInstance<any>) => void>
+    Arrayable<(instance: ModelInstance<T>) => void>
   >
   readonly [s: string]: any
 }
 
-type OptionalModelOptions =
+type OptionalModelOptions<T extends FunctionalModel> =
   | {
       readonly instanceCreatedCallback?: Nullable<
-        Arrayable<(instance: ModelInstance<any>) => void>
+        Arrayable<(instance: ModelInstance<T>) => void>
       >
       readonly [s: string]: any
     }
