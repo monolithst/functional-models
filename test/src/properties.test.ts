@@ -667,7 +667,8 @@ describe('/src/properties.ts', () => {
       })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
         const actual = (await ReferenceProperty(TestModel1, {
-          fetcher: async () => ({ id: 'obj-id', name: 'switch-a-roo' }),
+          fetcher: async () =>
+            Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' }),
         }).createGetter('obj-id')()) as ModelInstance<TestModelType>
         const expected = 'switch-a-roo'
         assert.deepEqual(actual.get.name(), expected)

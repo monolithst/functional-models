@@ -18,7 +18,6 @@ import {
   ReferenceValueType,
   ModelInstance,
   MaybeEmpty,
-  Nullable,
   PrimaryKeyType,
   Model,
   PropertyInstance,
@@ -57,11 +56,11 @@ const _mergeValidators = (
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 
-function Property<T extends Arrayable<FunctionalType>>(
+const Property = <T extends Arrayable<FunctionalType>>(
   type: string,
   config: PropertyConfig = {},
   additionalMetadata = {}
-) {
+) => {
   if (!type && !config?.type) {
     throw new Error(`Property type must be provided.`)
   }
@@ -321,6 +320,7 @@ const ReferenceProperty = <T extends FunctionalModel>(
       const instance = objIsModelInstance
         ? objToUse
         : _getModel().create(objToUse as ModelInstanceInputData<T>)
+      // We are replacing the toObj function, because the reference type in the end should be the primary key when serialized.
       return merge({}, instance, {
         toObj: _getId(instanceValues),
       })

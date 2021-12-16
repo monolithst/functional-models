@@ -73,10 +73,9 @@ type FunctionalType =
   | Arrayable<FunctionalModel>
   | Arrayable<{ readonly [s: string]: JsonAble }>
 
-type ModelInstanceInputData<T extends FunctionalModel> = ValueIsNotOfType<
-  T,
-  ModelMethodTypes<T>
->
+type ModelInstanceInputData<T extends FunctionalModel> =
+  | ValueIsNotOfType<T, ModelMethodTypes<T>>
+  | JsonAble
 
 type PropertyValidatorComponentTypeAdvanced<
   TValue,
@@ -185,11 +184,13 @@ type PropertyConfigContents = {
   readonly maxValue?: number
   readonly minValue?: number
   readonly autoNow?: boolean
-  readonly fetcher?: (
-    model: Model<any>,
-    primaryKey: PrimaryKeyType
-  ) => Promise<any>
+  readonly fetcher?: ModelFetcher
 }
+
+type ModelFetcher = <T extends FunctionalModel>(
+  model: Model<T>,
+  primaryKey: PrimaryKeyType
+) => Promise<Maybe<ModelInstance<T> | ModelInstanceInputData<T>>>
 
 type PropertyConfig =
   | (PropertyConfigContents & DefaultPropertyValidators)
@@ -218,16 +219,23 @@ type ModelDefinition<T extends FunctionalModel> = {
   readonly modelValidators?: readonly ModelComponentValidator[]
 }
 
-type ModelFactory = <T extends FunctionalModel>(modelName: string, modelDefinition: ModelDefinition<T>, options?: OptionalModelOptions) => Model<T>
+type ModelFactory = <T extends FunctionalModel>(
+  modelName: string,
+  modelDefinition: ModelDefinition<T>,
+  options?: OptionalModelOptions
+) => Model<T>
+
+type CreateParams<T extends FunctionalModel> =
+  | (ModelInstanceInputData<T> & { readonly id?: PrimaryKeyType })
+  | ModelInstanceInputData<T>
 
 type Model<T extends FunctionalModel> = {
   readonly getName: () => string
   readonly getPrimaryKeyName: () => string
   readonly getModelDefinition: () => ModelDefinition<T>
   readonly getPrimaryKey: (t: ModelInstanceInputData<T>) => PrimaryKeyType
-  readonly create: (
-    data: ModelInstanceInputData<T> & { readonly id?: PrimaryKeyType }
-  ) => ModelInstance<T>
+  readonly getOptions: () => object & ModelOptions
+  readonly create: (data: CreateParams<T>) => ModelInstance<T>
   readonly methods: ModelMethodGetters<T>
 }
 
@@ -270,6 +278,7 @@ type ModelOptions = {
   readonly instanceCreatedCallback: Nullable<
     Arrayable<(instance: ModelInstance<any>) => void>
   >
+  readonly [s: string]: any
 }
 
 type OptionalModelOptions =
@@ -277,6 +286,7 @@ type OptionalModelOptions =
       readonly instanceCreatedCallback?: Nullable<
         Arrayable<(instance: ModelInstance<any>) => void>
       >
+      readonly [s: string]: any
     }
   | undefined
 
@@ -322,5 +332,7 @@ export {
   MaybeEmpty,
   PrimaryKeyType,
   ModelFactory,
+  ModelFetcher,
+  CreateParams,
 }
 /* eslint-enable no-unused-vars */

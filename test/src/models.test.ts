@@ -25,7 +25,7 @@ const TEST_MODEL_1 = BaseModel<TEST_MODEL_TYPE>('MyModel', {
 })
 
 describe('/src/models.ts', () => {
-  describe('#Model()', () => {
+  describe('#BaseModel()', () => {
     it('should pass a functional instance to the instanceMethods by the time the function is called by a client', () => {
       const model = BaseModel<{
         name: string
@@ -98,6 +98,24 @@ describe('/src/models.ts', () => {
         },
       })
       assert.isFunction(model.methods.myString)
+    })
+    describe('#getOptions()', () => {
+      it('should pass arbitrary options from the BaseModel() call through to the model', () => {
+        const model = BaseModel(
+          'ModelName',
+          {
+            properties: {},
+          },
+          {
+            instanceCreatedCallback: null,
+            arbitrary: { nested: 'arg' },
+          }
+        )
+        const options = model.getOptions()
+        const actual = options.arbitrary
+        const expected = { nested: 'arg' }
+        assert.deepEqual(actual, expected)
+      })
     })
     describe('#getPrimaryKeyName()', () => {
       it('should return "primaryKey" when this value is passed in as the primaryKey', () => {

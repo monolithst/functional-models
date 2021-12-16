@@ -1,4 +1,4 @@
-type KeysToErrors = { [s: string]: string[] }
+type KeysToErrors = { readonly [s: string]: readonly string[] }
 
 /* eslint-disable functional/no-this-expression */
 /* eslint-disable functional/no-class */

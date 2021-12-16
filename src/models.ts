@@ -47,10 +47,9 @@ const _createModelDefWithPrimaryKey = <T extends FunctionalModel>(
   }
 }
 
-const BaseModel : ModelFactory = <T extends FunctionalModel>(
+const BaseModel: ModelFactory = <T extends FunctionalModel>(
   modelName: string,
   modelDefinition: ModelDefinition<T>,
-  //keyToProperty: IModelDefinition2<T>,
   options?: OptionalModelOptions
 ) => {
   /*
@@ -175,6 +174,7 @@ const BaseModel : ModelFactory = <T extends FunctionalModel>(
       getModelDefinition: () => modelDefinition,
       getPrimaryKeyName,
       getPrimaryKey,
+      getOptions: () => theOptions,
       methods: fleshedOutModelFunctions,
     }
   )
