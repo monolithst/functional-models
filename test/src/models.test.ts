@@ -216,6 +216,17 @@ describe('/src/models.ts', () => {
           model.create({})
         })
       })
+      it('should not throw an exception if an unsupported property is passed into function', () => {
+        const input = {
+          properties: {
+            myProperty: TextProperty({ required: true }),
+          },
+        }
+        const model = BaseModel('name', input)
+        assert.doesNotThrow(() => {
+          model.create({ whereIsMyProperty: 'not-here'})
+        })
+      })
       it('should return an object that contains getModel().getModelDefinition().properties.myProperty', () => {
         type MyType = { myProperty: string }
         const input: ModelDefinition<MyType> = {
@@ -411,6 +422,16 @@ describe('/src/models.ts', () => {
         const actual = instance.references.myReference()
         const expected = 'unit-test-id'
         assert.deepEqual(actual, expected)
+      })
+    })
+    describe('#toObj()', () => {
+      it('should be able to pass the results of toObj into .create() without forcing it.', async () => {
+        const model = BaseModel<{simple: string}>('ModelName', { properties: { simple: TextProperty()} })
+        const instance1 = model.create({ simple: 'test-me'})
+        const obj = await instance1.toObj()
+        const instance2 = model.create(obj)
+        const obj2 = await instance2.toObj()
+        assert.deepEqual(obj, obj2)
       })
     })
     describe('#getPrimaryKey()', () => {

@@ -75,7 +75,7 @@ type ModelInstanceInputData<T extends FunctionalModel> = {
   //readonly [P in keyof T as T[P] extends ModelMethodTypes<T> ? never : P]: T[P]
   //readonly [s: string]: any
   readonly [P in keyof T as T[P] extends ModelMethodTypes<T> ? never : P]: T[P]
-}
+} | JsonAble
 
 type PropertyValidatorComponentTypeAdvanced<
   TValue,
@@ -225,8 +225,8 @@ type ModelFactory = <T extends FunctionalModel>(
 ) => Model<T>
 
 type CreateParams<T extends FunctionalModel> =
-  | (ModelInstanceInputData<T> & { readonly id?: PrimaryKeyType })
   | ModelInstanceInputData<T>
+  | (ModelInstanceInputData<T> & { readonly id?: PrimaryKeyType })
 
 type Model<T extends FunctionalModel> = {
   readonly getName: () => string
