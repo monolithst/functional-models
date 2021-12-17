@@ -17,7 +17,7 @@ import { createUuid } from './utils'
 import {
   ReferenceValueType,
   ModelInstance,
-  MaybeEmpty,
+  Maybe,
   PrimaryKeyType,
   Model,
   PropertyInstance,
@@ -49,8 +49,8 @@ function _getValidatorFromConfigElseEmpty<T>(
   return emptyValidator
 }
 
-const _mergeValidators = (
-  config: PropertyConfig | undefined,
+const _mergeValidators = <T extends Arrayable<FunctionalType>>(
+  config: PropertyConfig<T> | undefined,
   validators: readonly PropertyValidatorComponent[]
 ) => {
   return [...validators, ...(config?.validators ? config.validators : [])]
@@ -58,7 +58,7 @@ const _mergeValidators = (
 
 const Property = <T extends Arrayable<FunctionalType>>(
   type: string,
-  config: PropertyConfig = {},
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) => {
   if (!type && !config?.type) {
@@ -121,8 +121,8 @@ const Property = <T extends Arrayable<FunctionalType>>(
   return r
 }
 
-const DateProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
-  Property<MaybeEmpty<Date|string>>(
+const DateProperty = (config: PropertyConfig<Maybe<Date|string>> = {}, additionalMetadata = {}) =>
+  Property<Maybe<Date|string>>(
     PROPERTY_TYPES.DateProperty,
     merge(
       {
@@ -164,8 +164,8 @@ const ObjectProperty = (config = {}, additionalMetadata = {}) =>
     additionalMetadata
   )
 
-const TextProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
-  Property<MaybeEmpty<string>>(
+const TextProperty = (config: PropertyConfig<Maybe<string>> = {}, additionalMetadata = {}) =>
+  Property<Maybe<string>>(
     PROPERTY_TYPES.TextProperty,
     merge(config, {
       isString: true,
@@ -182,10 +182,10 @@ const TextProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
   )
 
 const IntegerProperty = (
-  config: PropertyConfig = {},
+  config: PropertyConfig<Maybe<number>> = {},
   additionalMetadata = {}
 ) =>
-  Property<MaybeEmpty<number>>(
+  Property<Maybe<number>>(
     PROPERTY_TYPES.IntegerProperty,
     merge(config, {
       isInteger: true,
@@ -201,8 +201,8 @@ const IntegerProperty = (
     additionalMetadata
   )
 
-const NumberProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
-  Property<MaybeEmpty<number>>(
+const NumberProperty = (config: PropertyConfig<Maybe<number>> = {}, additionalMetadata = {}) =>
+  Property<Maybe<number>>(
     PROPERTY_TYPES.NumberProperty,
     merge(config, {
       isNumber: true,
@@ -220,7 +220,7 @@ const NumberProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
 
 const ConstantValueProperty = (
   value: string,
-  config: PropertyConfig = {},
+  config: PropertyConfig<Maybe<string>> = {},
   additionalMetadata = {}
 ) =>
   TextProperty(
@@ -231,7 +231,7 @@ const ConstantValueProperty = (
     additionalMetadata
   )
 
-const EmailProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
+const EmailProperty = (config: PropertyConfig<Maybe<string>> = {}, additionalMetadata = {}) =>
   TextProperty(
     merge(config, {
       type: PROPERTY_TYPES.EmailProperty,
@@ -241,10 +241,10 @@ const EmailProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
   )
 
 const BooleanProperty = (
-  config: PropertyConfig = {},
+  config: PropertyConfig<Maybe<boolean>> = {},
   additionalMetadata = {}
 ) =>
-  Property<MaybeEmpty<boolean>>(
+  Property<Maybe<boolean>>(
     PROPERTY_TYPES.BooleanProperty,
     merge(config, {
       isBoolean: true,
@@ -252,7 +252,7 @@ const BooleanProperty = (
     additionalMetadata
   )
 
-const UniqueId = (config: PropertyConfig = {}, additionalMetadata = {}) =>
+const UniqueId = (config: PropertyConfig<string> = {}, additionalMetadata = {}) =>
   Property<string>(
     PROPERTY_TYPES.UniqueId,
     merge(
@@ -271,7 +271,7 @@ const UniqueId = (config: PropertyConfig = {}, additionalMetadata = {}) =>
 
 const ReferenceProperty = <T extends FunctionalModel>(
   model: MaybeFunction<Model<T>>,
-  config: PropertyConfig = {},
+  config: PropertyConfig<ModelInstance<T> | T | Maybe<PrimaryKeyType>> = {},
   additionalMetadata = {}
 ) => {
   if (!model) {
@@ -289,7 +289,7 @@ const ReferenceProperty = <T extends FunctionalModel>(
 
   const _getId =
     (instanceValues: ReferenceValueType<T>) =>
-    (): MaybeEmpty<PrimaryKeyType> => {
+    (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
       }
@@ -316,7 +316,7 @@ const ReferenceProperty = <T extends FunctionalModel>(
     const valueIsModelInstance =
       instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKeyName
     const _getInstanceReturn = (objToUse: ReferenceValueType<T>) => {
-      // We need to determine if the object we just go is an actual model instance to determine if we need to make one.
+      // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
       const objIsModelInstance =
         instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKeyName
 
@@ -345,7 +345,7 @@ const ReferenceProperty = <T extends FunctionalModel>(
   }
 
   const p: ReferencePropertyInstance<T> = merge(
-    Property<ModelInstance<T> | T | MaybeEmpty<PrimaryKeyType>>(
+    Property<ModelInstance<T> | T | Maybe<PrimaryKeyType>>(
       PROPERTY_TYPES.ReferenceProperty,
       merge({}, config, {
         validators,

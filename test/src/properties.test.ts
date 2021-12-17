@@ -16,9 +16,10 @@ import {
 } from '../../src/properties'
 import { TYPE_PRIMITIVES, arrayType } from '../../src/validation'
 import { BaseModel } from '../../src/models'
-import { ModelInstance } from '../../src/interfaces'
+import {Model, ModelFetcher, ModelInstance, ModelInstanceInputData, PrimaryKeyType} from '../../src/interfaces'
 
 type TestModelType = { name: string }
+
 const TestModel1 = BaseModel<TestModelType>('TestModel1', {
   properties: {
     name: TextProperty(),
@@ -536,12 +537,12 @@ describe('/src/properties.ts', () => {
     })
     describe('#createGetter()', () => {
       it('should return a function even if config.value is set to a value', () => {
-        const instance = Property('MyProperty', { value: 'my-value' })
+        const instance = Property<string>('MyProperty', { value: 'my-value' })
         const actual = instance.createGetter('not-my-value')
         assert.isFunction(actual)
       })
       it('should return the value passed into config.value regardless of what is passed into the createGetter', async () => {
-        const instance = Property('MyProperty', { value: 'my-value' })
+        const instance = Property<string>('MyProperty', { value: 'my-value' })
         const actual = await instance.createGetter('not-my-value')()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
@@ -615,13 +616,11 @@ describe('/src/properties.ts', () => {
       const proto = DateProperty({})
       const date = '2020-01-01T00:00:01Z'
       const instance = proto.createGetter(date)
-      const actual = await instance()
-      const expected = null
-      assert.deepEqual(actual, expected)
-
+      const actual = (await instance() as Date).toISOString()
+      const expected = new Date(date).toISOString()
+      assert.equal(actual, expected)
     })
   })
-
   describe('#ReferenceProperty()', () => {
     it('should throw an exception if a model value is not passed in', () => {
       assert.throws(() => {
@@ -675,9 +674,11 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
-        const actual = (await ReferenceProperty(TestModel1, {
-          fetcher: async () =>
-            Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' }),
+        const modelFetcher : ModelFetcher = <TestModelType>() => {
+          return Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' })
+        }
+        const actual = (await ReferenceProperty<TestModelType>(TestModel1, {
+          fetcher: () => Promise.resolve({id: 'obj-id', name: 'switch-a-roo'})
         }).createGetter('obj-id')()) as ModelInstance<TestModelType>
         const expected = 'switch-a-roo'
         assert.deepEqual(actual.get.name(), expected)

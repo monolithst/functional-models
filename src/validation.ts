@@ -289,9 +289,9 @@ const CONFIG_TO_VALIDATE_METHOD: MethodConfigDict = {
   choices: _boolChoice(choices),
 }
 
-const createPropertyValidator = (
+const createPropertyValidator = <T extends Arrayable<FunctionalType>>(
   valueGetter: ValueGetter,
-  config: PropertyConfig
+  config: PropertyConfig<T>
 ): PropertyValidator => {
   const _propertyValidator: PropertyValidator = async (
     instance,
