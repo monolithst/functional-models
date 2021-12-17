@@ -16,7 +16,13 @@ import {
 } from '../../src/properties'
 import { TYPE_PRIMITIVES, arrayType } from '../../src/validation'
 import { BaseModel } from '../../src/models'
-import {Model, ModelFetcher, ModelInstance, ModelInstanceInputData, PrimaryKeyType} from '../../src/interfaces'
+import {
+  Model,
+  ModelFetcher,
+  ModelInstance,
+  ModelInstanceInputData,
+  PrimaryKeyType,
+} from '../../src/interfaces'
 
 type TestModelType = { name: string }
 
@@ -616,7 +622,7 @@ describe('/src/properties.ts', () => {
       const proto = DateProperty({})
       const date = '2020-01-01T00:00:01Z'
       const instance = proto.createGetter(date)
-      const actual = (await instance() as Date).toISOString()
+      const actual = ((await instance()) as Date).toISOString()
       const expected = new Date(date).toISOString()
       assert.equal(actual, expected)
     })
@@ -674,11 +680,12 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
-        const modelFetcher : ModelFetcher = <TestModelType>() => {
+        const modelFetcher: ModelFetcher = <TestModelType>() => {
           return Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' })
         }
         const actual = (await ReferenceProperty<TestModelType>(TestModel1, {
-          fetcher: () => Promise.resolve({id: 'obj-id', name: 'switch-a-roo'})
+          fetcher: () =>
+            Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' }),
         }).createGetter('obj-id')()) as ModelInstance<TestModelType>
         const expected = 'switch-a-roo'
         assert.deepEqual(actual.get.name(), expected)

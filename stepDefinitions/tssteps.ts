@@ -52,11 +52,13 @@ const TE_FULL_TEST_1 = () => {
 }
 
 const TE_TEST = () => {
-  return BaseModel<{basic: string}>('BasicTest', {properties: { basic: TextProperty()}})
+  return BaseModel<{ basic: string }>('BasicTest', {
+    properties: { basic: TextProperty() },
+  })
 }
 
 const TE_TEST_1 = () => {
-  return { basic: 'hello world'}
+  return { basic: 'hello world' }
 }
 
 const DATA_SET: { [s: string]: () => ModelInstanceInputData<any> } = {
@@ -66,7 +68,7 @@ const DATA_SET: { [s: string]: () => ModelInstanceInputData<any> } = {
 
 const MODEL_SET: { [s: string]: () => Model<any> } = {
   TE_FULL_TEST,
-  TE_TEST
+  TE_TEST,
 }
 
 Given('model {word} is used', function (modelName: string) {
@@ -116,14 +118,17 @@ Then('the model instance validated successfully', function () {
   assert.deepEqual(this.validationActual, expected)
 })
 
-When('another model instance is created from the toObj data', function() {
+When('another model instance is created from the toObj data', function () {
   this.anotherModelInstance = this.theModel.create(this.results)
 })
 
-When('toObj is called on another model instance', async function() {
+When('toObj is called on another model instance', async function () {
   this.results2 = await this.anotherModelInstance.toObj()
 })
 
-Then('the results of the two toObj calls are compared successfully', function() {
-  assert.deepEqual(this.results, this.results2)
-})
+Then(
+  'the results of the two toObj calls are compared successfully',
+  function () {
+    assert.deepEqual(this.results, this.results2)
+  }
+)

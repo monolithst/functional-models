@@ -70,7 +70,7 @@ describe('/src/validation.ts', () => {
       assert.isOk(actual)
     })
     it('should return undefined if a date', () => {
-      const actual = isDate(new Date(), EMPTY_MODEL_INSTANCE, {})
+      const actual = isDate(new Date(), EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
@@ -128,81 +128,81 @@ describe('/src/validation.ts', () => {
   })
   describe('#isNumber()', () => {
     it('should return an error when empty is passed', () => {
-      const actual = isNumber(null, EMPTY_MODEL_INSTANCE, {})
+      const actual = isNumber(null, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return an error when "asdf" is passed', () => {
-      const actual = isNumber('asdf', EMPTY_MODEL_INSTANCE, {})
+      const actual = isNumber('asdf', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined when 1 is passed', () => {
-      const actual = isNumber(1, EMPTY_MODEL_INSTANCE, {})
+      const actual = isNumber(1, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return error when "1" is passed', () => {
-      const actual = isNumber('1', EMPTY_MODEL_INSTANCE, {})
+      const actual = isNumber('1', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
   })
   describe('#isString()', () => {
     it('should return undefined when "1" is passed', () => {
-      const actual = isString('1', EMPTY_MODEL_INSTANCE, {})
+      const actual = isString('1', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return error when 1 is passed', () => {
-      const actual = isString(1, EMPTY_MODEL_INSTANCE, {})
+      const actual = isString(1, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
   })
   describe('#isRequired()', () => {
     it('should return undefined when 1 is passed', () => {
-      const actual = isRequired(1, EMPTY_MODEL_INSTANCE, {})
+      const actual = isRequired(1, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined when a date is passed', () => {
-      const actual = isRequired(new Date(), EMPTY_MODEL_INSTANCE, {})
+      const actual = isRequired(new Date(), EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined when 0 is passed', () => {
-      const actual = isRequired(0, EMPTY_MODEL_INSTANCE, {})
+      const actual = isRequired(0, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined when "something" is passed', () => {
-      const actual = isRequired('something', EMPTY_MODEL_INSTANCE, {})
+      const actual = isRequired('something', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return error when null is passed', () => {
-      const actual = isRequired(null, EMPTY_MODEL_INSTANCE, {})
+      const actual = isRequired(null, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return error when undefined is passed', () => {
-      const actual = isRequired(undefined, EMPTY_MODEL_INSTANCE, {})
+      const actual = isRequired(undefined, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined when false is passed', () => {
-      const actual = isRequired(false, EMPTY_MODEL_INSTANCE, {})
+      const actual = isRequired(false, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined when true is passed', () => {
-      const actual = isRequired(true, EMPTY_MODEL_INSTANCE, {})
+      const actual = isRequired(true, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
   describe('#isBoolean()', () => {
     it('should return error when "true" is passed"', () => {
-      const actual = isBoolean('true', EMPTY_MODEL_INSTANCE, {})
+      const actual = isBoolean('true', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return an error when "false" is passed', () => {
-      const actual = isBoolean('false', EMPTY_MODEL_INSTANCE, {})
+      const actual = isBoolean('false', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined when true is passed"', () => {
-      const actual = isBoolean(true, EMPTY_MODEL_INSTANCE, {})
+      const actual = isBoolean(true, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined when false is passed', () => {
-      const actual = isBoolean(false, EMPTY_MODEL_INSTANCE, {})
+      const actual = isBoolean(false, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
@@ -213,15 +213,15 @@ describe('/src/validation.ts', () => {
       assert.isOk(actual)
     })
     it('should return error if max=5 and value=6', () => {
-      const actual = maxNumber(5)(6, EMPTY_MODEL_INSTANCE, {})
+      const actual = maxNumber(5)(6, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined if max=5 and value=5', () => {
-      const actual = maxNumber(5)(5, EMPTY_MODEL_INSTANCE, {})
+      const actual = maxNumber(5)(5, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined if max=5 and value=4', () => {
-      const actual = maxNumber(5)(4, EMPTY_MODEL_INSTANCE, {})
+      const actual = maxNumber(5)(4, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
@@ -232,25 +232,25 @@ describe('/src/validation.ts', () => {
       assert.isOk(actual)
     })
     it('should return error if min=5 and value=4', () => {
-      const actual = minNumber(5)(4, EMPTY_MODEL_INSTANCE, {})
+      const actual = minNumber(5)(4, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined if min=5 and value=4', () => {
-      const actual = minNumber(5)(5, EMPTY_MODEL_INSTANCE, {})
+      const actual = minNumber(5)(5, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined if min=5 and value=6', () => {
-      const actual = minNumber(5)(6, EMPTY_MODEL_INSTANCE, {})
+      const actual = minNumber(5)(6, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
   describe('#choices()', () => {
     it('should return an error if choices are [1,2,3] and value is 4', () => {
-      const actual = choices(['1', '2', '3'])('4', EMPTY_MODEL_INSTANCE, {})
+      const actual = choices(['1', '2', '3'])('4', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined if choices are [1,2,3] and value is 1', () => {
-      const actual = choices(['1', '2', '3'])('1', EMPTY_MODEL_INSTANCE, {})
+      const actual = choices(['1', '2', '3'])('1', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
@@ -261,19 +261,24 @@ describe('/src/validation.ts', () => {
       assert.isOk(actual)
     })
     it('should return error if min=5 and value=5', () => {
-      const actual = minTextLength(5)('5', EMPTY_MODEL_INSTANCE, {})
+      const actual = minTextLength(5)('5', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return error if length=5 and value="asdf"', () => {
-      const actual = minTextLength(5)('asdf', EMPTY_MODEL_INSTANCE, {})
+      const actual = minTextLength(5)('asdf', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined if length=5 and value="hello"', () => {
-      const actual = minTextLength(5)('hello', EMPTY_MODEL_INSTANCE, {})
+      const actual = minTextLength(5)('hello', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined if length=5 and value="hello world"', () => {
-      const actual = minTextLength(5)('hello world', EMPTY_MODEL_INSTANCE, {})
+      const actual = minTextLength(5)(
+        'hello world',
+        EMPTY_MODEL_INSTANCE,
+        {},
+        {}
+      )
       assert.isUndefined(actual)
     })
   })
@@ -284,15 +289,20 @@ describe('/src/validation.ts', () => {
       assert.isOk(actual)
     })
     it('should return error if length=5 and value="hello world"', () => {
-      const actual = maxTextLength(5)('hello world', EMPTY_MODEL_INSTANCE, {})
+      const actual = maxTextLength(5)(
+        'hello world',
+        EMPTY_MODEL_INSTANCE,
+        {},
+        {}
+      )
       assert.isOk(actual)
     })
     it('should return undefined if length=5 and value="hello"', () => {
-      const actual = maxTextLength(5)('hello', EMPTY_MODEL_INSTANCE, {})
+      const actual = maxTextLength(5)('hello', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined if length=5 and value="asdf"', () => {
-      const actual = maxTextLength(5)('asdf', EMPTY_MODEL_INSTANCE, {})
+      const actual = maxTextLength(5)('asdf', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
@@ -301,12 +311,18 @@ describe('/src/validation.ts', () => {
       const actual = meetsRegex(/asdf/, 'g')(
         'hello world',
         EMPTY_MODEL_INSTANCE,
+        {},
         {}
       )
       assert.isOk(actual)
     })
     it('should return undefined with regex=/asdf/ flags="g" and value="hello asdf world"', () => {
-      const actual = meetsRegex(/asdf/, 'g')('asdf', EMPTY_MODEL_INSTANCE, {})
+      const actual = meetsRegex(/asdf/, 'g')(
+        'asdf',
+        EMPTY_MODEL_INSTANCE,
+        {},
+        {}
+      )
       assert.isUndefined(actual)
     })
   })
@@ -315,7 +331,11 @@ describe('/src/validation.ts', () => {
       const validators = [minTextLength(10), isNumber]
       const value = 'asdf'
       const actual = (
-        await aggregateValidator(value, validators)(EMPTY_MODEL_INSTANCE, {})
+        await aggregateValidator(value, validators)(
+          EMPTY_MODEL_INSTANCE,
+          {},
+          {}
+        )
       ).length
       const expected = 2
       assert.equal(actual, expected)
@@ -324,7 +344,11 @@ describe('/src/validation.ts', () => {
       const validators = minTextLength(10)
       const value = 'asdf'
       const actual = (
-        await aggregateValidator(value, validators)(EMPTY_MODEL_INSTANCE, {})
+        await aggregateValidator(value, validators)(
+          EMPTY_MODEL_INSTANCE,
+          {},
+          {}
+        )
       ).length
       const expected = 1
       assert.equal(actual, expected)
@@ -332,38 +356,38 @@ describe('/src/validation.ts', () => {
   })
   describe('#emptyValidator()', () => {
     it('should return undefined with a value of 1', () => {
-      const actual = emptyValidator(1, EMPTY_MODEL_INSTANCE, {})
+      const actual = emptyValidator(1, EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return undefined with a value of "1"', () => {
-      const actual = emptyValidator('1', EMPTY_MODEL_INSTANCE, {})
+      const actual = emptyValidator('1', EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return undefined with a value of true', () => {
-      const actual = emptyValidator(true, EMPTY_MODEL_INSTANCE, {})
+      const actual = emptyValidator(true, EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return undefined with a value of false', () => {
-      const actual = emptyValidator(false, EMPTY_MODEL_INSTANCE, {})
+      const actual = emptyValidator(false, EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return undefined with a value of undefined', () => {
-      const actual = emptyValidator(undefined, EMPTY_MODEL_INSTANCE, {})
+      const actual = emptyValidator(undefined, EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
   })
   describe('#isInteger()', () => {
     it('should return an error with a value of "1"', () => {
-      const actual = isInteger('1', EMPTY_MODEL_INSTANCE, {})
+      const actual = isInteger('1', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined with a value of 1', () => {
-      const actual = isInteger(1, EMPTY_MODEL_INSTANCE, {})
+      const actual = isInteger(1, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
@@ -542,7 +566,7 @@ describe('/src/validation.ts', () => {
     it('should accept an undefined configuration', async () => {
       // @ts-ignore
       const validator = createPropertyValidator(() => null, undefined)
-      const actual = await validator(EMPTY_MODEL_INSTANCE, {})
+      const actual = await validator(EMPTY_MODEL_INSTANCE, {}, {})
       const expected: readonly string[] = []
       assert.deepEqual(actual, expected)
     })
@@ -552,7 +576,7 @@ describe('/src/validation.ts', () => {
         // @ts-ignore
         notarealarg: false,
       })
-      const actual = await validator(EMPTY_MODEL_INSTANCE, {})
+      const actual = await validator(EMPTY_MODEL_INSTANCE, {}, {})
       const expected: readonly string[] = []
       assert.deepEqual(actual, expected)
     })
@@ -589,42 +613,42 @@ describe('/src/validation.ts', () => {
   })
   describe('#isArray()', () => {
     it('should return an error for null', () => {
-      const actual = isArray(null, EMPTY_MODEL_INSTANCE, {})
+      const actual = isArray(null, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return an error for undefined', () => {
-      const actual = isArray(undefined, EMPTY_MODEL_INSTANCE, {})
+      const actual = isArray(undefined, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return an error for 1', () => {
-      const actual = isArray(1, EMPTY_MODEL_INSTANCE, {})
+      const actual = isArray(1, EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return an error for "1"', () => {
-      const actual = isArray('1', EMPTY_MODEL_INSTANCE, {})
+      const actual = isArray('1', EMPTY_MODEL_INSTANCE, {}, {})
       assert.isOk(actual)
     })
     it('should return undefined for [1,2,3]', () => {
-      const actual = isArray([1, 2, 3], EMPTY_MODEL_INSTANCE, {})
+      const actual = isArray([1, 2, 3], EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
     it('should return undefined for []', () => {
-      const actual = isArray([], EMPTY_MODEL_INSTANCE, {})
+      const actual = isArray([], EMPTY_MODEL_INSTANCE, {}, {})
       assert.isUndefined(actual)
     })
   })
   describe('#arrayType()', () => {
     describe('#(object)()', () => {
       it('should return an error for null, even though its an object, its not an array', () => {
-        const actual = arrayType('object')(null, EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType('object')(null, EMPTY_MODEL_INSTANCE, {}, {})
         assert.isOk(actual)
       })
       it('should return an error for 1', () => {
-        const actual = arrayType('object')(1, EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType('object')(1, EMPTY_MODEL_INSTANCE, {}, {})
         assert.isOk(actual)
       })
       it('should return undefined for [{}]', () => {
-        const actual = arrayType('object')([{}], EMPTY_MODEL_INSTANCE, {})
+        const actual = arrayType('object')([{}], EMPTY_MODEL_INSTANCE, {}, {})
         assert.isUndefined(actual)
       })
     })
@@ -633,6 +657,7 @@ describe('/src/validation.ts', () => {
         const actual = arrayType(TYPE_PRIMITIVES.integer)(
           null,
           EMPTY_MODEL_INSTANCE,
+          {},
           {}
         )
         assert.isOk(actual)
@@ -641,6 +666,7 @@ describe('/src/validation.ts', () => {
         const actual = arrayType(TYPE_PRIMITIVES.integer)(
           undefined,
           EMPTY_MODEL_INSTANCE,
+          {},
           {}
         )
         assert.isOk(actual)
@@ -649,6 +675,7 @@ describe('/src/validation.ts', () => {
         const actual = arrayType(TYPE_PRIMITIVES.integer)(
           1,
           EMPTY_MODEL_INSTANCE,
+          {},
           {}
         )
         assert.isOk(actual)
@@ -657,6 +684,7 @@ describe('/src/validation.ts', () => {
         const actual = arrayType(TYPE_PRIMITIVES.integer)(
           '1',
           EMPTY_MODEL_INSTANCE,
+          {},
           {}
         )
         assert.isOk(actual)
@@ -665,6 +693,7 @@ describe('/src/validation.ts', () => {
         const actual = arrayType(TYPE_PRIMITIVES.integer)(
           [1, 2, 3],
           EMPTY_MODEL_INSTANCE,
+          {},
           {}
         )
         assert.isUndefined(actual)
@@ -673,6 +702,7 @@ describe('/src/validation.ts', () => {
         const actual = arrayType(TYPE_PRIMITIVES.integer)(
           [1, '2', 3],
           EMPTY_MODEL_INSTANCE,
+          {},
           {}
         )
         assert.isOk(actual)

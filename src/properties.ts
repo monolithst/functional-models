@@ -111,9 +111,10 @@ const Property = <T extends Arrayable<FunctionalType>>(
       const validator = createPropertyValidator(valueGetter, config)
       const _propertyValidatorWrapper: PropertyValidator = async (
         instance,
-        instanceData
+        instanceData,
+        propertyConfiguration
       ) => {
-        return validator(instance, instanceData)
+        return validator(instance, instanceData, propertyConfiguration)
       }
       return _propertyValidatorWrapper
     },
@@ -121,8 +122,11 @@ const Property = <T extends Arrayable<FunctionalType>>(
   return r
 }
 
-const DateProperty = (config: PropertyConfig<Maybe<Date|string>> = {}, additionalMetadata = {}) =>
-  Property<Maybe<Date|string>>(
+const DateProperty = (
+  config: PropertyConfig<Maybe<Date | string>> = {},
+  additionalMetadata = {}
+) =>
+  Property<Maybe<Date | string>>(
     PROPERTY_TYPES.DateProperty,
     merge(
       {
@@ -164,7 +168,10 @@ const ObjectProperty = (config = {}, additionalMetadata = {}) =>
     additionalMetadata
   )
 
-const TextProperty = (config: PropertyConfig<Maybe<string>> = {}, additionalMetadata = {}) =>
+const TextProperty = (
+  config: PropertyConfig<Maybe<string>> = {},
+  additionalMetadata = {}
+) =>
   Property<Maybe<string>>(
     PROPERTY_TYPES.TextProperty,
     merge(config, {
@@ -201,7 +208,10 @@ const IntegerProperty = (
     additionalMetadata
   )
 
-const NumberProperty = (config: PropertyConfig<Maybe<number>> = {}, additionalMetadata = {}) =>
+const NumberProperty = (
+  config: PropertyConfig<Maybe<number>> = {},
+  additionalMetadata = {}
+) =>
   Property<Maybe<number>>(
     PROPERTY_TYPES.NumberProperty,
     merge(config, {
@@ -231,7 +241,10 @@ const ConstantValueProperty = (
     additionalMetadata
   )
 
-const EmailProperty = (config: PropertyConfig<Maybe<string>> = {}, additionalMetadata = {}) =>
+const EmailProperty = (
+  config: PropertyConfig<Maybe<string>> = {},
+  additionalMetadata = {}
+) =>
   TextProperty(
     merge(config, {
       type: PROPERTY_TYPES.EmailProperty,
@@ -252,7 +265,10 @@ const BooleanProperty = (
     additionalMetadata
   )
 
-const UniqueId = (config: PropertyConfig<string> = {}, additionalMetadata = {}) =>
+const UniqueId = (
+  config: PropertyConfig<string> = {},
+  additionalMetadata = {}
+) =>
   Property<string>(
     PROPERTY_TYPES.UniqueId,
     merge(
@@ -288,8 +304,7 @@ const ReferenceProperty = <T extends FunctionalModel>(
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
   const _getId =
-    (instanceValues: ReferenceValueType<T>) =>
-    (): Maybe<PrimaryKeyType> => {
+    (instanceValues: ReferenceValueType<T>) => (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
       }

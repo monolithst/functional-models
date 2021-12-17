@@ -71,11 +71,17 @@ type FunctionalType =
   | Arrayable<FunctionalModel>
   | Arrayable<{ readonly [s: string]: JsonAble }>
 
-type ModelInstanceInputData<T extends FunctionalModel> = {
-  //readonly [P in keyof T as T[P] extends ModelMethodTypes<T> ? never : P]: T[P]
-  //readonly [s: string]: any
-  readonly [P in keyof T as T[P] extends ModelMethodTypes<T> ? never : P]: T[P]
-} | JsonAble
+type ModelInstanceInputData<T extends FunctionalModel> =
+  | {
+      readonly //readonly [P in keyof T as T[P] extends ModelMethodTypes<T> ? never : P]: T[P]
+      //readonly [s: string]: any
+      [P in keyof T as T[P] extends ModelMethodTypes<T> ? never : P]: T[P]
+    }
+  | JsonAble
+
+type ValidatorConfiguration = {
+  readonly [s: string]: any
+}
 
 type PropertyValidatorComponentTypeAdvanced<
   TValue,
@@ -89,7 +95,8 @@ type PropertyValidatorComponentTypeAdvanced<
 type PropertyValidatorComponentType<TValue> = (
   value: TValue,
   instance: ModelInstance<any>,
-  instanceData: FunctionalModel
+  instanceData: FunctionalModel,
+  configurations: ValidatorConfiguration
 ) => string | undefined
 
 type PropertyValidatorComponentSync = PropertyValidatorComponentType<any>
@@ -97,7 +104,8 @@ type PropertyValidatorComponentSync = PropertyValidatorComponentType<any>
 type PropertyValidatorComponentAsync = (
   value: Arrayable<FunctionalModel>,
   instance: ModelInstance<any>,
-  instanceData: FunctionalModel
+  instanceData: FunctionalModel,
+  configurations: ValidatorConfiguration
 ) => Promise<string | undefined>
 
 type PropertyValidatorComponent =
@@ -106,7 +114,8 @@ type PropertyValidatorComponent =
 
 type PropertyValidator = (
   instance: ModelInstance<any>,
-  instanceData: FunctionalModel
+  instanceData: FunctionalModel,
+  configurations: ValidatorConfiguration
 ) => Promise<ValidationErrors>
 
 type ValidationError = string | undefined
@@ -119,7 +128,7 @@ type ModelErrors = {
 type ModelComponentValidator = (
   instance: ModelInstance<any>,
   instanceData: FunctionalModel,
-  options?: object
+  configurations: ValidatorConfiguration
 ) => Promise<ValidationErrors>
 
 type ValueGetter = () =>
@@ -150,12 +159,9 @@ interface ReferencePropertyInstance<T extends FunctionalModel>
   readonly getReferencedModel: () => Model<T>
 }
 
-type ReferenceValueType<T extends FunctionalModel> =
-  | Maybe<
-    | ModelInstance<T>
-    | ModelInstanceInputData<T>
-    | PrimaryKeyType
-  >
+type ReferenceValueType<T extends FunctionalModel> = Maybe<
+  ModelInstance<T> | ModelInstanceInputData<T> | PrimaryKeyType
+>
 
 type DefaultPropertyValidators = {
   readonly required?: boolean
@@ -171,12 +177,8 @@ type PropertyConfigContents<T extends Arrayable<FunctionalType>> = {
   readonly defaultValue?: T
   readonly value?: T
   readonly choices?: readonly VeryPrimitivesTypes[]
-  readonly lazyLoadMethod?: (
-    value: T
-  ) => MaybeLazy<T>
-  readonly valueSelector?: (
-    instanceValue: MaybePromise<T>
-  ) => T
+  readonly lazyLoadMethod?: (value: T) => MaybeLazy<T>
+  readonly valueSelector?: (instanceValue: MaybePromise<T>) => T
   readonly validators?: readonly PropertyValidatorComponent[]
   readonly maxLength?: number
   readonly minLength?: number
@@ -189,7 +191,9 @@ type PropertyConfigContents<T extends Arrayable<FunctionalType>> = {
 type ModelFetcher = (
   model: Model<any>,
   primaryKey: PrimaryKeyType
-) => Promise<ModelInstance<any> | ModelInstanceInputData<any> | null | undefined>
+) => Promise<
+  ModelInstance<any> | ModelInstanceInputData<any> | null | undefined
+>
 
 type PropertyConfig<T extends Arrayable<FunctionalType>> =
   | (PropertyConfigContents<T> & DefaultPropertyValidators)
@@ -332,5 +336,6 @@ export {
   ModelFactory,
   ModelFetcher,
   CreateParams,
+  ValidatorConfiguration,
 }
 /* eslint-enable no-unused-vars */

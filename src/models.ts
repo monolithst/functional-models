@@ -27,7 +27,9 @@ const _defaultOptions = <T extends FunctionalModel>(): ModelOptions<T> => ({
   instanceCreatedCallback: null,
 })
 
-const _convertOptions = <T extends FunctionalModel>(options?: OptionalModelOptions<T>) => {
+const _convertOptions = <T extends FunctionalModel>(
+  options?: OptionalModelOptions<T>
+) => {
   const r: ModelOptions<T> = merge({}, _defaultOptions(), options)
   return r
 }

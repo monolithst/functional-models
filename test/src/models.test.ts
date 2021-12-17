@@ -224,7 +224,7 @@ describe('/src/models.ts', () => {
         }
         const model = BaseModel('name', input)
         assert.doesNotThrow(() => {
-          model.create({ whereIsMyProperty: 'not-here'})
+          model.create({ whereIsMyProperty: 'not-here' })
         })
       })
       it('should return an object that contains getModel().getModelDefinition().properties.myProperty', () => {
@@ -389,7 +389,6 @@ describe('/src/models.ts', () => {
         const actual = await instance.validate()
         const expected = 1
         assert.equal(Object.values(actual).length, expected)
-
       })
       it('should return a model where validate returns one error for the missing text property', async () => {
         const input = {
@@ -426,8 +425,10 @@ describe('/src/models.ts', () => {
     })
     describe('#toObj()', () => {
       it('should be able to pass the results of toObj into .create() without forcing it.', async () => {
-        const model = BaseModel<{simple: string}>('ModelName', { properties: { simple: TextProperty()} })
-        const instance1 = model.create({ simple: 'test-me'})
+        const model = BaseModel<{ simple: string }>('ModelName', {
+          properties: { simple: TextProperty() },
+        })
+        const instance1 = model.create({ simple: 'test-me' })
         const obj = await instance1.toObj()
         const instance2 = model.create(obj)
         const obj2 = await instance2.toObj()

@@ -18,6 +18,7 @@ import {
   Arrayable,
   FunctionalType,
   ModelErrors,
+  ValidatorConfiguration,
 } from './interfaces'
 
 const TYPE_PRIMITIVES = {
@@ -243,11 +244,12 @@ const aggregateValidator = (
 
   const _aggregativeValidator: PropertyValidator = async (
     instance: ModelInstance<any>,
-    instanceData: FunctionalModel
+    instanceData: FunctionalModel,
+    propertyConfiguration
   ) => {
     const values = await Promise.all(
       toDo.map(method => {
-        return method(value, instance, instanceData)
+        return method(value, instance, instanceData, propertyConfiguration)
       })
     )
     return filterEmpty(values)
@@ -266,7 +268,7 @@ const _boolChoice =
       modelInstance: ModelInstance<any>,
       modelData: FunctionalModel
     ) => {
-      return func(value, modelInstance, modelData)
+      return func(value, modelInstance, modelData, {})
     }
     return validatorWrapper
   }
@@ -295,7 +297,8 @@ const createPropertyValidator = <T extends Arrayable<FunctionalType>>(
 ): PropertyValidator => {
   const _propertyValidator: PropertyValidator = async (
     instance,
-    instanceData: FunctionalModel
+    instanceData: FunctionalModel,
+    propertyConfiguration
   ) => {
     if (!config) {
       config = {}
@@ -318,7 +321,11 @@ const createPropertyValidator = <T extends Arrayable<FunctionalType>>(
       return []
     }
     const validator = aggregateValidator(value, validators)
-    const errors = await validator(instance, instanceData)
+    const errors = await validator(
+      instance,
+      instanceData,
+      propertyConfiguration
+    )
     return [...new Set(flatMap(errors))]
   }
   return _propertyValidator
@@ -330,7 +337,7 @@ const createModelValidator = (
 ) => {
   const _modelValidator = async (
     instance: ModelInstance<any>,
-    options: object
+    propertyConfiguration: ValidatorConfiguration
   ): Promise<ModelErrors> => {
     return Promise.resolve().then(async () => {
       if (!instance) {
@@ -340,14 +347,17 @@ const createModelValidator = (
       const instanceData = await instance.toObj()
       const propertyValidationErrors = await Promise.all(
         keysAndFunctions.map(async ([key, validator]) => {
-          return [key, await validator(instance, instanceData)]
+          return [
+            key,
+            await validator(instance, instanceData, propertyConfiguration),
+          ]
         })
       )
       const modelValidationErrors = (
         await Promise.all(
           modelValidators
             ? modelValidators.map(validator =>
-                validator(instance, instanceData, options)
+                validator(instance, instanceData, propertyConfiguration)
               )
             : []
         )
