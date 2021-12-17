@@ -378,6 +378,7 @@ describe('/src/models.ts', () => {
         const actual = await instance.validate()
         const expected = 1
         assert.equal(Object.values(actual).length, expected)
+
       })
       it('should return a model where validate returns one error for the missing text property', async () => {
         const input = {

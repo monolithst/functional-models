@@ -1,7 +1,4 @@
 /* eslint-disable no-unused-vars */
-
-import {Func} from "mocha"
-
 type MaybeFunction<T> = T | (() => T)
 type MaybePromise<T> = T | Promise<T>
 type Nullable<T> = T | null
@@ -77,9 +74,8 @@ type FunctionalType =
 
 type ModelInstanceInputData<T extends FunctionalModel> =
   | ValueIsNotOfType<T, ModelMethodTypes<T>>
-  | JsonAble
 
-type PropertyValidatorComponentTypeAdvanced<
+  type PropertyValidatorComponentTypeAdvanced<
   TValue,
   TModel extends FunctionalModel
 > = (

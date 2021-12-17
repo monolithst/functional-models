@@ -9,7 +9,7 @@
     "test:coverage": "nyc npm run test",
     "feature-tests": "./node_modules/.bin/cucumber-js -p default",
     "coverage": "nyc --all --reporter=lcov npm test",
-    "dist": "tsc && cp package.json ./dist && cp README.md ./dist && cd dist && npm publish"
+    "dist": "TS_NODE_PROJECT=tsconfig.build.json && tsc && cp package.json ./dist && cp README.md ./dist && cd dist && npm publish"
   },
   "repository": {
     "type": "git",

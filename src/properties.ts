@@ -122,13 +122,16 @@ const Property = <T extends Arrayable<FunctionalType>>(
 }
 
 const DateProperty = (config: PropertyConfig = {}, additionalMetadata = {}) =>
-  Property<MaybeEmpty<Date>>(
+  Property<MaybeEmpty<Date|string>>(
     PROPERTY_TYPES.DateProperty,
     merge(
       {
         lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
           if (!value && config?.autoNow) {
             return new Date()
+          }
+          if (typeof value === 'string') {
+            return new Date(value)
           }
           return value
         },

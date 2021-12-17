@@ -611,6 +611,15 @@ describe('/src/properties.ts', () => {
       const expected = null
       assert.deepEqual(actual, expected)
     })
+    it('should return a Date object when a string date is passed in', async () => {
+      const proto = DateProperty({})
+      const date = '2020-01-01T00:00:01Z'
+      const instance = proto.createGetter(date)
+      const actual = await instance()
+      const expected = null
+      assert.deepEqual(actual, expected)
+
+    })
   })
 
   describe('#ReferenceProperty()', () => {
