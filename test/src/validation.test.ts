@@ -27,7 +27,7 @@ import {
   TYPE_PRIMITIVES,
 } from '../../src/validation'
 import {
-  ModelComponentValidator,
+  ModelValidatorComponent,
   PropertyValidator,
   PropertyValidatorComponent,
 } from '../../src/interfaces'
@@ -43,7 +43,7 @@ const TestModel2 = BaseModel('TestModel2', {
 })
 
 const createTestModel3 = (
-  modelValidators: ModelComponentValidator<{ name: string }>[]
+  modelValidators: ModelValidatorComponent<{ name: string }>[]
 ) =>
   BaseModel<{ name: string }>('TestModel3', {
     properties: {

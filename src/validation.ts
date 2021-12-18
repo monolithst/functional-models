@@ -5,7 +5,7 @@ import {
   FunctionalModel,
   ModelInstance,
   Model,
-  ModelComponentValidator,
+  ModelValidatorComponent,
   PropertyValidatorComponent,
   PropertyValidatorComponentSync,
   PropertyValidatorComponentTypeAdvanced,
@@ -357,12 +357,12 @@ const createPropertyValidator = <T extends Arrayable<FunctionalType>>(
 
 const createModelValidator = <T extends FunctionalModel>(
   validators: PropertyValidators<T>,
-  modelValidators?: readonly ModelComponentValidator<T>[]
+  modelValidators?: readonly ModelValidatorComponent<T>[]
 ) => {
   const _modelValidator = async (
     instance: ModelInstance<T>,
     propertyConfiguration: ValidatorConfiguration
-  ): Promise<ModelErrors> => {
+  ): Promise<ModelErrors<T>> => {
     return Promise.resolve().then(async () => {
       if (!instance) {
         throw new Error(`Instance cannot be empty`)
@@ -385,12 +385,12 @@ const createModelValidator = <T extends FunctionalModel>(
               )
             : []
         )
-      ).filter(x => x)
+      ).filter(x => x) as readonly string[]
       const propertyErrors = propertyValidationErrors
         .filter(([, errors]) => Boolean(errors) && errors.length > 0)
         .reduce((acc, [key, errors]) => {
           return merge(acc, { [String(key)]: errors })
-        }, {})
+        }, {} as ModelErrors<T>)
       return modelValidationErrors.length > 0
         ? merge(propertyErrors, { overall: modelValidationErrors })
         : propertyErrors
