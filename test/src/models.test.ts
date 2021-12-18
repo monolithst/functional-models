@@ -342,7 +342,6 @@ describe('/src/models.ts', () => {
       it('should return a model with get.id and get.type for the provided valid keyToProperty', () => {
         const input = {
           properties: {
-            id: UniqueId({ required: true }),
             type: Property('MyProperty', {}),
           },
         }

@@ -79,7 +79,7 @@ const BaseModel: ModelFactory = <T extends FunctionalModel>(
     let instance: Nullable<ModelInstance<T>> = null
     const startingInternals: {
       readonly get: PropertyGetters<T> & { readonly id: () => string }
-      readonly validators: PropertyValidators
+      readonly validators: PropertyValidators<T>
       readonly references: ReferenceFunctions
     } = {
       get: {} as PropertyGetters<T> & { readonly id: () => string },
@@ -100,7 +100,7 @@ const BaseModel: ModelFactory = <T extends FunctionalModel>(
             [key]: propertyValidator,
           },
         }
-        const asReferenced = property as ReferencePropertyInstance<any>
+        const asReferenced = property as ReferencePropertyInstance<any, any>
         const referencedProperty = asReferenced.getReferencedId
           ? {
               references: {
@@ -133,10 +133,12 @@ const BaseModel: ModelFactory = <T extends FunctionalModel>(
     const getModel = () => model as Model<T>
     const toObj = toJsonAble(loadedInternals.get)
     const validate = (options = {}) => {
-      return createModelValidator(
-        loadedInternals.validators,
-        modelDefinition.modelValidators || []
-      )(instance as ModelInstance<T>, options)
+      return Promise.resolve().then(() => {
+        return createModelValidator<T>(
+          loadedInternals.validators,
+          modelDefinition.modelValidators || []
+        )(instance as ModelInstance<T>, options)
+      })
     }
 
     instance = merge(loadedInternals, {

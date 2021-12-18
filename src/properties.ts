@@ -1,4 +1,3 @@
-import identity from 'lodash/identity'
 import merge from 'lodash/merge'
 import {
   createPropertyValidator,
@@ -32,16 +31,17 @@ import {
   ModelInstanceInputData,
   FunctionalModel,
   JsonAble,
+  PropertyModifier,
 } from './interfaces'
 
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
 
-function _getValidatorFromConfigElseEmpty<T>(
+const _getValidatorFromConfigElseEmpty = <T extends FunctionalModel>(
   input: T | undefined,
   // eslint-disable-next-line no-unused-vars
-  validatorGetter: (t: T) => PropertyValidatorComponent
-) {
+  validatorGetter: (t: T) => PropertyValidatorComponent<T>
+) => {
   if (input !== undefined) {
     const validator = validatorGetter(input)
     return validator
@@ -51,7 +51,7 @@ function _getValidatorFromConfigElseEmpty<T>(
 
 const _mergeValidators = <T extends Arrayable<FunctionalType>>(
   config: PropertyConfig<T> | undefined,
-  validators: readonly PropertyValidatorComponent[]
+  validators: readonly PropertyValidatorComponent<any>[]
 ) => {
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
@@ -73,7 +73,7 @@ const Property = <T extends Arrayable<FunctionalType>>(
     (config?.defaultValue !== undefined ? config.defaultValue : undefined) as T
   const getChoices = () => config?.choices || []
   const lazyLoadMethod = config?.lazyLoadMethod || false
-  const valueSelector = config?.valueSelector || identity
+  const valueSelector = config?.valueSelector || (x => x)
   if (typeof valueSelector !== 'function') {
     throw new Error(`valueSelector must be a function`)
   }
@@ -85,7 +85,7 @@ const Property = <T extends Arrayable<FunctionalType>>(
     getDefaultValue,
     getConstantValue,
     getPropertyType: () => type,
-    createGetter: (instanceValue: T): ValueGetter => {
+    createGetter: (instanceValue: T): ValueGetter<T> => {
       const value = getConstantValue()
       if (value !== undefined) {
         return () => value
@@ -103,18 +103,22 @@ const Property = <T extends Arrayable<FunctionalType>>(
         : typeof instanceValue === 'function'
         ? (instanceValue as () => T)
         : () => instanceValue
-      return () => {
-        return valueSelector(method(instanceValue))
+      const r: ValueGetter<T> = () => {
+        const result = method(instanceValue)
+        return valueSelector(result)
       }
+      return r
     },
-    getValidator: valueGetter => {
+    getValidator: <TModel extends FunctionalModel>(
+      valueGetter: ValueGetter<T>
+    ) => {
       const validator = createPropertyValidator(valueGetter, config)
-      const _propertyValidatorWrapper: PropertyValidator = async (
+      const _propertyValidatorWrapper: PropertyValidator<TModel> = async (
         instance,
         instanceData,
         propertyConfiguration
       ) => {
-        return validator(instance, instanceData, propertyConfiguration)
+        return validator<TModel>(instance, instanceData, propertyConfiguration)
       }
       return _propertyValidatorWrapper
     },
@@ -122,11 +126,11 @@ const Property = <T extends Arrayable<FunctionalType>>(
   return r
 }
 
-const DateProperty = (
-  config: PropertyConfig<Maybe<Date | string>> = {},
+const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  Property<Maybe<Date | string>>(
+  Property<TModifier>(
     PROPERTY_TYPES.DateProperty,
     merge(
       {
@@ -159,8 +163,13 @@ const ArrayProperty = <T extends FunctionalType>(
     additionalMetadata
   )
 
-const ObjectProperty = (config = {}, additionalMetadata = {}) =>
-  Property<{ readonly [s: string]: JsonAble }>(
+const ObjectProperty = <
+  TModifier extends PropertyModifier<{ readonly [s: string]: JsonAble }>
+>(
+  config = {},
+  additionalMetadata = {}
+) =>
+  Property<TModifier>(
     PROPERTY_TYPES.ObjectProperty,
     merge(config, {
       validators: _mergeValidators(config, [isType('object')]),
@@ -168,11 +177,11 @@ const ObjectProperty = (config = {}, additionalMetadata = {}) =>
     additionalMetadata
   )
 
-const TextProperty = (
-  config: PropertyConfig<Maybe<string>> = {},
+const TextProperty = <TModifier extends PropertyModifier<string>>(
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  Property<Maybe<string>>(
+  Property<TModifier>(
     PROPERTY_TYPES.TextProperty,
     merge(config, {
       isString: true,
@@ -188,11 +197,11 @@ const TextProperty = (
     additionalMetadata
   )
 
-const IntegerProperty = (
-  config: PropertyConfig<Maybe<number>> = {},
+const IntegerProperty = <TModifier extends PropertyModifier<number>>(
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  Property<Maybe<number>>(
+  Property<TModifier>(
     PROPERTY_TYPES.IntegerProperty,
     merge(config, {
       isInteger: true,
@@ -208,11 +217,11 @@ const IntegerProperty = (
     additionalMetadata
   )
 
-const NumberProperty = (
-  config: PropertyConfig<Maybe<number>> = {},
+const NumberProperty = <TModifier extends PropertyModifier<number>>(
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  Property<Maybe<number>>(
+  Property<TModifier>(
     PROPERTY_TYPES.NumberProperty,
     merge(config, {
       isNumber: true,
@@ -228,21 +237,23 @@ const NumberProperty = (
     additionalMetadata
   )
 
-const ConstantValueProperty = (
-  value: string,
-  config: PropertyConfig<Maybe<string>> = {},
+const ConstantValueProperty = <
+  TModifier extends PropertyModifier<Arrayable<FunctionalType>>
+>(
+  value: TModifier,
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  TextProperty(
+  Property<TModifier>(
+    PROPERTY_TYPES.ConstantValueProperty,
     merge(config, {
-      type: PROPERTY_TYPES.ConstantValueProperty,
       value,
     }),
     additionalMetadata
   )
 
-const EmailProperty = (
-  config: PropertyConfig<Maybe<string>> = {},
+const EmailProperty = <TModifier extends PropertyModifier<string>>(
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
   TextProperty(
@@ -253,11 +264,11 @@ const EmailProperty = (
     additionalMetadata
   )
 
-const BooleanProperty = (
-  config: PropertyConfig<Maybe<boolean>> = {},
+const BooleanProperty = <TModifier extends PropertyModifier<boolean>>(
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  Property<Maybe<boolean>>(
+  Property<TModifier>(
     PROPERTY_TYPES.BooleanProperty,
     merge(config, {
       isBoolean: true,
@@ -265,11 +276,11 @@ const BooleanProperty = (
     additionalMetadata
   )
 
-const UniqueId = (
-  config: PropertyConfig<string> = {},
+const UniqueId = <TModifier extends PropertyModifier<string>>(
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  Property<string>(
+  Property<TModifier>(
     PROPERTY_TYPES.UniqueId,
     merge(
       {
@@ -285,9 +296,12 @@ const UniqueId = (
     additionalMetadata
   )
 
-const ReferenceProperty = <T extends FunctionalModel>(
+const ReferenceProperty = <
+  T extends FunctionalModel,
+  TModifier extends PropertyModifier<ReferenceValueType<T>>
+>(
   model: MaybeFunction<Model<T>>,
-  config: PropertyConfig<ModelInstance<T> | T | Maybe<PrimaryKeyType>> = {},
+  config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) => {
   if (!model) {
@@ -327,14 +341,15 @@ const ReferenceProperty = <T extends FunctionalModel>(
       ] as PrimaryKeyType
     }
 
-  const lazyLoadMethod = async (instanceValues: ReferenceValueType<T>) => {
+  const lazyLoadMethod = async (instanceValues: TModifier) => {
     const valueIsModelInstance =
       instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKeyName
-    const _getInstanceReturn = (objToUse: ReferenceValueType<T>) => {
+    const _getInstanceReturn = (objToUse: TModifier) => {
       // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
       const objIsModelInstance =
         instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKeyName
 
+      // @ts-ignore
       const instance = objIsModelInstance
         ? objToUse
         : _getModel().create(objToUse as ModelInstanceInputData<T>)
@@ -344,6 +359,7 @@ const ReferenceProperty = <T extends FunctionalModel>(
       })
     }
 
+    // @ts-ignore
     if (valueIsModelInstance) {
       return _getInstanceReturn(instanceValues)
     }
@@ -352,15 +368,15 @@ const ReferenceProperty = <T extends FunctionalModel>(
       const model = _getModel()
       if (id !== null && id !== undefined) {
         const obj = await config.fetcher(model, id)
-        return _getInstanceReturn(obj)
+        return _getInstanceReturn(obj as TModifier)
       }
       return null
     }
     return _getId(instanceValues)()
   }
 
-  const p: ReferencePropertyInstance<T> = merge(
-    Property<ModelInstance<T> | T | Maybe<PrimaryKeyType>>(
+  const p: ReferencePropertyInstance<T, TModifier> = merge(
+    Property<TModifier>(
       PROPERTY_TYPES.ReferenceProperty,
       merge({}, config, {
         validators,

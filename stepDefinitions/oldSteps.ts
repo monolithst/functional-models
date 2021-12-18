@@ -39,7 +39,6 @@ const MODEL_DEFINITIONS = {
     toJson: ModelInstanceMethod
   }>('FunctionModel1', {
     properties: {
-      id: UniqueId({ required: true }),
       name: TextProperty({ required: true }),
     },
     modelMethods: {

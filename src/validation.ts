@@ -7,9 +7,9 @@ import {
   Model,
   ModelComponentValidator,
   PropertyValidatorComponent,
-  PropertyValidatorComponentType,
   PropertyValidatorComponentSync,
   PropertyValidatorComponentTypeAdvanced,
+  JsonAble,
   PropertyValidator,
   PropertyConfig,
   MaybeFunction,
@@ -19,6 +19,8 @@ import {
   FunctionalType,
   ModelErrors,
   ValidatorConfiguration,
+  ValuePropertyValidatorComponent,
+  ValidationErrors,
 } from './interfaces'
 
 const TYPE_PRIMITIVES = {
@@ -36,8 +38,11 @@ const filterEmpty = <T>(
 }
 
 const _trueOrError =
-  (method: Function, error: string): PropertyValidatorComponentSync =>
-  (value: any) => {
+  <T extends Arrayable<FunctionalType>>(
+    method: (t: T) => boolean,
+    error: string
+  ): ValuePropertyValidatorComponent<T> =>
+  (value: T) => {
     if (method(value) === false) {
       return error
     }
@@ -45,8 +50,11 @@ const _trueOrError =
   }
 
 const _typeOrError =
-  (type: string, errorMessage: string): PropertyValidatorComponentSync =>
-  (value: any) => {
+  <T extends Arrayable<FunctionalType>>(
+    type: string,
+    errorMessage: string
+  ): ValuePropertyValidatorComponent<T> =>
+  (value: T) => {
     if (typeof value !== type) {
       return errorMessage
     }
@@ -54,17 +62,19 @@ const _typeOrError =
   }
 
 const isType =
-  (type: string): PropertyValidatorComponentSync =>
-  (value: any) => {
+  <T extends Arrayable<FunctionalType>>(
+    type: string
+  ): ValuePropertyValidatorComponent<T> =>
+  (value: T) => {
     // @ts-ignore
     return _typeOrError(type, `Must be a ${type}`)(value)
   }
-const isNumber = isType('number')
-const isInteger = _trueOrError(Number.isInteger, 'Must be an integer')
+const isNumber = isType<number>('number')
+const isInteger = _trueOrError<number>(Number.isInteger, 'Must be an integer')
 
-const isBoolean = isType('boolean')
-const isString = isType('string')
-const isArray = _trueOrError(
+const isBoolean = isType<boolean>('boolean')
+const isString = isType<string>('string')
+const isArray = _trueOrError<readonly FunctionalType[]>(
   (v: any) => Array.isArray(v),
   'Value is not an array'
 )
@@ -77,8 +87,10 @@ const PRIMITIVE_TO_SPECIAL_TYPE_VALIDATOR = {
 }
 
 const arrayType =
-  (type: string): PropertyValidatorComponentSync =>
-  (value: Arrayable<FunctionalType>) => {
+  <T extends FunctionalType>(
+    type: string
+  ): ValuePropertyValidatorComponent<readonly T[]> =>
+  (value: readonly T[]) => {
     // @ts-ignore
     const arrayError = isArray(value)
     if (arrayError) {
@@ -98,34 +110,36 @@ const arrayType =
   }
 
 const meetsRegex =
-  (
+  <T extends FunctionalType>(
     regex: string | RegExp,
     flags?: string,
     errorMessage: string = 'Format was invalid'
-  ): PropertyValidatorComponentSync =>
-  (value: FunctionalType) => {
+  ): ValuePropertyValidatorComponent<T> =>
+  (value: T) => {
     const reg = new RegExp(regex, flags)
     // @ts-ignore
     return _trueOrError((v: string) => reg.test(v), errorMessage)(value)
   }
 
 const choices =
-  (choiceArray: readonly FunctionalType[]): PropertyValidatorComponentSync =>
-  (value: Arrayable<FunctionalType>) => {
+  <T extends FunctionalType>(
+    choiceArray: readonly T[]
+  ): ValuePropertyValidatorComponent<T> =>
+  (value: T | readonly T[]) => {
     if (Array.isArray(value)) {
       const bad = value.find(v => !choiceArray.includes(v))
       if (bad) {
         return `${bad} is not a valid choice`
       }
     } else {
-      if (!choiceArray.includes(value as FunctionalType)) {
+      if (!choiceArray.includes(value as T)) {
         return `${value} is not a valid choice`
       }
     }
     return undefined
   }
 
-const isDate: PropertyValidatorComponentType<Date> = (value: Date) => {
+const isDate: ValuePropertyValidatorComponent<Date> = (value: Date) => {
   if (!value) {
     return 'Date value is empty'
   }
@@ -135,7 +149,7 @@ const isDate: PropertyValidatorComponentType<Date> = (value: Date) => {
   return undefined
 }
 
-const isRequired: PropertyValidatorComponentSync = (value?: any) => {
+const isRequired: ValuePropertyValidatorComponent<any> = (value?: any) => {
   if (value === true || value === false) {
     return undefined
   }
@@ -154,7 +168,7 @@ const isRequired: PropertyValidatorComponentSync = (value?: any) => {
 }
 
 const maxNumber =
-  (max: Number): PropertyValidatorComponentType<number> =>
+  (max: Number): ValuePropertyValidatorComponent<number> =>
   (value: number) => {
     // @ts-ignore
     const numberError = isNumber(value)
@@ -168,7 +182,7 @@ const maxNumber =
   }
 
 const minNumber =
-  (min: Number): PropertyValidatorComponentType<number> =>
+  (min: Number): ValuePropertyValidatorComponent<number> =>
   (value: Number) => {
     // @ts-ignore
     const numberError = isNumber(value)
@@ -182,7 +196,7 @@ const minNumber =
   }
 
 const maxTextLength =
-  (max: Number): PropertyValidatorComponentType<string> =>
+  (max: Number): ValuePropertyValidatorComponent<string> =>
   (value: string) => {
     // @ts-ignore
     const stringError = isString(value)
@@ -196,7 +210,7 @@ const maxTextLength =
   }
 
 const minTextLength =
-  (min: Number): PropertyValidatorComponentType<string> =>
+  (min: Number): ValuePropertyValidatorComponent<string> =>
   (value: string) => {
     // @ts-ignore
     const stringError = isString(value)
@@ -232,19 +246,19 @@ const referenceTypeMatch = <TModel extends FunctionalModel>(
   }
 }
 
-const aggregateValidator = (
+const aggregateValidator = <T extends FunctionalModel>(
   value: any,
   methodOrMethods:
-    | PropertyValidatorComponent
-    | readonly PropertyValidatorComponent[]
+    | PropertyValidatorComponent<T>
+    | readonly PropertyValidatorComponent<T>[]
 ) => {
   const toDo = Array.isArray(methodOrMethods)
     ? methodOrMethods
     : [methodOrMethods]
 
-  const _aggregativeValidator: PropertyValidator = async (
-    instance: ModelInstance<any>,
-    instanceData: FunctionalModel,
+  const _aggregativeValidator: PropertyValidator<T> = async (
+    instance: ModelInstance<T>,
+    instanceData: T | JsonAble,
     propertyConfiguration
   ) => {
     const values = await Promise.all(
@@ -257,86 +271,96 @@ const aggregateValidator = (
   return _aggregativeValidator
 }
 
-const emptyValidator: PropertyValidatorComponentSync = () => undefined
+const emptyValidator: PropertyValidatorComponentSync<any> = () => undefined
 
 const _boolChoice =
-  (method: (configValue: any) => PropertyValidatorComponentSync) =>
+  <T extends FunctionalModel>(
+    method: (configValue: any) => PropertyValidatorComponentSync<T>
+  ) =>
   (configValue: any) => {
     const func = method(configValue)
-    const validatorWrapper: PropertyValidatorComponentSync = (
+    const validatorWrapper: PropertyValidatorComponentSync<T> = (
       value: any,
-      modelInstance: ModelInstance<any>,
-      modelData: FunctionalModel
+      modelInstance: ModelInstance<T>,
+      modelData: T | JsonAble,
+      configurations: ValidatorConfiguration
     ) => {
-      return func(value, modelInstance, modelData, {})
+      return func(value, modelInstance, modelData, configurations)
     }
     return validatorWrapper
   }
 
-type MethodConfigDict = {
-  readonly [s: string]: (config: any) => PropertyValidatorComponentSync
+type MethodConfigDict<T extends FunctionalModel> = {
+  readonly [s: string]: (config: any) => PropertyValidatorComponentSync<T>
 }
 
-const simpleFuncWrap = (validator: PropertyValidatorComponentSync) => () => {
-  return validator
-}
+const simpleFuncWrap =
+  <T extends FunctionalModel>(validator: PropertyValidatorComponentSync<T>) =>
+  () => {
+    return validator
+  }
 
-const CONFIG_TO_VALIDATE_METHOD: MethodConfigDict = {
-  required: _boolChoice(simpleFuncWrap(isRequired)),
-  isInteger: _boolChoice(simpleFuncWrap(isInteger)),
-  isNumber: _boolChoice(simpleFuncWrap(isNumber)),
-  isString: _boolChoice(simpleFuncWrap(isString)),
-  isArray: _boolChoice(simpleFuncWrap(isArray)),
-  isBoolean: _boolChoice(simpleFuncWrap(isBoolean)),
-  choices: _boolChoice(choices),
-}
+const CONFIG_TO_VALIDATE_METHOD = <
+  T extends FunctionalModel
+>(): MethodConfigDict<T> => ({
+  required: _boolChoice<T>(simpleFuncWrap(isRequired)),
+  isInteger: _boolChoice<T>(simpleFuncWrap(isInteger)),
+  isNumber: _boolChoice<T>(simpleFuncWrap(isNumber)),
+  isString: _boolChoice<T>(simpleFuncWrap(isString)),
+  isArray: _boolChoice<T>(simpleFuncWrap(isArray)),
+  isBoolean: _boolChoice<T>(simpleFuncWrap(isBoolean)),
+  choices: _boolChoice<T>(choices),
+})
 
 const createPropertyValidator = <T extends Arrayable<FunctionalType>>(
-  valueGetter: ValueGetter,
+  valueGetter: ValueGetter<T>,
   config: PropertyConfig<T>
-): PropertyValidator => {
-  const _propertyValidator: PropertyValidator = async (
-    instance,
-    instanceData: FunctionalModel,
-    propertyConfiguration
-  ) => {
-    if (!config) {
-      config = {}
-    }
-    const validators: readonly PropertyValidatorComponent[] = [
-      ...Object.entries(config).map(([key, value]) => {
-        const method = CONFIG_TO_VALIDATE_METHOD[key]
-        if (method) {
-          return method(value)
-        }
-        return emptyValidator
-      }),
-      ...(config.validators ? config.validators : []),
-    ].filter(x => x)
-    const value = await valueGetter()
-    const isRequiredValue = config.required
-      ? true
-      : validators.includes(isRequired)
-    if (!value && !isRequiredValue) {
-      return []
-    }
-    const validator = aggregateValidator(value, validators)
-    const errors = await validator(
-      instance,
-      instanceData,
-      propertyConfiguration
-    )
-    return [...new Set(flatMap(errors))]
+) => {
+  const _propertyValidator = async <TModel extends FunctionalModel>(
+    instance: ModelInstance<TModel>,
+    instanceData: TModel | JsonAble,
+    propertyConfiguration: ValidatorConfiguration
+  ): Promise<ValidationErrors> => {
+    return Promise.resolve().then(async () => {
+      const configToValidateMethod = CONFIG_TO_VALIDATE_METHOD<TModel>()
+      if (!config) {
+        config = {}
+      }
+      const validators: readonly PropertyValidatorComponent<TModel>[] = [
+        ...Object.entries(config).map(([key, value]) => {
+          const method = configToValidateMethod[key]
+          if (method) {
+            return method(value)
+          }
+          return emptyValidator
+        }),
+        ...(config.validators ? config.validators : []),
+      ].filter(x => x)
+      const value = await valueGetter()
+      const isRequiredValue = config.required
+        ? true
+        : validators.includes(isRequired)
+      if (!value && !isRequiredValue) {
+        return []
+      }
+      const validator = aggregateValidator(value, validators)
+      const errors = await validator(
+        instance,
+        instanceData,
+        propertyConfiguration
+      )
+      return [...new Set(flatMap(errors))]
+    })
   }
   return _propertyValidator
 }
 
-const createModelValidator = (
-  validators: PropertyValidators,
-  modelValidators?: readonly ModelComponentValidator[]
+const createModelValidator = <T extends FunctionalModel>(
+  validators: PropertyValidators<T>,
+  modelValidators?: readonly ModelComponentValidator<T>[]
 ) => {
   const _modelValidator = async (
-    instance: ModelInstance<any>,
+    instance: ModelInstance<T>,
     propertyConfiguration: ValidatorConfiguration
   ): Promise<ModelErrors> => {
     return Promise.resolve().then(async () => {

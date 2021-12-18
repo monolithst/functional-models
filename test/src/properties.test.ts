@@ -22,6 +22,10 @@ import {
   ModelInstance,
   ModelInstanceInputData,
   PrimaryKeyType,
+  ValueOptional,
+  ValueRequired,
+  ValueRequiredR,
+  ValueOptionalR,
 } from '../../src/interfaces'
 
 type TestModelType = { name: string }
@@ -81,7 +85,8 @@ describe('/src/properties.ts', () => {
   describe('#ConstantValueProperty()', () => {
     describe('#createGetter()', () => {
       it('should always have the value passed in', async () => {
-        const PropertyInstance = ConstantValueProperty('constant')
+        const PropertyInstance =
+          ConstantValueProperty<ValueRequired<string>>('constant')
         const getter = PropertyInstance.createGetter('changed')
         const actual = await getter()
         const expected = 'constant'
@@ -90,7 +95,8 @@ describe('/src/properties.ts', () => {
     })
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
-        const PropertyInstance = ConstantValueProperty('constant')
+        const PropertyInstance =
+          ConstantValueProperty<ValueRequired<string>>('constant')
         const getter = PropertyInstance.createGetter('changed')
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -587,6 +593,16 @@ describe('/src/properties.ts', () => {
     })
   })
   describe('#DateProperty()', () => {
+    it('should enforce ValueRequired for Date', async () => {
+      const proto = DateProperty<ValueRequired<Date | string>>()
+      const instance = proto.createGetter(new Date())
+      assert.isOk(await instance())
+    })
+    it('should allow null if ValueOptional for Date', async () => {
+      const proto = DateProperty<ValueOptional<Date | string>>()
+      const instance = proto.createGetter(undefined)
+      assert.isUndefined(await instance())
+    })
     it('should allow creation without a config', async () => {
       const proto = DateProperty()
       const instance = proto.createGetter(new Date())
@@ -683,7 +699,10 @@ describe('/src/properties.ts', () => {
         const modelFetcher: ModelFetcher = <TestModelType>() => {
           return Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' })
         }
-        const actual = (await ReferenceProperty<TestModelType>(TestModel1, {
+        const actual = (await ReferenceProperty<
+          TestModelType,
+          ValueRequired<TestModelType | string>
+        >(TestModel1, {
           fetcher: () =>
             Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' }),
         }).createGetter('obj-id')()) as ModelInstance<TestModelType>
@@ -724,10 +743,10 @@ describe('/src/properties.ts', () => {
           },
         })
         const input = proto.create({ id, name: 'name' })
-        const instance = (await ReferenceProperty<TestModelType>(
-          TestModel1,
-          {}
-        ).createGetter(input)()) as ModelInstance<TestModelType>
+        const instance = (await ReferenceProperty<
+          TestModelType,
+          ValueRequiredR<TestModelType>
+        >(TestModel1, {}).createGetter(input)()) as ModelInstance<TestModelType>
         const actual = await instance.get.id()
         const expected = 'obj-id'
         assert.deepEqual(actual, expected)
@@ -741,10 +760,10 @@ describe('/src/properties.ts', () => {
             },
           })
           const input = proto.create({ id: 'obj-id', name: 'name' })
-          const instance = (await ReferenceProperty<TestModelType>(
-            TestModel1,
-            {}
-          ).createGetter(input)()) as ModelInstance<{}>
+          const instance = (await ReferenceProperty<
+            TestModelType,
+            ValueOptionalR<TestModelType>
+          >(TestModel1, {}).createGetter(input)()) as ModelInstance<{}>
           const actual = await instance.toObj()
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)
