@@ -238,7 +238,7 @@ const NumberProperty = <TModifier extends PropertyModifier<number>>(
   )
 
 const ConstantValueProperty = <
-  TModifier extends PropertyModifier<Arrayable<FunctionalType>>
+  TModifier extends PropertyModifier<FunctionalType>
 >(
   value: TModifier,
   config: PropertyConfig<TModifier> = {},

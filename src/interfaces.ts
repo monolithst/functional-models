@@ -44,7 +44,7 @@ type PropertyGetters<T extends FunctionalModel> = {
   readonly // NOTE: This is NOT ModelMethodTypes, its getting everything but.
   [Property in keyof T as T[Property] extends ModelMethodTypes<T>
     ? never
-    : Property]: () => T[Property] | Promise<T[Property]>
+    : Property]: () => T[Property] //| Promise<T[Property]>
 }
 
 type FunctionalModel =
@@ -52,6 +52,7 @@ type FunctionalModel =
   | {
       readonly [s: string]:
         | Arrayable<number>
+        | Promise<number>
         | Arrayable<string>
         | Arrayable<boolean>
         | Arrayable<null>
@@ -65,6 +66,7 @@ type FunctionalModel =
 
 type FunctionalType =
   | JsonAble
+  | Promise<FunctionalType>
   | (() => FunctionalType)
   | Arrayable<undefined>
   | Arrayable<Date>
@@ -286,10 +288,12 @@ type ValueOptionalR<T extends FunctionalModel> = ValueOptional<
 type ValueRequiredR<T extends FunctionalModel> = ValueRequired<
   ReferenceValueType<T>
 >
+type IsAsync<T extends Arrayable<FunctionalType>> = Promise<T>
 
 type PropertyModifier<T extends Arrayable<FunctionalType>> =
   | ValueRequired<T>
   | ValueOptional<T>
+  | IsAsync<T>
   | T
 
 type ModelMethodTyped<T extends FunctionalModel> = (
@@ -373,5 +377,6 @@ export {
   PropertyModifier,
   ValidationErrors,
   ModelError,
+  IsAsync,
 }
 /* eslint-enable no-unused-vars */

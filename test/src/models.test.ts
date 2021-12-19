@@ -4,6 +4,8 @@ import {
   ModelMethod,
   ModelInstanceMethod,
   ModelInstance,
+  ValueRequired,
+  IsAsync,
 } from '../../src/interfaces'
 
 import _ from 'lodash'
@@ -12,7 +14,7 @@ import { assert } from 'chai'
 import { BaseModel } from '../../src/models'
 import { Property, TextProperty, ReferenceProperty } from '../../src/properties'
 import { WrapperInstanceMethod, WrapperModelMethod } from '../../src/methods'
-import { UniqueId } from '../../src/properties'
+import { UniqueId, IntegerProperty } from '../../src/properties'
 
 type TEST_MODEL_TYPE = {
   name: string
@@ -26,6 +28,34 @@ const TEST_MODEL_1 = BaseModel<TEST_MODEL_TYPE>('MyModel', {
 
 describe('/src/models.ts', () => {
   describe('#BaseModel()', () => {
+    it('should allow a non-promise number property to be added without await', () => {
+      const model = BaseModel<{value: number, value2: number}>('TestModel', {
+        properties: {
+          value: IntegerProperty({ lazyLoadMethod: (input) => input + 5}),
+          value2: IntegerProperty<ValueRequired<number>>(),
+        }
+      })
+      const instance = model.create({value: 3, value2: 4})
+      const number = instance.get.value()
+      const number2 = instance.get.value2()
+      const actual = number + number2
+      const expected = 7
+      assert.equal(actual, expected)
+    })
+    it('should allow a promise number property to be added, and after an await be added ', async () => {
+      const model = BaseModel<{value: Promise<number>, value2: number}>('TestModel', {
+        properties: {
+          value: IntegerProperty({ lazyLoadMethod: (input) => input + 5}),
+          value2: IntegerProperty<ValueRequired<number>>(),
+        }
+      })
+      const instance = model.create({value: 3, value2: 4})
+      const number = await instance.get.value()
+      const number2 = instance.get.value2()
+      const actual = number + number2
+      const expected = 12
+      assert.equal(actual, expected)
+    })
     it('should pass a functional instance to the instanceMethods by the time the function is called by a client', () => {
       const model = BaseModel<{
         name: string
