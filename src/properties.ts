@@ -7,28 +7,28 @@ import {
   minNumber,
   maxNumber,
   isType,
-  referenceTypeMatch,
+  //referenceTypeMatch,
   meetsRegex,
 } from './validation'
 import { PROPERTY_TYPES } from './constants'
 import { lazyValue } from './lazy'
 import { createUuid } from './utils'
 import {
-  ReferenceValueType,
-  ModelInstance,
-  Maybe,
-  PrimaryKeyType,
-  Model,
+  //ReferenceValueType,
+  //ModelInstance,
+  //Maybe,
+  //PrimaryKeyType,
+  //Model,
   PropertyInstance,
-  FunctionalType,
+  FunctionalValue,
   PropertyConfig,
   ValueGetter,
-  MaybeFunction,
+  //MaybeFunction,
   Arrayable,
   PropertyValidatorComponent,
   PropertyValidator,
-  ReferencePropertyInstance,
-  ModelInstanceInputData,
+  //ReferencePropertyInstance,
+  //ModelInstanceInputData,
   FunctionalModel,
   JsonAble,
   PropertyModifier,
@@ -49,14 +49,14 @@ const _getValidatorFromConfigElseEmpty = <T extends FunctionalModel>(
   return emptyValidator
 }
 
-const _mergeValidators = <T extends Arrayable<FunctionalType>>(
+const _mergeValidators = <T extends Arrayable<FunctionalValue>>(
   config: PropertyConfig<T> | undefined,
   validators: readonly PropertyValidatorComponent<any>[]
 ) => {
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 
-const Property = <T extends Arrayable<FunctionalType>>(
+const Property = <T extends Arrayable<FunctionalValue>>(
   type: string,
   config: PropertyConfig<T> = {},
   additionalMetadata = {}
@@ -134,7 +134,7 @@ const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
     PROPERTY_TYPES.DateProperty,
     merge(
       {
-        lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
+        lazyLoadMethod: (value: Arrayable<FunctionalValue>) => {
           if (!value && config?.autoNow) {
             return new Date()
           }
@@ -149,7 +149,7 @@ const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
     additionalMetadata
   )
 
-const ArrayProperty = <T extends FunctionalType>(
+const ArrayProperty = <T extends FunctionalValue>(
   config = {},
   additionalMetadata = {}
 ) =>
@@ -238,7 +238,7 @@ const NumberProperty = <TModifier extends PropertyModifier<number>>(
   )
 
 const ConstantValueProperty = <
-  TModifier extends PropertyModifier<FunctionalType>
+  TModifier extends PropertyModifier<FunctionalValue>
 >(
   value: TModifier,
   config: PropertyConfig<TModifier> = {},
@@ -284,7 +284,7 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
     PROPERTY_TYPES.UniqueId,
     merge(
       {
-        lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
+        lazyLoadMethod: (value: Arrayable<FunctionalValue>) => {
           if (!value) {
             return createUuid()
           }
@@ -296,6 +296,9 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
     additionalMetadata
   )
 
+
+
+/*
 const ReferenceProperty = <
   T extends FunctionalModel,
   TModifier extends PropertyModifier<ReferenceValueType<T>>
@@ -393,12 +396,14 @@ const ReferenceProperty = <
   return p
 }
 
+ */
+
 export {
   Property,
   UniqueId,
   DateProperty,
   ArrayProperty,
-  ReferenceProperty,
+  //ReferenceProperty,
   IntegerProperty,
   TextProperty,
   ConstantValueProperty,

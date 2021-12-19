@@ -16,7 +16,7 @@ import {
   PropertyValidators,
   ValueGetter,
   Arrayable,
-  FunctionalType,
+  FunctionalValue,
   ModelErrors,
   ValidatorConfiguration,
   ValuePropertyValidatorComponent,
@@ -38,7 +38,7 @@ const filterEmpty = <T>(
 }
 
 const _trueOrError =
-  <T extends Arrayable<FunctionalType>>(
+  <T extends Arrayable<FunctionalValue>>(
     method: (t: T) => boolean,
     error: string
   ): ValuePropertyValidatorComponent<T> =>
@@ -50,7 +50,7 @@ const _trueOrError =
   }
 
 const _typeOrError =
-  <T extends Arrayable<FunctionalType>>(
+  <T extends Arrayable<FunctionalValue>>(
     type: string,
     errorMessage: string
   ): ValuePropertyValidatorComponent<T> =>
@@ -62,7 +62,7 @@ const _typeOrError =
   }
 
 const isType =
-  <T extends Arrayable<FunctionalType>>(
+  <T extends Arrayable<FunctionalValue>>(
     type: string
   ): ValuePropertyValidatorComponent<T> =>
   (value: T) => {
@@ -74,7 +74,7 @@ const isInteger = _trueOrError<number>(Number.isInteger, 'Must be an integer')
 
 const isBoolean = isType<boolean>('boolean')
 const isString = isType<string>('string')
-const isArray = _trueOrError<readonly FunctionalType[]>(
+const isArray = _trueOrError<readonly FunctionalValue[]>(
   (v: any) => Array.isArray(v),
   'Value is not an array'
 )
@@ -87,7 +87,7 @@ const PRIMITIVE_TO_SPECIAL_TYPE_VALIDATOR = {
 }
 
 const arrayType =
-  <T extends FunctionalType>(
+  <T extends FunctionalValue>(
     type: string
   ): ValuePropertyValidatorComponent<readonly T[]> =>
   (value: readonly T[]) => {
@@ -98,7 +98,7 @@ const arrayType =
     }
     const validator = PRIMITIVE_TO_SPECIAL_TYPE_VALIDATOR[type] || isType(type)
     return (value as readonly []).reduce(
-      (acc: string | undefined, v: FunctionalType) => {
+      (acc: string | undefined, v: FunctionalValue) => {
         if (acc) {
           return acc
         }
@@ -110,7 +110,7 @@ const arrayType =
   }
 
 const meetsRegex =
-  <T extends FunctionalType>(
+  <T extends FunctionalValue>(
     regex: string | RegExp,
     flags?: string,
     errorMessage: string = 'Format was invalid'
@@ -122,7 +122,7 @@ const meetsRegex =
   }
 
 const choices =
-  <T extends FunctionalType>(
+  <T extends FunctionalValue>(
     choiceArray: readonly T[]
   ): ValuePropertyValidatorComponent<T> =>
   (value: T | readonly T[]) => {
@@ -312,7 +312,7 @@ const CONFIG_TO_VALIDATE_METHOD = <
   choices: _boolChoice<T>(choices),
 })
 
-const createPropertyValidator = <T extends Arrayable<FunctionalType>>(
+const createPropertyValidator = <T extends Arrayable<FunctionalValue>>(
   valueGetter: ValueGetter<T>,
   config: PropertyConfig<T>
 ) => {

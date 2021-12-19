@@ -1,18 +1,21 @@
 import {
   ModelDefinition,
-  ReferenceValueType,
+  //ReferenceValueType,
   ModelMethod,
   ModelInstanceMethod,
   ModelInstance,
   ValueRequired,
   IsAsync,
 } from '../../src/interfaces'
+import {
+  isPromise
+} from '../../src/utils'
 
 import _ from 'lodash'
 import sinon from 'sinon'
 import { assert } from 'chai'
 import { BaseModel } from '../../src/models'
-import { Property, TextProperty, ReferenceProperty } from '../../src/properties'
+import { Property, TextProperty } from '../../src/properties'
 import { WrapperInstanceMethod, WrapperModelMethod } from '../../src/methods'
 import { UniqueId, IntegerProperty } from '../../src/properties'
 
@@ -28,10 +31,34 @@ const TEST_MODEL_1 = BaseModel<TEST_MODEL_TYPE>('MyModel', {
 
 describe('/src/models.ts', () => {
   describe('#BaseModel()', () => {
+    /*
+    it('should have a Promise for ReferenceValueTypes', () => {
+      type ModelType1 = {simple: number}
+      const model1 = BaseModel<ModelType1>('TestModel1', {
+        properties: {
+          simple: IntegerProperty()
+        }
+      })
+      const instance1 = model1.create({simple: 10})
+      const model2 = BaseModel<{value: number, value2: ReferenceValueType<ModelType1>}>('TestModel2', {
+        properties: {
+          value: IntegerProperty(),
+          value2: ReferenceProperty<ModelType1, ValueRequired<ModelType1>>(model1)
+        }
+      })
+      const instance2 = model2.create({value: 3, value2: instance1})
+      const actual = instance2.get.value2()
+      if (!actual) {
+        throw new Error(`Must `)
+      }
+      assert.isOk(actual.then)
+    })
+
+     */
     it('should allow a non-promise number property to be added without await', () => {
       const model = BaseModel<{value: number, value2: number}>('TestModel', {
         properties: {
-          value: IntegerProperty({ lazyLoadMethod: (input) => input + 5}),
+          value: IntegerProperty(),
           value2: IntegerProperty<ValueRequired<number>>(),
         }
       })
@@ -41,6 +68,30 @@ describe('/src/models.ts', () => {
       const actual = number + number2
       const expected = 7
       assert.equal(actual, expected)
+    })
+    it('should provide a Promise for get.id() by default', () => {
+      const model = BaseModel<{value: number}>('TestModel', {
+        properties: {
+          value: IntegerProperty()
+        }
+      })
+      const instance = model.create({value: 3, value2: 4})
+      const actual = instance.get.id()
+      const value = isPromise(actual)
+      assert.isOk(value)
+    })
+    it('should not be a Promise for get.id() if set explicitly', () => {
+      const model = BaseModel<{id: string, value: number, somethingElse: number}>('TestModel', {
+        properties: {
+          id: TextProperty<string>(),
+          value: IntegerProperty(),
+          somethingElse: IntegerProperty<ValueRequired<number>>()
+        }
+      })
+      const instance = model.create({value: 3, value2: 4})
+      const actual = instance.get.id()
+      const value = isPromise(actual)
+      assert.isFalse(value)
     })
     it('should allow a promise number property to be added, and after an await be added ', async () => {
       const model = BaseModel<{value: Promise<number>, value2: number}>('TestModel', {
@@ -164,6 +215,7 @@ describe('/src/models.ts', () => {
       })
     })
     describe('#create()', () => {
+      /*
       it('should have a references.theReference when properties has a ReferenceProperty named "theReference"', () => {
         const model = BaseModel<{
           theReference?: ReferenceValueType<TEST_MODEL_TYPE>
@@ -175,6 +227,8 @@ describe('/src/models.ts', () => {
         const instance = model.create({})
         assert.isFunction(instance.references.theReference)
       })
+
+       */
       it('should have an "get.id" field when no primaryKey is passed', () => {
         const model = BaseModel<{}>('ModelName', {
           properties: {},
@@ -437,6 +491,7 @@ describe('/src/models.ts', () => {
       const actual = BaseModel<{}>('name', { properties: {} })
       assert.isFunction(actual.create)
     })
+    /*
     describe('#references.getMyReferencedId()', () => {
       it('should return the id from the ReferenceProperty', () => {
         const model = BaseModel<{
@@ -452,6 +507,8 @@ describe('/src/models.ts', () => {
         assert.deepEqual(actual, expected)
       })
     })
+
+     */
     describe('#toObj()', () => {
       it('should be able to pass the results of toObj into .create() without forcing it.', async () => {
         const model = BaseModel<{ simple: string }>('ModelName', {

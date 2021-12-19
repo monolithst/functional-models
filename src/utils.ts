@@ -39,4 +39,11 @@ const loweredTitleCase = (string: string) => {
   return `${string.slice(0, 1).toLowerCase()}${string.slice(1)}`
 }
 
-export { loweredTitleCase, toTitleCase, createUuid }
+function isPromise<T>(something: any): something is Promise<T> {
+  if (something?.then) {
+    return true
+  }
+  return false
+}
+
+export { loweredTitleCase, toTitleCase, createUuid, isPromise}
