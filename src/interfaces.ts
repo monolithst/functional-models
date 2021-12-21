@@ -40,7 +40,7 @@ type PropertyGetters<T extends FunctionalModel> = {
   readonly // NOTE: This is NOT ModelMethodTypes, its getting everything but.
   [Property in keyof T as T[Property] extends ModelMethodTypes<T>
     ? never
-    : Property]: () => T[Property] //| Promise<T[Property]>
+    : Property]: () => T[Property]
 }
 
 type FunctionalModel =
@@ -58,7 +58,7 @@ type FunctionalModel =
         | ReferenceValueType<any>
         | ModelInstanceMethod
         | ModelMethod
-    }
+    } & {readonly id?: Promise<PrimaryKeyType>}
 
 type FunctionalValue =MaybePromise<
   | JsonAble
@@ -152,7 +152,7 @@ type PropertyInstance<T extends Arrayable<FunctionalValue>> = {
   ) => PropertyValidator<TModel>
 }
 
-type PropertiesList<T> = {
+type PropertiesList<T extends FunctionalModel> = {
   readonly [P in keyof T as T[P] extends Arrayable<FunctionalValue>
     ? P
     : never]: PropertyInstance<any>
@@ -372,5 +372,7 @@ export {
   ValidationErrors,
   ModelError,
   IsAsync,
+  ModelInstanceMethodClient,
+  ModelMethodClient,
 }
 /* eslint-enable no-unused-vars */
