@@ -5,7 +5,7 @@ import {
   Property,
   DateProperty,
   BooleanProperty,
-  //ReferenceProperty,
+  ReferenceProperty,
   ArrayProperty,
   ConstantValueProperty,
   ObjectProperty,
@@ -24,8 +24,8 @@ import {
   PrimaryKeyType,
   ValueOptional,
   ValueRequired,
-  //ValueRequiredR,
-  //ValueOptionalR,
+  ValueRequiredR,
+  ValueOptionalR,
 } from '../../src/interfaces'
 
 type TestModelType = { name: string }
@@ -643,7 +643,6 @@ describe('/src/properties.ts', () => {
       assert.equal(actual, expected)
     })
   })
-  /*
   describe('#ReferenceProperty()', () => {
     it('should throw an exception if a model value is not passed in', () => {
       assert.throws(() => {
@@ -782,5 +781,4 @@ describe('/src/properties.ts', () => {
       })
     })
   })
-   */
 })

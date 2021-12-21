@@ -7,28 +7,28 @@ import {
   minNumber,
   maxNumber,
   isType,
-  //referenceTypeMatch,
+  referenceTypeMatch,
   meetsRegex,
 } from './validation'
 import { PROPERTY_TYPES } from './constants'
 import { lazyValue } from './lazy'
 import { createUuid } from './utils'
 import {
-  //ReferenceValueType,
-  //ModelInstance,
-  //Maybe,
-  //PrimaryKeyType,
-  //Model,
+  ReferenceValueType,
+  ModelInstance,
+  Maybe,
+  PrimaryKeyType,
+  Model,
   PropertyInstance,
   FunctionalValue,
   PropertyConfig,
   ValueGetter,
-  //MaybeFunction,
+  MaybeFunction,
   Arrayable,
   PropertyValidatorComponent,
   PropertyValidator,
-  //ReferencePropertyInstance,
-  //ModelInstanceInputData,
+  ReferencePropertyInstance,
+  ModelInstanceInputData,
   FunctionalModel,
   JsonAble,
   PropertyModifier,
@@ -256,7 +256,7 @@ const EmailProperty = <TModifier extends PropertyModifier<string>>(
   config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  TextProperty(
+  TextProperty<TModifier>(
     merge(config, {
       type: PROPERTY_TYPES.EmailProperty,
       validators: _mergeValidators(config, [meetsRegex(EMAIL_REGEX)]),
@@ -298,7 +298,6 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
 
 
 
-/*
 const ReferenceProperty = <
   T extends FunctionalModel,
   TModifier extends PropertyModifier<ReferenceValueType<T>>
@@ -321,7 +320,7 @@ const ReferenceProperty = <
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
   const _getId =
-    (instanceValues: ReferenceValueType<T>) => (): Maybe<PrimaryKeyType> => {
+    (instanceValues: ReferenceValueType<T>|TModifier) => (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
       }
@@ -396,14 +395,13 @@ const ReferenceProperty = <
   return p
 }
 
- */
 
 export {
   Property,
   UniqueId,
   DateProperty,
   ArrayProperty,
-  //ReferenceProperty,
+  ReferenceProperty,
   IntegerProperty,
   TextProperty,
   ConstantValueProperty,

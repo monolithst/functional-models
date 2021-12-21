@@ -1,6 +1,6 @@
 import {
   ModelDefinition,
-  //ReferenceValueType,
+  ReferenceValueType,
   ModelMethod,
   ModelInstanceMethod,
   ModelInstance,
@@ -11,13 +11,12 @@ import {
   isPromise
 } from '../../src/utils'
 
-import _ from 'lodash'
 import sinon from 'sinon'
 import { assert } from 'chai'
 import { BaseModel } from '../../src/models'
 import { Property, TextProperty } from '../../src/properties'
 import { WrapperInstanceMethod, WrapperModelMethod } from '../../src/methods'
-import { UniqueId, IntegerProperty } from '../../src/properties'
+import { UniqueId, IntegerProperty, ReferenceProperty} from '../../src/properties'
 
 type TEST_MODEL_TYPE = {
   name: string
@@ -31,7 +30,6 @@ const TEST_MODEL_1 = BaseModel<TEST_MODEL_TYPE>('MyModel', {
 
 describe('/src/models.ts', () => {
   describe('#BaseModel()', () => {
-    /*
     it('should have a Promise for ReferenceValueTypes', () => {
       type ModelType1 = {simple: number}
       const model1 = BaseModel<ModelType1>('TestModel1', {
@@ -48,13 +46,12 @@ describe('/src/models.ts', () => {
       })
       const instance2 = model2.create({value: 3, value2: instance1})
       const actual = instance2.get.value2()
-      if (!actual) {
-        throw new Error(`Must `)
+      if (isPromise(actual)) {
+        assert.isOk(actual.then)
+      } else {
+        throw new Error(`Not a promise`)
       }
-      assert.isOk(actual.then)
     })
-
-     */
     it('should allow a non-promise number property to be added without await', () => {
       const model = BaseModel<{value: number, value2: number}>('TestModel', {
         properties: {
@@ -491,7 +488,6 @@ describe('/src/models.ts', () => {
       const actual = BaseModel<{}>('name', { properties: {} })
       assert.isFunction(actual.create)
     })
-    /*
     describe('#references.getMyReferencedId()', () => {
       it('should return the id from the ReferenceProperty', () => {
         const model = BaseModel<{
@@ -507,8 +503,6 @@ describe('/src/models.ts', () => {
         assert.deepEqual(actual, expected)
       })
     })
-
-     */
     describe('#toObj()', () => {
       it('should be able to pass the results of toObj into .create() without forcing it.', async () => {
         const model = BaseModel<{ simple: string }>('ModelName', {

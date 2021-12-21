@@ -10,11 +10,11 @@ import {
   ModelInstance,
   ModelOptions,
   ModelFactory,
-  //ReferenceFunctions,
+  ReferenceFunctions,
   PropertyGetters,
   OptionalModelOptions,
-  //ReferencePropertyInstance,
-  //ReferenceValueType,
+  ReferencePropertyInstance,
+  ReferenceValueType,
   PropertyValidators,
   FunctionalModel,
   ModelInstanceInputData,
@@ -80,11 +80,11 @@ const BaseModel: ModelFactory = <T extends FunctionalModel>(
     const startingInternals: {
       readonly get: PropertyGetters<T> & { readonly id: () => string }
       readonly validators: PropertyValidators<T>
-      //readonly references: ReferenceFunctions
+      readonly references: ReferenceFunctions
     } = {
       get: {} as PropertyGetters<T> & { readonly id: () => string },
       validators: {},
-      //references: {},
+      references: {},
     }
     const loadedInternals = Object.entries(modelDefinition.properties).reduce(
       (acc, [key, property]) => {
@@ -100,7 +100,6 @@ const BaseModel: ModelFactory = <T extends FunctionalModel>(
             [key]: propertyValidator,
           },
         }
-        /*
         const asReferenced = property as ReferencePropertyInstance<any, any>
         const referencedProperty = asReferenced.getReferencedId
           ? {
@@ -114,10 +113,7 @@ const BaseModel: ModelFactory = <T extends FunctionalModel>(
             }
           : {}
 
-         */
-
-        //return merge(acc, fleshedOutInstanceProperties, referencedProperty)
-        return merge(acc, fleshedOutInstanceProperties)
+        return merge(acc, fleshedOutInstanceProperties, referencedProperty)
       },
       startingInternals
     )
