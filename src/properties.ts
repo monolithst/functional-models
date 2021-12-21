@@ -20,7 +20,7 @@ import {
   PrimaryKeyType,
   Model,
   PropertyInstance,
-  FunctionalType,
+  FunctionalValue,
   PropertyConfig,
   ValueGetter,
   MaybeFunction,
@@ -49,14 +49,14 @@ const _getValidatorFromConfigElseEmpty = <T extends FunctionalModel>(
   return emptyValidator
 }
 
-const _mergeValidators = <T extends Arrayable<FunctionalType>>(
+const _mergeValidators = <T extends Arrayable<FunctionalValue>>(
   config: PropertyConfig<T> | undefined,
   validators: readonly PropertyValidatorComponent<any>[]
 ) => {
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 
-const Property = <T extends Arrayable<FunctionalType>>(
+const Property = <T extends Arrayable<FunctionalValue>>(
   type: string,
   config: PropertyConfig<T> = {},
   additionalMetadata = {}
@@ -134,7 +134,7 @@ const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
     PROPERTY_TYPES.DateProperty,
     merge(
       {
-        lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
+        lazyLoadMethod: (value: Arrayable<FunctionalValue>) => {
           if (!value && config?.autoNow) {
             return new Date()
           }
@@ -149,7 +149,7 @@ const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
     additionalMetadata
   )
 
-const ArrayProperty = <T extends FunctionalType>(
+const ArrayProperty = <T extends FunctionalValue>(
   config = {},
   additionalMetadata = {}
 ) =>
@@ -238,7 +238,7 @@ const NumberProperty = <TModifier extends PropertyModifier<number>>(
   )
 
 const ConstantValueProperty = <
-  TModifier extends PropertyModifier<Arrayable<FunctionalType>>
+  TModifier extends PropertyModifier<FunctionalValue>
 >(
   value: TModifier,
   config: PropertyConfig<TModifier> = {},
@@ -256,7 +256,7 @@ const EmailProperty = <TModifier extends PropertyModifier<string>>(
   config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  TextProperty(
+  TextProperty<TModifier>(
     merge(config, {
       type: PROPERTY_TYPES.EmailProperty,
       validators: _mergeValidators(config, [meetsRegex(EMAIL_REGEX)]),
@@ -284,7 +284,7 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
     PROPERTY_TYPES.UniqueId,
     merge(
       {
-        lazyLoadMethod: (value: Arrayable<FunctionalType>) => {
+        lazyLoadMethod: (value: Arrayable<FunctionalValue>) => {
           if (!value) {
             return createUuid()
           }
@@ -295,6 +295,8 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
     ),
     additionalMetadata
   )
+
+
 
 const ReferenceProperty = <
   T extends FunctionalModel,
@@ -318,7 +320,7 @@ const ReferenceProperty = <
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
   const _getId =
-    (instanceValues: ReferenceValueType<T>) => (): Maybe<PrimaryKeyType> => {
+    (instanceValues: ReferenceValueType<T>|TModifier) => (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
       }
@@ -392,6 +394,7 @@ const ReferenceProperty = <
   )
   return p
 }
+
 
 export {
   Property,
