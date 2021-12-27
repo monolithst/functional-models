@@ -11,42 +11,47 @@ import {
   ArrayProperty,
   validation,
 } from '../src'
-import { ModelInstanceMethod, ModelMethod } from '../src/interfaces'
+import {ModelInstanceMethod, ModelInstanceMethodTyped, ModelMethod, ModelMethodTyped, FunctionalModel, Model, ModelInstance, MethodArgs} from '../src/interfaces'
 
-const instanceToString = WrapperInstanceMethod(modelInstance => {
+const instanceToString = <T extends FunctionalModel>() => WrapperInstanceMethod<T>((model, modelInstance) => {
   return `${modelInstance.getModel().getName()}-Instance`
 })
 
-const instanceToJson = WrapperInstanceMethod(async modelInstance => {
+const instanceToJson = <T extends FunctionalModel>() => WrapperInstanceMethod<T>(async (model, modelInstance) => {
   return JSON.stringify(await modelInstance.toObj())
 })
 
-const modelToString = WrapperModelMethod(model => {
+const modelToString = <T extends FunctionalModel>() => WrapperModelMethod<T>(model => {
   return `${model.getName()}-[${Object.keys(
     model.getModelDefinition().properties
   ).join(',')}]`
 })
 
-const modelWrapper = WrapperModelMethod(model => {
+const modelWrapper = <T extends FunctionalModel>() => WrapperModelMethod<T>(model => {
   return model
 })
 
+type FunctionalModel1Type = {
+  name: string
+  modelWrapper: ModelMethod
+  toString: ModelInstanceMethod,
+  toJson: ModelInstanceMethod
+}
+
+const modelWrapper1 : ModelInstanceMethod = modelWrapper<any>()
+
 const MODEL_DEFINITIONS = {
-  FunctionModel1: BaseModel<{
-    name: string
-    modelWrapper: ModelMethod
-    toString: ModelInstanceMethod
-    toJson: ModelInstanceMethod
-  }>('FunctionModel1', {
+  FunctionModel1: BaseModel<FunctionalModel1Type>
+  ('FunctionModel1', {
     properties: {
       name: TextProperty({ required: true }),
     },
     modelMethods: {
-      modelWrapper,
+      modelWrapper: modelWrapper<any>(),
     },
     instanceMethods: {
-      toString: instanceToString,
-      toJson: instanceToJson,
+      toString: instanceToString<any>(),
+      toJson: instanceToJson<any>(),
     },
   }),
   TestModel1: BaseModel<{ name: string; type: string; flag: number }>(

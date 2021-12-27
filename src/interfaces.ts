@@ -6,11 +6,11 @@ type Maybe<T> = T | undefined | null
 type Arrayable<T> = T | readonly T[]
 type MaybeLazy<T> = Maybe<Promise<T>>
 type JsonAble =
-  | Arrayable<{ readonly [s: string]: JsonAble }>
-  | Arrayable<number>
-  | Arrayable<string>
-  | Arrayable<boolean>
-  | Arrayable<null>
+  | Arrayable<{ readonly [s: string]: JsonAble|null }>
+  | readonly (number|string|boolean)[]
+  | number
+  | string
+  | boolean
 type VeryPrimitivesTypes = null | string | number | boolean
 type toObj = () => Promise<JsonAble>
 
@@ -18,23 +18,46 @@ type ValueIsOfType<T, V> = {
   readonly [P in keyof T as T[P] extends V ? P : never]: T[P]
 }
 
-type InstanceMethodGetters<T> = {
-  readonly [P in keyof T as T[P] extends ModelInstanceMethod
+type MethodArgs = {
+  [s: string]: any
+}
+
+type ModelMethodTypedAdvanced<T extends FunctionalModel, TModel extends Model<T>> = (
+  model: TModel,
+  args?: MethodArgs,
+) => any
+type ModelMethodTyped<T extends FunctionalModel> = ModelMethodTypedAdvanced<T, Model<T>>
+type ModelMethod = ModelMethodTyped<any>
+type ModelMethodClient = (args?: MethodArgs) => any
+
+type ModelInstanceMethodTypedAdvanced<T extends FunctionalModel, TModel extends Model<T>, TModelInstance extends ModelInstance<T>> = (
+  model: TModel,
+  instance: TModelInstance,
+  args?: MethodArgs,
+) => any
+type ModelInstanceMethodTyped<T extends FunctionalModel> = ModelInstanceMethodTypedAdvanced<T, Model<T>, ModelInstance<T>>
+type ModelInstanceMethod = ModelInstanceMethodTyped<FunctionalModel>
+type ModelInstanceMethodClient = (args?: MethodArgs) => any
+
+type InstanceMethodGetters<T extends FunctionalModel> = {
+  readonly [P in keyof T as T[P] extends ModelInstanceMethod | ModelInstanceMethodTyped<T> | ModelInstanceMethodTypedAdvanced<T, any, any>
     ? P
     : never]: ModelInstanceMethodClient
 }
 
-type ModelMethodGetters<T> = {
-  readonly [P in keyof T as T[P] extends ModelMethod
+type ModelMethodGetters<T extends FunctionalModel> = {
+  readonly [P in keyof T as T[P] extends ModelMethod | ModelMethodTyped<T> | ModelMethodTypedAdvanced<T, any>
     ? P
     : never]: ModelMethodClient
 }
 
 type ModelMethodTypes<T extends FunctionalModel> =
   | ModelMethod
-  | ModelInstanceMethod
   | ModelMethodTyped<T>
+  | ModelMethodTypedAdvanced<T, any>
+  | ModelInstanceMethod
   | ModelInstanceMethodTyped<T>
+  | ModelInstanceMethodTypedAdvanced<T, any, any>
 
 type PropertyGetters<T extends FunctionalModel> = {
   readonly // NOTE: This is NOT ModelMethodTypes, its getting everything but.
@@ -44,8 +67,7 @@ type PropertyGetters<T extends FunctionalModel> = {
 }
 
 type FunctionalModel =
-  | JsonAble
-  | {
+  | ({
       readonly [s: string]:
         | Arrayable<number>
         | Promise<number>
@@ -58,11 +80,12 @@ type FunctionalModel =
         | ReferenceValueType<any>
         | ModelInstanceMethod
         | ModelMethod
-    } & {readonly id?: Promise<PrimaryKeyType>}
+    } & {readonly id?: Promise<PrimaryKeyType>})
 
 type FunctionalValue =MaybePromise<
   | JsonAble
   | (() => FunctionalValue)
+  | Arrayable<null>
   | Arrayable<undefined>
   | Arrayable<Date>
   | Arrayable<FunctionalModel>
@@ -207,26 +230,28 @@ type PropertyConfig<T extends Arrayable<FunctionalValue>> =
   | (PropertyConfigContents<T> & DefaultPropertyValidators)
   | undefined
 
+type ModelMethods<T extends FunctionalModel> = ValueIsOfType<
+  T,
+  ModelMethod | ModelMethodTyped<T> | ModelMethodTypedAdvanced<T, any>
+  >
+type InstanceMethods<T extends FunctionalModel> = ValueIsOfType<
+  T,
+  ModelInstanceMethod | ModelInstanceMethodTyped<T> | ModelInstanceMethodTypedAdvanced<T, any, any>
+  >
+
 type PrimaryKeyPropertyInstanceType =
   | PropertyInstance<string>
   | PropertyInstance<number>
+
 type PrimaryKeyType = string | number
 
-type ModelMethods<T extends FunctionalModel> = ValueIsOfType<
-  T,
-  ModelMethod | ModelMethodTyped<T>
->
-type InstanceMethods<T extends FunctionalModel> = ValueIsOfType<
-  T,
-  ModelInstanceMethod | ModelInstanceMethodTyped<T>
->
 type ModelDefinition<T extends FunctionalModel> = {
   readonly getPrimaryKeyName?: () => string
   readonly properties: PropertiesList<T> & {
     readonly id?: PrimaryKeyPropertyInstanceType
   }
-  readonly instanceMethods?: InstanceMethods<T>
   readonly modelMethods?: ModelMethods<T>
+  readonly instanceMethods?: InstanceMethods<T>
   readonly modelValidators?: readonly ModelValidatorComponent<T>[]
 }
 
@@ -290,18 +315,6 @@ type PropertyModifier<T extends Arrayable<FunctionalValue>> =
   | ValueOptional<T>
   | T
 
-type ModelMethodTyped<T extends FunctionalModel> = (
-  model: Model<T>,
-  ...args: readonly any[]
-) => any
-type ModelMethod = ModelMethodTyped<any>
-type ModelMethodClient = (...args: readonly any[]) => any
-type ModelInstanceMethodTyped<T extends FunctionalModel> = (
-  instance: ModelInstance<T>,
-  args?: readonly any[]
-) => any
-type ModelInstanceMethod = ModelInstanceMethodTyped<any>
-type ModelInstanceMethodClient = (...args: readonly any[]) => any
 
 type ModelOptions<T extends FunctionalModel> = {
   readonly instanceCreatedCallback: Nullable<
@@ -374,5 +387,6 @@ export {
   IsAsync,
   ModelInstanceMethodClient,
   ModelMethodClient,
+  MethodArgs,
 }
 /* eslint-enable no-unused-vars */

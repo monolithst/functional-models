@@ -3,26 +3,27 @@ import {
   ModelInstance,
   FunctionalModel,
   Model,
-  ModelMethodTyped,
+  ModelMethodTyped, MethodArgs,
 } from './interfaces'
 
 const WrapperInstanceMethod = <T extends FunctionalModel>(
-  method: (instance: ModelInstance<T>, args?: readonly any[]) => any
+  method: (model: Model<T>, instance: ModelInstance<T>, args?: MethodArgs) => any
 ) => {
   const r: ModelInstanceMethodTyped<T> = (
+    model: Model<T>,
     instance: ModelInstance<T>,
     ...args: readonly any[]
   ) => {
-    return method(instance, ...args)
+    return method(model, instance, args)
   }
   return r
 }
 
 const WrapperModelMethod = <T extends FunctionalModel>(
-  method: (model: Model<T>, args?: readonly any[]) => any
+  method: (model: Model<T>, args?: MethodArgs) => any
 ) => {
-  const r: ModelMethodTyped<T> = (model: Model<T>, ...args: readonly any[]) => {
-    return method(model, ...args)
+  const r: ModelMethodTyped<T> = (model: Model<T>, args?: MethodArgs) => {
+    return method(model, args)
   }
   return r
 }

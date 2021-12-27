@@ -114,11 +114,10 @@ describe('/src/models.ts', () => {
           name: TextProperty(),
         },
         instanceMethods: {
-          func1: WrapperInstanceMethod((instance: ModelInstance<any>) => {
-            // @ts-ignore
+          func1: WrapperInstanceMethod((model, instance: ModelInstance<any>) => {
             return instance.methods.func2()
           }),
-          func2: (instance: ModelInstance<any>) => {
+          func2: (model, instance: ModelInstance<any>) => {
             return 'from instance func2'
           },
         },
@@ -129,15 +128,15 @@ describe('/src/models.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should pass the clients arguments before the model is passed', () => {
-      const model = BaseModel<{ func1: ModelMethod; func2: ModelMethod }>(
+      const model = BaseModel<{ func1: ModelMethod, func2: ModelMethod }>(
         'ModelName',
         {
           properties: {},
           modelMethods: {
-            func1: WrapperModelMethod((model, input) => {
+            func1: WrapperModelMethod<{func1: ModelMethod, func2: ModelMethod}>((model, input) => {
               return `${input} ${model.methods.func2()}`
             }),
-            func2: WrapperModelMethod(model => {
+            func2: WrapperModelMethod<{func1: ModelMethod, func2: ModelMethod}>(model => {
               return 'from func2'
             }),
           },

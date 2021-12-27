@@ -37,10 +37,10 @@ import {
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
 
-const _getValidatorFromConfigElseEmpty = <T extends FunctionalModel>(
-  input: T | undefined,
+const _getValidatorFromConfigElseEmpty = <T extends FunctionalModel, TValue extends FunctionalValue>(
+  input: TValue | undefined,
   // eslint-disable-next-line no-unused-vars
-  validatorGetter: (t: T) => PropertyValidatorComponent<T>
+  validatorGetter: (t: TValue) => PropertyValidatorComponent<T>
 ) => {
   if (input !== undefined) {
     const validator = validatorGetter(input)

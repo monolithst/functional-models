@@ -123,6 +123,7 @@ const BaseModel: ModelFactory = <T extends FunctionalModel>(
       return merge(acc, {
         [key]: (...args: readonly any[]) => {
           return (func as ModelInstanceMethodTyped<T>)(
+            model as Model<T>,
             instance as ModelInstance<T>,
             ...args
           )
