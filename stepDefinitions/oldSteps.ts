@@ -11,38 +11,45 @@ import {
   ArrayProperty,
   validation,
 } from '../src'
-import {ModelInstanceMethod, ModelInstanceMethodTyped, ModelMethod, ModelMethodTyped, FunctionalModel, Model, ModelInstance, MethodArgs} from '../src/interfaces'
+import {
+  ModelInstanceMethod,
+  ModelMethod,
+  FunctionalModel,
+  Model,
+  ModelInstance,
+} from '../src/interfaces'
 
-const instanceToString = <T extends FunctionalModel>() => WrapperInstanceMethod<T>((model, modelInstance) => {
-  return `${modelInstance.getModel().getName()}-Instance`
-})
+const instanceToString = <T extends FunctionalModel>() =>
+  WrapperInstanceMethod<T>((modelInstance, model) => {
+    return `${modelInstance.getModel().getName()}-Instance`
+  })
 
-const instanceToJson = <T extends FunctionalModel>() => WrapperInstanceMethod<T>(async (model, modelInstance) => {
-  return JSON.stringify(await modelInstance.toObj())
-})
+const instanceToJson = <T extends FunctionalModel>() =>
+  WrapperInstanceMethod<T, Model<T>>(async (modelInstance, model) => {
+    return JSON.stringify(await modelInstance.toObj())
+  })
 
-const modelToString = <T extends FunctionalModel>() => WrapperModelMethod<T>(model => {
-  return `${model.getName()}-[${Object.keys(
-    model.getModelDefinition().properties
-  ).join(',')}]`
-})
+const modelToString = <T extends FunctionalModel>() =>
+  WrapperModelMethod<T, Model<T>>(model => {
+    return `${model.getName()}-[${Object.keys(
+      model.getModelDefinition().properties
+    ).join(',')}]`
+  })
 
-const modelWrapper = <T extends FunctionalModel>() => WrapperModelMethod<T>(model => {
-  return model
-})
+const modelWrapper = <T extends FunctionalModel>() =>
+  WrapperModelMethod<T, Model<T>>(model => {
+    return model
+  })
 
 type FunctionalModel1Type = {
   name: string
   modelWrapper: ModelMethod
-  toString: ModelInstanceMethod,
+  toString: ModelInstanceMethod
   toJson: ModelInstanceMethod
 }
 
-const modelWrapper1 : ModelInstanceMethod = modelWrapper<any>()
-
 const MODEL_DEFINITIONS = {
-  FunctionModel1: BaseModel<FunctionalModel1Type>
-  ('FunctionModel1', {
+  FunctionModel1: BaseModel<FunctionalModel1Type>('FunctionModel1', {
     properties: {
       name: TextProperty({ required: true }),
     },
@@ -72,17 +79,17 @@ const MODEL_DEFINITIONS = {
       }),
     },
   }),
-  ArrayModel2: BaseModel('ArrayModel2', {
+  ArrayModel2: BaseModel<{ ArrayProperty: readonly number[] }>('ArrayModel2', {
     properties: {
       ArrayProperty: Property('Array', { isArray: true }),
     },
   }),
-  ArrayModel3: BaseModel('ArrayModel3', {
+  ArrayModel3: BaseModel<{ ArrayProperty: readonly number[] }>('ArrayModel3', {
     properties: {
       ArrayProperty: ArrayProperty({}),
     },
   }),
-  ArrayModel4: BaseModel('ArrayModel4', {
+  ArrayModel4: BaseModel<{ ArrayProperty: readonly number[] }>('ArrayModel4', {
     properties: {
       ArrayProperty: ArrayProperty({
         choices: [4, 5, 6],

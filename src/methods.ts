@@ -1,28 +1,43 @@
 import {
-  ModelInstanceMethodTyped,
+  ModelInstanceMethod,
   ModelInstance,
   FunctionalModel,
   Model,
-  ModelMethodTyped, MethodArgs,
+  ModelMethod,
 } from './interfaces'
 
-const WrapperInstanceMethod = <T extends FunctionalModel>(
-  method: (model: Model<T>, instance: ModelInstance<T>, args?: MethodArgs) => any
-) => {
-  const r: ModelInstanceMethodTyped<T> = (
-    model: Model<T>,
-    instance: ModelInstance<T>,
+type InstanceMethodInput<T extends FunctionalModel, TModel extends Model<T>> = (
+  instance: ModelInstance<T, TModel>,
+  model: TModel,
+  ...args: readonly any[]
+) => any
+type MethodInput<T extends FunctionalModel, TModel extends Model<T>> = (
+  model: TModel,
+  ...args: readonly any[]
+) => any
+
+function WrapperInstanceMethod<
+  T extends FunctionalModel,
+  TModel extends Model<T> = Model<T>
+>(method: InstanceMethodInput<T, TModel>): ModelInstanceMethod<T, TModel> {
+  const r: ModelInstanceMethod<T, TModel> = (
+    instance: ModelInstance<T, TModel>,
+    model: TModel,
     ...args: readonly any[]
   ) => {
-    return method(model, instance, args)
+    return method(instance, model, args)
   }
   return r
 }
 
-const WrapperModelMethod = <T extends FunctionalModel>(
-  method: (model: Model<T>, args?: MethodArgs) => any
-) => {
-  const r: ModelMethodTyped<T> = (model: Model<T>, args?: MethodArgs) => {
+function WrapperModelMethod<
+  T extends FunctionalModel,
+  TModel extends Model<T> = Model<T>
+>(method: MethodInput<T, TModel>): ModelMethod<T, TModel> {
+  const r: ModelMethod<T, TModel> = (
+    model: TModel,
+    ...args: readonly any[]
+  ) => {
     return method(model, args)
   }
   return r
