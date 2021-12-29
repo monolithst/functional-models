@@ -295,11 +295,11 @@ type ModelDefinition<
 type ModelFactory = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>
->(
+  >(
   modelName: string,
   modelDefinition: ModelDefinition<T, TModel>,
-  options?: OptionalModelOptions<T>
-) => Model<T>
+  options?: OptionalModelOptions<T, TModel>
+) => TModel
 
 type CreateParams<T extends FunctionalModel, TModel extends Model<T>> =
   | ModelInstanceInputData<T, TModel>

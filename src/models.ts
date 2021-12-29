@@ -58,7 +58,7 @@ const _createModelDefWithPrimaryKey = <
   }
 }
 
-const BaseModel = <
+const BaseModel : ModelFactory = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>
 >(
