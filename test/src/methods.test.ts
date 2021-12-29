@@ -18,7 +18,7 @@ describe('/src/methods.js', () => {
         properties: { text: TextProperty() },
       })
       const modelInstance = model.create({ text: 'Hello' })
-      const actual = myInstanceMethod(modelInstance)
+      const actual = myInstanceMethod(modelInstance, model)
       const expected = 'Hello-world'
       assert.equal(actual, expected)
     })
@@ -31,7 +31,7 @@ describe('/src/methods.js', () => {
         properties: { text: TextProperty() },
       })
       const modelInstance = model.create({ text: 'Hello' })
-      const actual = myInstanceMethod(modelInstance)
+      const actual = myInstanceMethod(modelInstance, model)
       sinon.assert.calledOnce(method)
     })
     it('should not call the method when InstanceMethod() called', () => {

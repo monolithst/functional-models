@@ -6,17 +6,21 @@ import {
   ModelInstance,
   ValueRequired,
   IsAsync,
+  Model,
+  FunctionalModel,
 } from '../../src/interfaces'
-import {
-  isPromise
-} from '../../src/utils'
+import { isPromise } from '../../src/utils'
 
 import sinon from 'sinon'
 import { assert } from 'chai'
 import { BaseModel } from '../../src/models'
 import { Property, TextProperty } from '../../src/properties'
 import { WrapperInstanceMethod, WrapperModelMethod } from '../../src/methods'
-import { UniqueId, IntegerProperty, ReferenceProperty} from '../../src/properties'
+import {
+  UniqueId,
+  IntegerProperty,
+  ReferenceProperty,
+} from '../../src/properties'
 
 type TEST_MODEL_TYPE = {
   name: string
@@ -30,21 +34,122 @@ const TEST_MODEL_1 = BaseModel<TEST_MODEL_TYPE>('MyModel', {
 
 describe('/src/models.ts', () => {
   describe('#BaseModel()', () => {
+    it('should be able to use a custom ModelInstance<> type for a ModelMethod and ModelMethodInstance', async () => {
+      type MyModelInstance<T extends FunctionalModel> = ModelInstance<T> & {
+        extended: () => string
+      }
+      type ModelType = {
+        simple: number
+        myMethod: ModelMethod<ModelType, Model<ModelType>>
+        myInstanceMethod: ModelInstanceMethod<
+          ModelType,
+          Model<ModelType>,
+          MyModelInstance<ModelType>
+        >
+      }
+      const model1 = BaseModel<ModelType>('TestModel1', {
+        properties: {
+          simple: IntegerProperty(),
+        },
+        modelMethods: {
+          myMethod: (model: Model<ModelType>, value: string) => {
+            return `hello ${value}`
+          },
+        },
+        instanceMethods: {
+          myInstanceMethod: (
+            instance: MyModelInstance<ModelType>,
+            model: Model<ModelType>,
+            value: string
+          ) => {
+            return `hello ${value}`
+          },
+        },
+      })
+      const actual = await model1.methods.myMethod('world')
+      const expected = 'hello world'
+      assert.deepEqual(actual, expected)
+
+      const instance1 = model1.create({
+        simple: 10,
+      }) as MyModelInstance<ModelType>
+      const actual2 = await instance1.methods.myInstanceMethod('world')
+      const expected2 = 'hello world'
+      assert.deepEqual(actual2, expected2)
+    })
+    it('should be able to use a custom ModelInstance<> type for a ModelMethod', async () => {
+      type MyModelInstance<T extends FunctionalModel> = ModelInstance<T> & {
+        extended: () => string
+      }
+      type ModelType = {
+        simple: number
+        myMethod: ModelMethod<ModelType, Model<ModelType>>
+      }
+      const model1 = BaseModel<ModelType>('TestModel1', {
+        properties: {
+          simple: IntegerProperty(),
+        },
+        modelMethods: {
+          myMethod: (model: Model<ModelType>, value: string) => {
+            return `hello ${value}`
+          },
+        },
+      })
+      const actual = await model1.methods.myMethod('world')
+      const expected = 'hello world'
+      assert.deepEqual(actual, expected)
+    })
+    it('should be able to use a custom ModelInstance<> type for a ModelInstanceMethod', async () => {
+      type MyModelInstance<T extends FunctionalModel> = ModelInstance<T> & {
+        extended: () => string
+      }
+      type ModelType = {
+        simple: number
+        myInstanceMethod: ModelInstanceMethod<
+          ModelType,
+          Model<ModelType>,
+          MyModelInstance<ModelType>
+        >
+      }
+      const model1 = BaseModel<ModelType>('TestModel1', {
+        properties: {
+          simple: IntegerProperty(),
+        },
+        instanceMethods: {
+          myInstanceMethod: (
+            instance: MyModelInstance<ModelType>,
+            model: Model<ModelType>,
+            value: string
+          ) => {
+            return `hello ${value}`
+          },
+        },
+      })
+      const instance1 = model1.create({ simple: 10 })
+      const actual = await instance1.methods.myInstanceMethod('world')
+      const expected = 'hello world'
+      assert.deepEqual(actual, expected)
+    })
     it('should have a Promise for ReferenceValueTypes', () => {
-      type ModelType1 = {simple: number}
+      type ModelType1 = { simple: number }
       const model1 = BaseModel<ModelType1>('TestModel1', {
         properties: {
-          simple: IntegerProperty()
-        }
+          simple: IntegerProperty(),
+        },
       })
-      const instance1 = model1.create({simple: 10})
-      const model2 = BaseModel<{value: number, value2: ReferenceValueType<ModelType1>}>('TestModel2', {
+      const instance1 = model1.create({ simple: 10 })
+      const model2 = BaseModel<{
+        value: number
+        value2: ReferenceValueType<ModelType1>
+      }>('TestModel2', {
         properties: {
           value: IntegerProperty(),
-          value2: ReferenceProperty<ModelType1, ValueRequired<ModelType1>>(model1)
-        }
+          value2: ReferenceProperty<ModelType1, ValueRequired<ModelType1>>(
+            model1
+          ),
+        },
       })
-      const instance2 = model2.create({value: 3, value2: instance1})
+      const instance2 = model2.create({ value: 3, value2: instance1 })
       const actual = instance2.get.value2()
       if (isPromise(actual)) {
         assert.isOk(actual.then)
@@ -53,13 +158,13 @@ describe('/src/models.ts', () => {
       }
     })
     it('should allow a non-promise number property to be added without await', () => {
-      const model = BaseModel<{value: number, value2: number}>('TestModel', {
+      const model = BaseModel<{ value: number; value2: number }>('TestModel', {
         properties: {
           value: IntegerProperty(),
           value2: IntegerProperty<ValueRequired<number>>(),
-        }
+        },
       })
-      const instance = model.create({value: 3, value2: 4})
+      const instance = model.create({ value: 3, value2: 4 })
       const number = instance.get.value()
       const number2 = instance.get.value2()
       const actual = number + number2
@@ -67,37 +172,44 @@ describe('/src/models.ts', () => {
       assert.equal(actual, expected)
     })
     it('should provide a Promise for get.id() by default', () => {
-      const model = BaseModel<{value: number}>('TestModel', {
+      const model = BaseModel<{ value: number }>('TestModel', {
         properties: {
-          value: IntegerProperty()
-        }
+          value: IntegerProperty(),
+        },
       })
-      const instance = model.create({value: 3, value2: 4})
+      const instance = model.create({ value: 3, value2: 4 })
       const actual = instance.get.id()
       const value = isPromise(actual)
       assert.isOk(value)
     })
     it('should not be a Promise for get.id() if set explicitly', () => {
-      const model = BaseModel<{id: string, value: number, somethingElse: number}>('TestModel', {
+      const model = BaseModel<{
+        id: string
+        value: number
+        somethingElse: number
+      }>('TestModel', {
         properties: {
           id: TextProperty<string>(),
           value: IntegerProperty(),
-          somethingElse: IntegerProperty<ValueRequired<number>>()
-        }
+          somethingElse: IntegerProperty<ValueRequired<number>>(),
+        },
       })
-      const instance = model.create({value: 3, value2: 4})
+      const instance = model.create({ value: 3, value2: 4 })
       const actual = instance.get.id()
       const value = isPromise(actual)
       assert.isFalse(value)
     })
     it('should allow a promise number property to be added, and after an await be added ', async () => {
-      const model = BaseModel<{value: Promise<number>, value2: number}>('TestModel', {
-        properties: {
-          value: IntegerProperty({ lazyLoadMethod: (input) => input + 5}),
-          value2: IntegerProperty<ValueRequired<number>>(),
+      const model = BaseModel<{ value: Promise<number>; value2: number }>(
+        'TestModel',
+        {
+          properties: {
+            value: IntegerProperty({ lazyLoadMethod: input => input + 5 }),
+            value2: IntegerProperty<ValueRequired<number>>(),
+          },
         }
-      })
-      const instance = model.create({value: 3, value2: 4})
+      )
+      const instance = model.create({ value: 3, value2: 4 })
       const number = await instance.get.value()
       const number2 = instance.get.value2()
       const actual = number + number2
@@ -114,11 +226,12 @@ describe('/src/models.ts', () => {
           name: TextProperty(),
         },
         instanceMethods: {
-          func1: WrapperInstanceMethod((instance: ModelInstance<any>) => {
-            // @ts-ignore
-            return instance.methods.func2()
-          }),
-          func2: (instance: ModelInstance<any>) => {
+          func1: WrapperInstanceMethod(
+            (instance: ModelInstance<any>, model) => {
+              return instance.methods.func2()
+            }
+          ),
+          func2: (instance: ModelInstance<any>, model) => {
             return 'from instance func2'
           },
         },
@@ -129,39 +242,35 @@ describe('/src/models.ts', () => {
       assert.deepEqual(actual, expected)
     })
     it('should pass the clients arguments before the model is passed', () => {
-      const model = BaseModel<{ func1: ModelMethod; func2: ModelMethod }>(
-        'ModelName',
-        {
-          properties: {},
-          modelMethods: {
-            func1: WrapperModelMethod((model, input) => {
-              return `${input} ${model.methods.func2()}`
-            }),
-            func2: WrapperModelMethod(model => {
-              return 'from func2'
-            }),
-          },
-        }
-      )
+      type MyType = { func1: ModelMethod<MyType>; func2: ModelMethod<MyType> }
+      const model = BaseModel<MyType>('ModelName', {
+        properties: {},
+        modelMethods: {
+          func1: WrapperModelMethod<MyType>((model, input) => {
+            return `${input} ${model.methods.func2()}`
+          }),
+          func2: WrapperModelMethod<MyType>(model => {
+            return 'from func2'
+          }),
+        },
+      })
       const actual = model.methods.func1('hello')
       const expected = 'hello from func2'
       assert.deepEqual(actual, expected)
     })
     it('should pass a functional model to the modelFunction by the time the function is called by a client', () => {
-      const model = BaseModel<{ func1: ModelMethod; func2: ModelMethod }>(
-        'ModelName',
-        {
-          properties: {},
-          modelMethods: {
-            func1: model => {
-              return model.methods.func2()
-            },
-            func2: model => {
-              return 'from func2'
-            },
+      type MyType = { func1: ModelMethod<MyType>; func2: ModelMethod<MyType> }
+      const model = BaseModel<MyType>('ModelName', {
+        properties: {},
+        modelMethods: {
+          func1: model => {
+            return model.methods.func2()
           },
-        }
-      )
+          func2: model => {
+            return 'from func2'
+          },
+        },
+      })
       const actual = model.methods.func1()
       const expected = 'from func2'
       assert.deepEqual(actual, expected)
@@ -265,7 +374,7 @@ describe('/src/models.ts', () => {
           },
         }
         const callbacks = [sinon.stub(), sinon.stub()]
-        const model = BaseModel('name', input, {
+        const model = BaseModel<{ myProperty: string }>('name', input, {
           instanceCreatedCallback: callbacks,
         })
         model.create({ myProperty: 'value' })
@@ -280,7 +389,7 @@ describe('/src/models.ts', () => {
           },
         }
         const callback = sinon.stub()
-        const model = BaseModel('name', input, {
+        const model = BaseModel<{ myProperty: string }>('name', input, {
           instanceCreatedCallback: callback,
         })
         model.create({ myProperty: 'value' })
@@ -292,7 +401,7 @@ describe('/src/models.ts', () => {
             myProperty: TextProperty({ required: true }),
           },
         }
-        const model = BaseModel('name', input)
+        const model = BaseModel<{ myProperty: string }>('name', input)
         assert.doesNotThrow(() => {
           model.create({})
         })
@@ -303,7 +412,7 @@ describe('/src/models.ts', () => {
             myProperty: TextProperty({ required: true }),
           },
         }
-        const model = BaseModel('name', input)
+        const model = BaseModel<{ myProperty: string }>('name', input)
         assert.doesNotThrow(() => {
           model.create({ whereIsMyProperty: 'not-here' })
         })
@@ -346,7 +455,7 @@ describe('/src/models.ts', () => {
             myProperty: TextProperty({ required: true }),
           },
         }
-        const model = BaseModel('test-the-name', input)
+        const model = BaseModel<{ myProperty: string }>('test-the-name', input)
         const instance = model.create({ myProperty: 'value' })
         const actual = instance.getModel().getName()
         const expected = 'test-the-name'
@@ -451,7 +560,7 @@ describe('/src/models.ts', () => {
             type: Property('MyProperty', {}),
           },
         }
-        const model = BaseModel('name', input)
+        const model = BaseModel<{ type: string }>('name', input)
         const instance = model.create({ id: expected, type: 'my-type' })
         const actual = instance.get.id()
         // @ts-ignore

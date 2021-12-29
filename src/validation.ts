@@ -225,8 +225,11 @@ const minTextLength =
 
 const referenceTypeMatch = <TModel extends FunctionalModel>(
   referencedModel: MaybeFunction<Model<TModel>>
-): PropertyValidatorComponentTypeAdvanced<ModelInstance<TModel>, TModel> => {
-  return (value?: ModelInstance<TModel>) => {
+): PropertyValidatorComponentTypeAdvanced<
+  ModelInstance<TModel, any>,
+  TModel
+> => {
+  return (value?: ModelInstance<TModel, any>) => {
     if (!value) {
       return 'Must include a value'
     }
@@ -257,7 +260,7 @@ const aggregateValidator = <T extends FunctionalModel>(
     : [methodOrMethods]
 
   const _aggregativeValidator: PropertyValidator<T> = async (
-    instance: ModelInstance<T>,
+    instance: ModelInstance<T, any>,
     instanceData: T | JsonAble,
     propertyConfiguration
   ) => {
@@ -281,7 +284,7 @@ const _boolChoice =
     const func = method(configValue)
     const validatorWrapper: PropertyValidatorComponentSync<T> = (
       value: any,
-      modelInstance: ModelInstance<T>,
+      modelInstance: ModelInstance<T, any>,
       modelData: T | JsonAble,
       configurations: ValidatorConfiguration
     ) => {
@@ -317,7 +320,7 @@ const createPropertyValidator = <T extends Arrayable<FunctionalValue>>(
   config: PropertyConfig<T>
 ) => {
   const _propertyValidator = async <TModel extends FunctionalModel>(
-    instance: ModelInstance<TModel>,
+    instance: ModelInstance<TModel, any>,
     instanceData: TModel | JsonAble,
     propertyConfiguration: ValidatorConfiguration
   ): Promise<ValidationErrors> => {
@@ -355,14 +358,17 @@ const createPropertyValidator = <T extends Arrayable<FunctionalValue>>(
   return _propertyValidator
 }
 
-const createModelValidator = <T extends FunctionalModel>(
+const createModelValidator = <
+  T extends FunctionalModel,
+  TModel extends Model<T> = Model<T>
+>(
   validators: PropertyValidators<T>,
   modelValidators?: readonly ModelValidatorComponent<T>[]
 ) => {
   const _modelValidator = async (
-    instance: ModelInstance<T>,
+    instance: ModelInstance<T, TModel>,
     propertyConfiguration: ValidatorConfiguration
-  ): Promise<ModelErrors<T>> => {
+  ): Promise<ModelErrors<T, TModel>> => {
     return Promise.resolve().then(async () => {
       if (!instance) {
         throw new Error(`Instance cannot be empty`)
@@ -390,7 +396,7 @@ const createModelValidator = <T extends FunctionalModel>(
         .filter(([, errors]) => Boolean(errors) && errors.length > 0)
         .reduce((acc, [key, errors]) => {
           return merge(acc, { [String(key)]: errors })
-        }, {} as ModelErrors<T>)
+        }, {} as ModelErrors<T, TModel>)
       return modelValidationErrors.length > 0
         ? merge(propertyErrors, { overall: modelValidationErrors })
         : propertyErrors

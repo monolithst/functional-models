@@ -11,42 +11,54 @@ import {
   ArrayProperty,
   validation,
 } from '../src'
-import { ModelInstanceMethod, ModelMethod } from '../src/interfaces'
+import {
+  ModelInstanceMethod,
+  ModelMethod,
+  FunctionalModel,
+  Model,
+  ModelInstance,
+} from '../src/interfaces'
 
-const instanceToString = WrapperInstanceMethod(modelInstance => {
-  return `${modelInstance.getModel().getName()}-Instance`
-})
+const instanceToString = <T extends FunctionalModel>() =>
+  WrapperInstanceMethod<T>((modelInstance, model) => {
+    return `${modelInstance.getModel().getName()}-Instance`
+  })
 
-const instanceToJson = WrapperInstanceMethod(async modelInstance => {
-  return JSON.stringify(await modelInstance.toObj())
-})
+const instanceToJson = <T extends FunctionalModel>() =>
+  WrapperInstanceMethod<T, Model<T>>(async (modelInstance, model) => {
+    return JSON.stringify(await modelInstance.toObj())
+  })
 
-const modelToString = WrapperModelMethod(model => {
-  return `${model.getName()}-[${Object.keys(
-    model.getModelDefinition().properties
-  ).join(',')}]`
-})
+const modelToString = <T extends FunctionalModel>() =>
+  WrapperModelMethod<T, Model<T>>(model => {
+    return `${model.getName()}-[${Object.keys(
+      model.getModelDefinition().properties
+    ).join(',')}]`
+  })
 
-const modelWrapper = WrapperModelMethod(model => {
-  return model
-})
+const modelWrapper = <T extends FunctionalModel>() =>
+  WrapperModelMethod<T, Model<T>>(model => {
+    return model
+  })
+
+type FunctionalModel1Type = {
+  name: string
+  modelWrapper: ModelMethod
+  toString: ModelInstanceMethod
+  toJson: ModelInstanceMethod
+}
 
 const MODEL_DEFINITIONS = {
-  FunctionModel1: BaseModel<{
-    name: string
-    modelWrapper: ModelMethod
-    toString: ModelInstanceMethod
-    toJson: ModelInstanceMethod
-  }>('FunctionModel1', {
+  FunctionModel1: BaseModel<FunctionalModel1Type>('FunctionModel1', {
     properties: {
       name: TextProperty({ required: true }),
     },
     modelMethods: {
-      modelWrapper,
+      modelWrapper: modelWrapper<any>(),
     },
     instanceMethods: {
-      toString: instanceToString,
-      toJson: instanceToJson,
+      toString: instanceToString<any>(),
+      toJson: instanceToJson<any>(),
     },
   }),
   TestModel1: BaseModel<{ name: string; type: string; flag: number }>(
@@ -67,17 +79,17 @@ const MODEL_DEFINITIONS = {
       }),
     },
   }),
-  ArrayModel2: BaseModel('ArrayModel2', {
+  ArrayModel2: BaseModel<{ ArrayProperty: readonly number[] }>('ArrayModel2', {
     properties: {
       ArrayProperty: Property('Array', { isArray: true }),
     },
   }),
-  ArrayModel3: BaseModel('ArrayModel3', {
+  ArrayModel3: BaseModel<{ ArrayProperty: readonly number[] }>('ArrayModel3', {
     properties: {
       ArrayProperty: ArrayProperty({}),
     },
   }),
-  ArrayModel4: BaseModel('ArrayModel4', {
+  ArrayModel4: BaseModel<{ ArrayProperty: readonly number[] }>('ArrayModel4', {
     properties: {
       ArrayProperty: ArrayProperty({
         choices: [4, 5, 6],

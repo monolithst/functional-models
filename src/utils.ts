@@ -46,4 +46,4 @@ function isPromise<T>(something: any): something is Promise<T> {
   return false
 }
 
-export { loweredTitleCase, toTitleCase, createUuid, isPromise}
+export { loweredTitleCase, toTitleCase, createUuid, isPromise }

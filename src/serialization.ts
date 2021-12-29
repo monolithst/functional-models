@@ -1,7 +1,7 @@
 import merge from 'lodash/merge'
 import { PropertyGetters, JsonAble, toObj } from './interfaces'
 
-const _getValue = async (value: any): Promise<JsonAble> => {
+const _getValue = async (value: any): Promise<JsonAble | null> => {
   if (value === undefined) {
     return null
   }

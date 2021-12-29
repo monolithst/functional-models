@@ -5,10 +5,10 @@ import { WrapperInstanceMethod, WrapperModelMethod } from '../src/methods'
 import {
   Model,
   FunctionalModel,
-  ModelInstanceMethodTyped,
-  ModelMethodTyped,
+  ModelMethod,
   ModelInstanceInputData,
   Nullable,
+  ModelInstanceMethod,
 } from '../src/interfaces'
 import { ObjectProperty, TextProperty, UniqueId } from '../src/properties'
 
@@ -16,8 +16,8 @@ type MyTSType = {
   name: string
   data: FunctionalModel
   notRequired?: Nullable<string>
-  myMethod: ModelInstanceMethodTyped<MyTSType>
-  myModelMethod: ModelMethodTyped<MyTSType>
+  myMethod: ModelInstanceMethod
+  myModelMethod: ModelMethod
 }
 
 const TE_FULL_TEST = () => {
@@ -29,12 +29,12 @@ const TE_FULL_TEST = () => {
       notRequired: TextProperty({}),
     },
     instanceMethods: {
-      myMethod: WrapperInstanceMethod<MyTSType>((instance, args) => {
+      myMethod: WrapperInstanceMethod(() => {
         return 'InstanceMethod'
       }),
     },
     modelMethods: {
-      myModelMethod: WrapperModelMethod<MyTSType>((model, args) => {
+      myModelMethod: WrapperModelMethod(() => {
         return 'ModelMethod'
       }),
     },
@@ -61,7 +61,7 @@ const TE_TEST_1 = () => {
   return { basic: 'hello world' }
 }
 
-const DATA_SET: { [s: string]: () => ModelInstanceInputData<any> } = {
+const DATA_SET: { [s: string]: () => ModelInstanceInputData<any, any> } = {
   TE_FULL_TEST_1,
   TE_TEST_1,
 }

@@ -37,10 +37,13 @@ import {
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
 
-const _getValidatorFromConfigElseEmpty = <T extends FunctionalModel>(
-  input: T | undefined,
+const _getValidatorFromConfigElseEmpty = <
+  T extends FunctionalModel,
+  TValue extends FunctionalValue
+>(
+  input: TValue | undefined,
   // eslint-disable-next-line no-unused-vars
-  validatorGetter: (t: T) => PropertyValidatorComponent<T>
+  validatorGetter: (t: TValue) => PropertyValidatorComponent<T>
 ) => {
   if (input !== undefined) {
     const validator = validatorGetter(input)
@@ -296,8 +299,6 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
     additionalMetadata
   )
 
-
-
 const ReferenceProperty = <
   T extends FunctionalModel,
   TModifier extends PropertyModifier<ReferenceValueType<T>>
@@ -320,7 +321,8 @@ const ReferenceProperty = <
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
   const _getId =
-    (instanceValues: ReferenceValueType<T>|TModifier) => (): Maybe<PrimaryKeyType> => {
+    (instanceValues: ReferenceValueType<T> | TModifier) =>
+    (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
       }
@@ -330,8 +332,8 @@ const ReferenceProperty = <
       if (typeof instanceValues === 'string') {
         return instanceValues
       }
-      if ((instanceValues as ModelInstance<T>).getPrimaryKey) {
-        return (instanceValues as ModelInstance<T>).getPrimaryKey()
+      if ((instanceValues as ModelInstance<T, any>).getPrimaryKey) {
+        return (instanceValues as ModelInstance<T, any>).getPrimaryKey()
       }
 
       const theModel = _getModel()
@@ -345,16 +347,18 @@ const ReferenceProperty = <
 
   const lazyLoadMethod = async (instanceValues: TModifier) => {
     const valueIsModelInstance =
-      instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKeyName
+      instanceValues &&
+      (instanceValues as ModelInstance<T, any>).getPrimaryKeyName
     const _getInstanceReturn = (objToUse: TModifier) => {
       // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
       const objIsModelInstance =
-        instanceValues && (instanceValues as ModelInstance<T>).getPrimaryKeyName
+        instanceValues &&
+        (instanceValues as ModelInstance<T, any>).getPrimaryKeyName
 
       // @ts-ignore
       const instance = objIsModelInstance
         ? objToUse
-        : _getModel().create(objToUse as ModelInstanceInputData<T>)
+        : _getModel().create(objToUse as ModelInstanceInputData<T, any>)
       // We are replacing the toObj function, because the reference type in the end should be the primary key when serialized.
       return merge({}, instance, {
         toObj: _getId(instanceValues),
@@ -394,7 +398,6 @@ const ReferenceProperty = <
   )
   return p
 }
-
 
 export {
   Property,
