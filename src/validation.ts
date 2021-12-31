@@ -362,8 +362,8 @@ const createModelValidator = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>
 >(
-  validators: PropertyValidators<T>,
-  modelValidators?: readonly ModelValidatorComponent<T>[]
+  validators: PropertyValidators<T, TModel>,
+  modelValidators?: readonly ModelValidatorComponent<T, TModel>[]
 ) => {
   const _modelValidator = async (
     instance: ModelInstance<T, TModel>,

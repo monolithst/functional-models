@@ -1,9 +1,21 @@
 import { assert } from 'chai'
 import sinon from 'sinon'
 import proxyquire from 'proxyquire'
-import { loweredTitleCase, createUuid, toTitleCase } from '../../src/utils'
+import {
+  loweredTitleCase,
+  createUuid,
+  toTitleCase,
+  isPromise,
+} from '../../src/utils'
 
 describe('/src/utils.ts', () => {
+  describe('#isPromise()', () => {
+    it('should return false if null is passed in', () => {
+      const actual = isPromise(null)
+      const expected = false
+      assert.equal(actual, expected)
+    })
+  })
   describe('#toTitleCase()', () => {
     it('should make camelCase into CamelCase', () => {
       const input = 'camelCase'

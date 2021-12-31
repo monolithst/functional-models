@@ -26,6 +26,7 @@ import {
   ValueRequired,
   ValueRequiredR,
   ValueOptionalR,
+  FunctionalModel,
 } from '../../src/interfaces'
 
 type TestModelType = { name: string }
@@ -696,16 +697,22 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
-        const modelFetcher: ModelFetcher = <TestModelType>() => {
-          return Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' })
+        const model = BaseModel<TestModelType>('Test', {
+          properties: {
+            name: TextProperty(),
+          },
+        })
+        const modelFetcher: ModelFetcher = <T extends FunctionalModel>() => {
+          const m = model.create({ id: 123, name: 'switch-a-roo' })
+          return Promise.resolve(m as unknown as ModelInstance<T>)
         }
         const actual = (await ReferenceProperty<
           TestModelType,
-          ValueRequired<TestModelType | string>
+          ValueRequired<TestModelType | number>
         >(TestModel1, {
-          fetcher: () =>
-            Promise.resolve({ id: 'obj-id', name: 'switch-a-roo' }),
-        }).createGetter('obj-id')()) as ModelInstance<TestModelType>
+          fetcher: modelFetcher,
+        }).createGetter(123)()) as ModelInstance<TestModelType>
+        console.log(actual.get.name())
         const expected = 'switch-a-roo'
         assert.deepEqual(actual.get.name(), expected)
       })
@@ -718,8 +725,21 @@ describe('/src/properties.ts', () => {
         assert.deepEqual(actual, expected)
       })
       it('should return null when fetcher is used, but the instance value passed in is empty', async () => {
+        const model = BaseModel<TestModelType>('Test', {
+          properties: {
+            name: TextProperty(),
+          },
+        })
+        const modelFetcher: ModelFetcher = <T extends FunctionalModel>() => {
+          return Promise.resolve(
+            model.create({
+              id: 123,
+              name: 'switch-a-roo',
+            }) as unknown as ModelInstance<T>
+          )
+        }
         const actual = (await ReferenceProperty(TestModel1, {
-          fetcher: async () => ({ id: 'obj-id', name: 'switch-a-roo' }),
+          fetcher: modelFetcher,
         }).createGetter(null)()) as ModelInstance<TestModelType>
         const expected = null
         assert.deepEqual(actual, expected)
@@ -768,14 +788,26 @@ describe('/src/properties.ts', () => {
           const expected = 'obj-id'
           assert.deepEqual(actual, expected)
         })
-        it('should return "obj-id" when switch-a-roo fetcher is used and toObj is called', async () => {
-          const input = 'obj-id'
+        it('should return 123 when switch-a-roo fetcher is used and toObj is called', async () => {
+          const model = BaseModel<TestModelType>('Test', {
+            properties: {
+              name: TextProperty(),
+            },
+          })
+          const modelFetcher: ModelFetcher = <T extends FunctionalModel>() => {
+            return Promise.resolve(
+              model.create({
+                id: 123,
+                name: 'switch-a-roo',
+              }) as unknown as ModelInstance<T>
+            )
+          }
+          const input = 123
           const instance = (await ReferenceProperty(TestModel1, {
-            fetcher: () =>
-              Promise.resolve({ id: 'obj-id', prop: 'switch-a-roo' }),
+            fetcher: modelFetcher,
           }).createGetter(input)()) as ModelInstance<{}>
           const actual = await instance.toObj()
-          const expected = 'obj-id'
+          const expected = 123
           assert.deepEqual(actual, expected)
         })
       })

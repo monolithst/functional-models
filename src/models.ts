@@ -58,7 +58,7 @@ const _createModelDefWithPrimaryKey = <
   }
 }
 
-const BaseModel : ModelFactory = <
+const BaseModel: ModelFactory = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>
 >(
@@ -82,19 +82,19 @@ const BaseModel : ModelFactory = <
 
   // @ts-ignore
   const getPrimaryKeyName = () => modelDefinition.getPrimaryKeyName()
-  const getPrimaryKey = (t: ModelInstanceInputData<T, TModel>) =>
+  const getPrimaryKey = (t: ModelInstanceInputData<T>) =>
     // @ts-ignore
     t[getPrimaryKeyName()] as string
 
-  const create = (instanceValues: ModelInstanceInputData<T, TModel>) => {
+  const create = (instanceValues: ModelInstanceInputData<T>) => {
     // eslint-disable-next-line functional/no-let
     let instance: Nullable<ModelInstance<T, TModel>> = null
     const startingInternals: {
-      readonly get: PropertyGetters<T> & { readonly id: () => string }
-      readonly validators: PropertyValidators<T>
+      readonly get: PropertyGetters<T, TModel> & { readonly id: () => string }
+      readonly validators: PropertyValidators<T, TModel>
       readonly references: ReferenceFunctions
     } = {
-      get: {} as PropertyGetters<T> & { readonly id: () => string },
+      get: {} as PropertyGetters<T, TModel> & { readonly id: () => string },
       validators: {},
       references: {},
     }

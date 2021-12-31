@@ -6,6 +6,7 @@ import {
   ModelInstance,
   ValueRequired,
   IsAsync,
+  ModelMethodGetters,
   Model,
   FunctionalModel,
 } from '../../src/interfaces'
@@ -34,6 +35,32 @@ const TEST_MODEL_1 = BaseModel<TEST_MODEL_TYPE>('MyModel', {
 
 describe('/src/models.ts', () => {
   describe('#BaseModel()', () => {
+    it('should be able to use a custom Model<> type for a ModelMethod, so long as you override the methods.', async () => {
+      type MyModel<T extends FunctionalModel> = Model<T> & {
+        methods: ModelMethodGetters<T, MyModel<T>>
+        extended: () => string
+      }
+
+      type ModelType = {
+        simple: number
+        myMethod: ModelMethod<ModelType, MyModel<ModelType>>
+      }
+      const model1 = BaseModel<ModelType>('TestModel1', {
+        properties: {
+          simple: IntegerProperty(),
+        },
+        modelMethods: {
+          myMethod: WrapperModelMethod<ModelType, MyModel<ModelType>>(
+            (model: MyModel<ModelType>, value: string) => {
+              return `hello ${value}`
+            }
+          ),
+        },
+      }) as MyModel<ModelType>
+      const actual = await model1.methods.myMethod('world')
+      const expected = 'hello world'
+      assert.deepEqual(actual, expected)
+    })
     it('should be able to use a custom ModelInstance<> type for a ModelMethod and ModelMethodInstance', async () => {
       type MyModelInstance<T extends FunctionalModel> = ModelInstance<T> & {
         extended: () => string
@@ -166,6 +193,9 @@ describe('/src/models.ts', () => {
       })
       const instance = model.create({ value: 3, value2: 4 })
       const number = instance.get.value()
+      if (isPromise(number)) {
+        throw new Error(`Should not be a promise!`)
+      }
       const number2 = instance.get.value2()
       const actual = number + number2
       const expected = 7
@@ -177,7 +207,7 @@ describe('/src/models.ts', () => {
           value: IntegerProperty(),
         },
       })
-      const instance = model.create({ value: 3, value2: 4 })
+      const instance = model.create({ value: 3 })
       const actual = instance.get.id()
       const value = isPromise(actual)
       assert.isOk(value)
@@ -194,7 +224,7 @@ describe('/src/models.ts', () => {
           somethingElse: IntegerProperty<ValueRequired<number>>(),
         },
       })
-      const instance = model.create({ value: 3, value2: 4 })
+      const instance = model.create({ id: 'test', value: 3, somethingElse: 5 })
       const actual = instance.get.id()
       const value = isPromise(actual)
       assert.isFalse(value)
@@ -403,6 +433,7 @@ describe('/src/models.ts', () => {
         }
         const model = BaseModel<{ myProperty: string }>('name', input)
         assert.doesNotThrow(() => {
+          // @ts-ignore
           model.create({})
         })
       })
@@ -414,6 +445,7 @@ describe('/src/models.ts', () => {
         }
         const model = BaseModel<{ myProperty: string }>('name', input)
         assert.doesNotThrow(() => {
+          // @ts-ignore
           model.create({ whereIsMyProperty: 'not-here' })
         })
       })

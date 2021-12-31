@@ -61,7 +61,7 @@ const TE_TEST_1 = () => {
   return { basic: 'hello world' }
 }
 
-const DATA_SET: { [s: string]: () => ModelInstanceInputData<any, any> } = {
+const DATA_SET: { [s: string]: () => ModelInstanceInputData<any> } = {
   TE_FULL_TEST_1,
   TE_TEST_1,
 }

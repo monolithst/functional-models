@@ -352,13 +352,11 @@ const ReferenceProperty = <
     const _getInstanceReturn = (objToUse: TModifier) => {
       // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
       const objIsModelInstance =
-        instanceValues &&
-        (instanceValues as ModelInstance<T, any>).getPrimaryKeyName
-
+        objToUse && (objToUse as ModelInstance<T, any>).getPrimaryKeyName
       // @ts-ignore
       const instance = objIsModelInstance
         ? objToUse
-        : _getModel().create(objToUse as ModelInstanceInputData<T, any>)
+        : _getModel().create(objToUse as ModelInstanceInputData<T>)
       // We are replacing the toObj function, because the reference type in the end should be the primary key when serialized.
       return merge({}, instance, {
         toObj: _getId(instanceValues),
@@ -373,7 +371,7 @@ const ReferenceProperty = <
       const id = await _getId(instanceValues)()
       const model = _getModel()
       if (id !== null && id !== undefined) {
-        const obj = await config.fetcher(model, id)
+        const obj = await config.fetcher<T>(model, id)
         return _getInstanceReturn(obj as TModifier)
       }
       return null
