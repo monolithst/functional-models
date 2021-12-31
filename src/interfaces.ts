@@ -330,11 +330,12 @@ type ModelDefinition<
 
 type ModelFactory = <
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 >(
   modelName: string,
-  modelDefinition: ModelDefinition<T, TModel>,
-  options?: OptionalModelOptions<T, TModel>
+  modelDefinition: ModelDefinition<T, TModel, TModelInstance>,
+  options?: OptionalModelOptions<T, TModel, TModelInstance>
 ) => TModel
 
 type CreateParams<T extends FunctionalModel> =
@@ -397,21 +398,23 @@ type PropertyModifier<T extends Arrayable<FunctionalValue>> =
 
 type ModelOptions<
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 > = {
   readonly instanceCreatedCallback: Nullable<
-    Arrayable<(instance: ModelInstance<T, TModel>) => void>
+    Arrayable<(instance: TModelInstance) => void>
   >
   readonly [s: string]: any
 }
 
 type OptionalModelOptions<
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 > =
   | {
       readonly instanceCreatedCallback?: Nullable<
-        Arrayable<(instance: ModelInstance<T, TModel>) => void>
+        Arrayable<(instance: TModelInstance) => void>
       >
       readonly [s: string]: any
     }

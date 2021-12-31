@@ -32,20 +32,26 @@ const _defaultOptions = <
 
 const _convertOptions = <
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 >(
-  options?: OptionalModelOptions<T, TModel>
+  options?: OptionalModelOptions<T, TModel, TModelInstance>
 ) => {
-  const r: ModelOptions<T, TModel> = merge({}, _defaultOptions(), options)
+  const r: ModelOptions<T, TModel, TModelInstance> = merge(
+    {},
+    _defaultOptions(),
+    options
+  )
   return r
 }
 
 const _createModelDefWithPrimaryKey = <
   T extends FunctionalModel,
-  TModel extends Model<T>
+  TModel extends Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 >(
-  keyToProperty: ModelDefinition<T, TModel>
-): ModelDefinition<T, TModel> => {
+  keyToProperty: ModelDefinition<T, TModel, TModelInstance>
+): ModelDefinition<T, TModel, TModelInstance> => {
   return {
     getPrimaryKeyName: () => 'id',
     modelMethods: keyToProperty.modelMethods,
@@ -60,11 +66,12 @@ const _createModelDefWithPrimaryKey = <
 
 const BaseModel: ModelFactory = <
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 >(
   modelName: string,
-  modelDefinition: ModelDefinition<T, TModel>,
-  options?: OptionalModelOptions<T, TModel>
+  modelDefinition: ModelDefinition<T, TModel, TModelInstance>,
+  options?: OptionalModelOptions<T, TModel, TModelInstance>
 ): TModel => {
   /*
    * This non-functional approach is specifically used to
@@ -88,7 +95,7 @@ const BaseModel: ModelFactory = <
 
   const create = (instanceValues: ModelInstanceInputData<T>) => {
     // eslint-disable-next-line functional/no-let
-    let instance: Nullable<ModelInstance<T, TModel>> = null
+    let instance: Nullable<TModelInstance> = null
     const startingInternals: {
       readonly get: PropertyGetters<T, TModel> & { readonly id: () => string }
       readonly validators: PropertyValidators<T, TModel>
@@ -134,8 +141,8 @@ const BaseModel: ModelFactory = <
     ).reduce((acc, [key, func]) => {
       return merge(acc, {
         [key]: (...args: readonly any[]) => {
-          return (func as ModelInstanceMethod<T, TModel>)(
-            instance as ModelInstance<T, TModel>,
+          return (func as ModelInstanceMethod<T, TModel, TModelInstance>)(
+            instance as TModelInstance,
             model as TModel,
             ...args
           )
@@ -143,14 +150,14 @@ const BaseModel: ModelFactory = <
       })
     }, {}) as InstanceMethodGetters<T, TModel>
 
-    const getModel = () => model as Model<T>
+    const getModel = () => model as TModel
     const toObj = toJsonAble(loadedInternals.get)
     const validate = (options = {}) => {
       return Promise.resolve().then(() => {
         return createModelValidator<T, TModel>(
           loadedInternals.validators,
           modelDefinition.modelValidators || []
-        )(instance as ModelInstance<T, TModel>, options)
+        )(instance as TModelInstance, options)
       })
     }
 
@@ -161,13 +168,13 @@ const BaseModel: ModelFactory = <
       getPrimaryKeyName,
       validate,
       methods,
-    }) as ModelInstance<T, TModel>
+    }) as TModelInstance
 
     if (theOptions.instanceCreatedCallback) {
       const toCall = Array.isArray(theOptions.instanceCreatedCallback)
         ? theOptions.instanceCreatedCallback
         : [theOptions.instanceCreatedCallback]
-      toCall.map(func => func(instance as ModelInstance<T, TModel>))
+      toCall.map(func => func(instance as TModelInstance))
     }
     return instance
   }
