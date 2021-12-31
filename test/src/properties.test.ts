@@ -702,10 +702,12 @@ describe('/src/properties.ts', () => {
             name: TextProperty(),
           },
         })
-        const modelFetcher: ModelFetcher = <T extends FunctionalModel>() => {
+
+        const modelFetcher: ModelFetcher = (theirModel: any, key) => {
           const m = model.create({ id: 123, name: 'switch-a-roo' })
-          return Promise.resolve(m as unknown as ModelInstance<T>)
+          return Promise.resolve(m as any)
         }
+
         const actual = (await ReferenceProperty<
           TestModelType,
           ValueRequired<TestModelType | number>
@@ -730,12 +732,15 @@ describe('/src/properties.ts', () => {
             name: TextProperty(),
           },
         })
-        const modelFetcher: ModelFetcher = <T extends FunctionalModel>() => {
+        const modelFetcher: ModelFetcher = <
+          T extends FunctionalModel,
+          TModel extends Model<T>
+        >() => {
           return Promise.resolve(
             model.create({
               id: 123,
               name: 'switch-a-roo',
-            }) as unknown as ModelInstance<T>
+            }) as unknown as ModelInstance<T, TModel>
           )
         }
         const actual = (await ReferenceProperty(TestModel1, {
@@ -794,12 +799,15 @@ describe('/src/properties.ts', () => {
               name: TextProperty(),
             },
           })
-          const modelFetcher: ModelFetcher = <T extends FunctionalModel>() => {
+          const modelFetcher: ModelFetcher = <
+            T extends FunctionalModel,
+            TModel extends Model<T>
+          >() => {
             return Promise.resolve(
               model.create({
                 id: 123,
                 name: 'switch-a-roo',
-              }) as unknown as ModelInstance<T>
+              }) as unknown as ModelInstance<T, TModel>
             )
           }
           const input = 123
