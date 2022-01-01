@@ -59,9 +59,14 @@ const _mergeValidators = <T extends Arrayable<FunctionalValue>>(
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 
-const Property = <T extends Arrayable<FunctionalValue>>(
+const Property = <
+  TValue extends Arrayable<FunctionalValue>,
+  T extends FunctionalModel = FunctionalModel,
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+>(
   type: string,
-  config: PropertyConfig<T> = {},
+  config: PropertyConfig<TValue> = {},
   additionalMetadata = {}
 ) => {
   if (!type && !config?.type) {
@@ -71,9 +76,11 @@ const Property = <T extends Arrayable<FunctionalValue>>(
     type = config.type
   }
   const getConstantValue = () =>
-    (config?.value !== undefined ? config.value : undefined) as T
+    (config?.value !== undefined ? config.value : undefined) as TValue
   const getDefaultValue = () =>
-    (config?.defaultValue !== undefined ? config.defaultValue : undefined) as T
+    (config?.defaultValue !== undefined
+      ? config.defaultValue
+      : undefined) as TValue
   const getChoices = () => config?.choices || []
   const lazyLoadMethod = config?.lazyLoadMethod || false
   const valueSelector = config?.valueSelector || (x => x)
@@ -81,14 +88,16 @@ const Property = <T extends Arrayable<FunctionalValue>>(
     throw new Error(`valueSelector must be a function`)
   }
 
-  const r: PropertyInstance<T> = {
+  const r: PropertyInstance<TValue, T, TModel, TModelInstance> = {
     ...additionalMetadata,
     getConfig: () => config || {},
     getChoices,
     getDefaultValue,
     getConstantValue,
     getPropertyType: () => type,
-    createGetter: (instanceValue: T): ValueGetter<T> => {
+    createGetter: (
+      instanceValue: TValue
+    ): ValueGetter<TValue, T, TModel, TModelInstance> => {
       const value = getConstantValue()
       if (value !== undefined) {
         return () => value
@@ -102,18 +111,18 @@ const Property = <T extends Arrayable<FunctionalValue>>(
       }
       const method = lazyLoadMethod
         ? // eslint-disable-next-line no-unused-vars
-          (lazyValue(lazyLoadMethod) as (value: T) => Promise<T>)
+          (lazyValue(lazyLoadMethod) as (value: TValue) => Promise<TValue>)
         : typeof instanceValue === 'function'
-        ? (instanceValue as () => T)
+        ? (instanceValue as () => TValue)
         : () => instanceValue
-      const r: ValueGetter<T> = () => {
+      const r: ValueGetter<TValue, T, TModel, TModelInstance> = () => {
         const result = method(instanceValue)
         return valueSelector(result)
       }
       return r
     },
-    getValidator: <TModel extends FunctionalModel>(
-      valueGetter: ValueGetter<T>
+    getValidator: (
+      valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>
     ) => {
       const validator = createPropertyValidator(valueGetter, config)
       const _propertyValidatorWrapper: PropertyValidator<TModel> = async (
@@ -301,9 +310,29 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
 
 const ReferenceProperty = <
   T extends FunctionalModel,
-  TModifier extends PropertyModifier<ReferenceValueType<T>>
+  TModifier extends PropertyModifier<
+    ReferenceValueType<T, Model<T>, ModelInstance<T, Model<T>>>
+  > = ReferenceValueType<T, Model<T>, ModelInstance<T, Model<T>>>
 >(
   model: MaybeFunction<Model<T>>,
+  config: PropertyConfig<TModifier> = {},
+  additionalMetadata = {}
+) =>
+  BaseReferenceProperty<T, Model<T>, ModelInstance<T>, TModifier>(
+    model,
+    config,
+    additionalMetadata
+  )
+
+const BaseReferenceProperty = <
+  T extends FunctionalModel,
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
+  TModifier extends PropertyModifier<
+    ReferenceValueType<T, TModel, TModelInstance>
+  > = ReferenceValueType<T, TModel, TModelInstance>
+>(
+  model: MaybeFunction<TModel>,
   config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) => {
@@ -321,7 +350,9 @@ const ReferenceProperty = <
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
   const _getId =
-    (instanceValues: ReferenceValueType<T> | TModifier) =>
+    (
+      instanceValues: ReferenceValueType<T, TModel, TModelInstance> | TModifier
+    ) =>
     (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
@@ -332,8 +363,8 @@ const ReferenceProperty = <
       if (typeof instanceValues === 'string') {
         return instanceValues
       }
-      if ((instanceValues as ModelInstance<T, any>).getPrimaryKey) {
-        return (instanceValues as ModelInstance<T, any>).getPrimaryKey()
+      if ((instanceValues as TModelInstance).getPrimaryKey) {
+        return (instanceValues as TModelInstance).getPrimaryKey()
       }
 
       const theModel = _getModel()
@@ -347,12 +378,11 @@ const ReferenceProperty = <
 
   const lazyLoadMethod = async (instanceValues: TModifier) => {
     const valueIsModelInstance =
-      instanceValues &&
-      (instanceValues as ModelInstance<T, any>).getPrimaryKeyName
+      instanceValues && (instanceValues as TModelInstance).getPrimaryKeyName
     const _getInstanceReturn = (objToUse: TModifier) => {
       // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
       const objIsModelInstance =
-        objToUse && (objToUse as ModelInstance<T, any>).getPrimaryKeyName
+        objToUse && (objToUse as TModelInstance).getPrimaryKeyName
       // @ts-ignore
       const instance = objIsModelInstance
         ? objToUse
@@ -379,21 +409,23 @@ const ReferenceProperty = <
     return _getId(instanceValues)()
   }
 
-  const p: ReferencePropertyInstance<T, TModifier> = merge(
-    Property<TModifier>(
-      PROPERTY_TYPES.ReferenceProperty,
-      merge({}, config, {
-        validators,
-        lazyLoadMethod,
-      }),
-      additionalMetadata
-    ),
-    {
-      getReferencedId: (instanceValues: ReferenceValueType<T>) =>
-        _getId(instanceValues)(),
-      getReferencedModel: _getModel,
-    }
-  )
+  const p: ReferencePropertyInstance<T, TModifier, TModel, TModelInstance> =
+    merge(
+      Property<TModifier>(
+        PROPERTY_TYPES.ReferenceProperty,
+        merge({}, config, {
+          validators,
+          lazyLoadMethod,
+        }),
+        additionalMetadata
+      ),
+      {
+        getReferencedId: (
+          instanceValues: ReferenceValueType<T, TModel, TModelInstance>
+        ) => _getId(instanceValues)(),
+        getReferencedModel: _getModel,
+      }
+    )
   return p
 }
 
@@ -403,6 +435,7 @@ export {
   DateProperty,
   ArrayProperty,
   ReferenceProperty,
+  BaseReferenceProperty,
   IntegerProperty,
   TextProperty,
   ConstantValueProperty,

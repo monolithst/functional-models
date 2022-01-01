@@ -6,6 +6,7 @@ import {
   DateProperty,
   BooleanProperty,
   ReferenceProperty,
+  BaseReferenceProperty,
   ArrayProperty,
   ConstantValueProperty,
   ObjectProperty,
@@ -27,6 +28,7 @@ import {
   ValueRequiredR,
   ValueOptionalR,
   FunctionalModel,
+  ReferenceValueType,
 } from '../../src/interfaces'
 
 type TestModelType = { name: string }
@@ -644,6 +646,40 @@ describe('/src/properties.ts', () => {
       assert.equal(actual, expected)
     })
   })
+  describe('#BaseReferenceProperty()', () => {
+    it('should not throw an exception when a custom Model is passed in', () => {
+      type MyType = { name: string }
+      type MyModel<T extends FunctionalModel> = Model<T> & {
+        extended: () => {}
+      }
+      type MyModelInstance<
+        T extends FunctionalModel,
+        TModel extends Model<T>
+      > = ModelInstance<T, TModel> & {
+        extended2: () => {}
+      }
+      type CustomReferenceType<T extends FunctionalModel> = ReferenceValueType<
+        T,
+        MyModel<T>,
+        MyModelInstance<T, MyModel<T>>
+      >
+      const model = BaseModel<
+        MyType,
+        MyModel<MyType>,
+        MyModelInstance<MyType, MyModel<MyType>>
+      >('Test', {
+        properties: { name: TextProperty() },
+      })
+      assert.doesNotThrow(async () => {
+        BaseReferenceProperty<
+          MyType,
+          MyModel<MyType>,
+          MyModelInstance<MyType, MyModel<MyType>>,
+          CustomReferenceType<MyType>
+        >(model)
+      })
+    })
+  })
   describe('#ReferenceProperty()', () => {
     it('should throw an exception if a model value is not passed in', () => {
       assert.throws(() => {
@@ -668,21 +704,26 @@ describe('/src/properties.ts', () => {
     })
     describe('#createGetter()', () => {
       it('should return "obj-id" when no fetcher is used', async () => {
-        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
-          'obj-id'
-        )()
+        const actual = await ReferenceProperty<TestModelType>(
+          TestModel1,
+          {}
+        ).createGetter('obj-id')()
         const expected = 'obj-id'
         assert.equal(actual, expected)
       })
       it('should allow null as the input', async () => {
-        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
-          null
-        )()
+        const actual = await ReferenceProperty<
+          TestModelType,
+          ValueOptionalR<TestModelType>
+        >(TestModel1, {}).createGetter(null)()
         const expected = null
         assert.equal(actual, expected)
       })
       it('should return "obj-id" from {}.id when no fetcher is used', async () => {
-        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
+        const actual = await ReferenceProperty<TestModelType>(
+          TestModel1,
+          {}
+        ).createGetter(
           // @ts-ignore
           { id: 'obj-id' }
         )()
@@ -690,9 +731,10 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
       it('should return 123 from {}.id when no fetcher is used', async () => {
-        const actual = await ReferenceProperty(TestModel1, {}).createGetter(
-          123
-        )()
+        const actual = await ReferenceProperty<TestModelType>(
+          TestModel1,
+          {}
+        ).createGetter(123)()
         const expected = 123
         assert.equal(actual, expected)
       })
@@ -708,12 +750,12 @@ describe('/src/properties.ts', () => {
           return Promise.resolve(m as any)
         }
 
-        const actual = (await ReferenceProperty<
-          TestModelType,
-          ValueRequired<TestModelType | number>
-        >(TestModel1, {
+        const actual = (await ReferenceProperty<TestModelType>(TestModel1, {
           fetcher: modelFetcher,
-        }).createGetter(123)()) as ModelInstance<TestModelType>
+        }).createGetter(123)()) as ModelInstance<
+          TestModelType,
+          Model<TestModelType>
+        >
         console.log(actual.get.name())
         const expected = 'switch-a-roo'
         assert.deepEqual(actual.get.name(), expected)
@@ -743,7 +785,10 @@ describe('/src/properties.ts', () => {
             }) as unknown as ModelInstance<T, TModel>
           )
         }
-        const actual = (await ReferenceProperty(TestModel1, {
+        const actual = (await ReferenceProperty<
+          TestModelType,
+          ValueOptionalR<TestModelType>
+        >(TestModel1, {
           fetcher: modelFetcher,
         }).createGetter(null)()) as ModelInstance<TestModelType>
         const expected = null

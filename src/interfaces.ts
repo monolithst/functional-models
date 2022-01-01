@@ -229,19 +229,29 @@ type ModelValidatorComponent<
   configurations: ValidatorConfiguration
 ) => Promise<ModelError>
 
-type ValueGetter<T extends Arrayable<FunctionalValue>> = () => MaybePromise<
-  T | ModelInstance<any, any>
->
+type ValueGetter<
+  TValue extends Arrayable<FunctionalValue>,
+  T extends FunctionalModel = FunctionalModel,
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+> = () => MaybePromise<TValue | TModelInstance>
 
-type PropertyInstance<TValue extends Arrayable<FunctionalValue>> = {
+type PropertyInstance<
+  TValue extends Arrayable<FunctionalValue>,
+  T extends FunctionalModel = FunctionalModel,
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+> = {
   readonly getConfig: () => object
   readonly getChoices: () => readonly VeryPrimitivesTypes[]
   readonly getDefaultValue: () => TValue
   readonly getConstantValue: () => TValue
   readonly getPropertyType: () => string
-  readonly createGetter: (value: TValue) => ValueGetter<TValue>
-  readonly getValidator: <TModel extends FunctionalModel>(
-    valueGetter: ValueGetter<TValue>
+  readonly createGetter: (
+    value: TValue
+  ) => ValueGetter<TValue, T, TModel, TModelInstance>
+  readonly getValidator: (
+    valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>
   ) => PropertyValidator<TModel>
 }
 
@@ -253,12 +263,14 @@ type PropertiesList<T extends FunctionalModel> = {
 
 interface ReferencePropertyInstance<
   T extends FunctionalModel,
-  TProperty extends Arrayable<FunctionalValue>
+  TProperty extends Arrayable<FunctionalValue>,
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 > extends PropertyInstance<TProperty> {
   readonly getReferencedId: (
-    instanceValues: ReferenceValueType<T>
+    instanceValues: ReferenceValueType<T, TModel, TModelInstance>
   ) => Maybe<PrimaryKeyType>
-  readonly getReferencedModel: () => Model<T>
+  readonly getReferencedModel: () => TModel
 }
 
 type ReferenceValueType<

@@ -315,21 +315,26 @@ const CONFIG_TO_VALIDATE_METHOD = <
   choices: _boolChoice<T>(choices),
 })
 
-const createPropertyValidator = <T extends Arrayable<FunctionalValue>>(
-  valueGetter: ValueGetter<T>,
-  config: PropertyConfig<T>
+const createPropertyValidator = <
+  TValue extends Arrayable<FunctionalValue>,
+  T extends FunctionalModel = FunctionalModel,
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+>(
+  valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>,
+  config: PropertyConfig<TValue>
 ) => {
-  const _propertyValidator = async <TModel extends FunctionalModel>(
-    instance: ModelInstance<TModel, any>,
-    instanceData: TModel | JsonAble,
+  const _propertyValidator = async <T extends FunctionalModel>(
+    instance: ModelInstance<T, any>,
+    instanceData: T | JsonAble,
     propertyConfiguration: ValidatorConfiguration
   ): Promise<ValidationErrors> => {
     return Promise.resolve().then(async () => {
-      const configToValidateMethod = CONFIG_TO_VALIDATE_METHOD<TModel>()
+      const configToValidateMethod = CONFIG_TO_VALIDATE_METHOD<T>()
       if (!config) {
         config = {}
       }
-      const validators: readonly PropertyValidatorComponent<TModel>[] = [
+      const validators: readonly PropertyValidatorComponent<T>[] = [
         ...Object.entries(config).map(([key, value]) => {
           const method = configToValidateMethod[key]
           if (method) {
@@ -346,7 +351,7 @@ const createPropertyValidator = <T extends Arrayable<FunctionalValue>>(
       if (!value && !isRequiredValue) {
         return []
       }
-      const validator = aggregateValidator(value, validators)
+      const validator = aggregateValidator<T>(value, validators)
       const errors = await validator(
         instance,
         instanceData,
