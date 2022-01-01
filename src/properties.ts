@@ -14,7 +14,7 @@ import { PROPERTY_TYPES } from './constants'
 import { lazyValue } from './lazy'
 import { createUuid } from './utils'
 import {
-  ReferenceValueType,
+  ModelReference,
   ModelInstance,
   Maybe,
   PrimaryKeyType,
@@ -27,7 +27,7 @@ import {
   Arrayable,
   PropertyValidatorComponent,
   PropertyValidator,
-  ReferencePropertyInstance,
+  ModelReferencePropertyInstance,
   ModelInstanceInputData,
   FunctionalModel,
   JsonAble,
@@ -308,29 +308,29 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
     additionalMetadata
   )
 
-const ReferenceProperty = <
+const ModelReferenceProperty = <
   T extends FunctionalModel,
   TModifier extends PropertyModifier<
-    ReferenceValueType<T, Model<T>, ModelInstance<T, Model<T>>>
-  > = ReferenceValueType<T, Model<T>, ModelInstance<T, Model<T>>>
+    ModelReference<T, Model<T>, ModelInstance<T, Model<T>>>
+  > = ModelReference<T, Model<T>, ModelInstance<T, Model<T>>>
 >(
   model: MaybeFunction<Model<T>>,
   config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  BaseReferenceProperty<T, Model<T>, ModelInstance<T>, TModifier>(
+  AdvancedModelReferenceProperty<T, Model<T>, ModelInstance<T>, TModifier>(
     model,
     config,
     additionalMetadata
   )
 
-const BaseReferenceProperty = <
+const AdvancedModelReferenceProperty = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
   TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
   TModifier extends PropertyModifier<
-    ReferenceValueType<T, TModel, TModelInstance>
-  > = ReferenceValueType<T, TModel, TModelInstance>
+    ModelReference<T, TModel, TModelInstance>
+  > = ModelReference<T, TModel, TModelInstance>
 >(
   model: MaybeFunction<TModel>,
   config: PropertyConfig<TModifier> = {},
@@ -351,7 +351,7 @@ const BaseReferenceProperty = <
 
   const _getId =
     (
-      instanceValues: ReferenceValueType<T, TModel, TModelInstance> | TModifier
+      instanceValues: ModelReference<T, TModel, TModelInstance> | TModifier
     ) =>
     (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
@@ -409,7 +409,7 @@ const BaseReferenceProperty = <
     return _getId(instanceValues)()
   }
 
-  const p: ReferencePropertyInstance<T, TModifier, TModel, TModelInstance> =
+  const p: ModelReferencePropertyInstance<T, TModifier, TModel, TModelInstance> =
     merge(
       Property<TModifier>(
         PROPERTY_TYPES.ReferenceProperty,
@@ -421,7 +421,7 @@ const BaseReferenceProperty = <
       ),
       {
         getReferencedId: (
-          instanceValues: ReferenceValueType<T, TModel, TModelInstance>
+          instanceValues: ModelReference<T, TModel, TModelInstance>
         ) => _getId(instanceValues)(),
         getReferencedModel: _getModel,
       }
@@ -434,8 +434,8 @@ export {
   UniqueId,
   DateProperty,
   ArrayProperty,
-  ReferenceProperty,
-  BaseReferenceProperty,
+  ModelReferenceProperty,
+  AdvancedModelReferenceProperty,
   IntegerProperty,
   TextProperty,
   ConstantValueProperty,

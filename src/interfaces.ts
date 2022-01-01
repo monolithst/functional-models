@@ -131,7 +131,7 @@ type FunctionalModel =
         | Arrayable<FunctionalModel>
         | Arrayable<Date>
         | Arrayable<undefined>
-        | ReferenceValueType<any>
+        | ModelReference<any>
         | ModelInstanceMethod
         | ModelMethod
     } & { readonly id?: PrimaryKeyType }
@@ -261,19 +261,19 @@ type PropertiesList<T extends FunctionalModel> = {
     : never]: PropertyInstance<any>
 }
 
-interface ReferencePropertyInstance<
+interface ModelReferencePropertyInstance<
   T extends FunctionalModel,
   TProperty extends Arrayable<FunctionalValue>,
   TModel extends Model<T> = Model<T>,
   TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 > extends PropertyInstance<TProperty> {
   readonly getReferencedId: (
-    instanceValues: ReferenceValueType<T, TModel, TModelInstance>
+    instanceValues: ModelReference<T, TModel, TModelInstance>
   ) => Maybe<PrimaryKeyType>
   readonly getReferencedModel: () => TModel
 }
 
-type ReferenceValueType<
+type ModelReference<
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
   TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
@@ -364,8 +364,8 @@ type Model<T extends FunctionalModel> = {
   readonly methods: ModelMethodGetters<T>
 }
 
-type ReferenceFunctions = {
-  readonly [s: string]: () => ReferenceValueType<any>
+type ModelReferenceFunctions = {
+  readonly [s: string]: () => ModelReference<any>
 }
 
 type PropertyValidators<
@@ -383,7 +383,7 @@ type ModelInstance<
     readonly id: () => MaybePromise<PrimaryKeyType>
   }
   readonly methods: InstanceMethodGetters<T, TModel>
-  readonly references: ReferenceFunctions
+  readonly references: ModelReferenceFunctions
   readonly toObj: toObj<T>
   readonly getPrimaryKeyName: () => string
   readonly getPrimaryKey: () => PrimaryKeyType
@@ -395,10 +395,10 @@ type ModelInstance<
 type ValueRequired<T extends Arrayable<FunctionalValue>> = NonNullable<T>
 type ValueOptional<T extends Arrayable<FunctionalValue>> = Maybe<T>
 type ValueOptionalR<T extends FunctionalModel> = ValueOptional<
-  ReferenceValueType<T>
+  ModelReference<T>
 >
 type ValueRequiredR<T extends FunctionalModel> = ValueRequired<
-  ReferenceValueType<T>
+  ModelReference<T>
 >
 
 type IsAsync<T extends Arrayable<FunctionalValue>> = Promise<T>
@@ -452,12 +452,12 @@ export {
   PropertyConfig,
   FunctionalValue,
   ValueGetter,
-  ReferenceValueType,
+  ModelReference,
   ModelDefinition,
   ModelOptions,
   ModelMethod,
   OptionalModelOptions,
-  ReferencePropertyInstance,
+  ModelReferencePropertyInstance,
   PropertyGetters,
   PropertyValidators,
   PropertyValidatorComponentTypeAdvanced,
@@ -466,7 +466,7 @@ export {
   ModelInstanceInputData,
   ModelMethodGetters,
   InstanceMethodGetters,
-  ReferenceFunctions,
+  ModelReferenceFunctions,
   ModelErrors,
   PrimaryKeyType,
   ModelFactory,

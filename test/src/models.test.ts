@@ -1,6 +1,6 @@
 import {
   ModelDefinition,
-  ReferenceValueType,
+  ModelReference,
   ModelMethod,
   ModelInstanceMethod,
   ModelInstance,
@@ -20,7 +20,7 @@ import { WrapperInstanceMethod, WrapperModelMethod } from '../../src/methods'
 import {
   UniqueId,
   IntegerProperty,
-  ReferenceProperty,
+  ModelReferenceProperty,
 } from '../../src/properties'
 
 type TEST_MODEL_TYPE = {
@@ -167,11 +167,11 @@ describe('/src/models.ts', () => {
       const instance1 = model1.create({ simple: 10 })
       const model2 = BaseModel<{
         value: number
-        value2: ReferenceValueType<ModelType1>
+        value2: ModelReference<ModelType1>
       }>('TestModel2', {
         properties: {
           value: IntegerProperty(),
-          value2: ReferenceProperty<ModelType1, ValueRequired<ModelType1>>(
+          value2: ModelReferenceProperty<ModelType1, ValueRequired<ModelType1>>(
             model1
           ),
         },
@@ -632,10 +632,10 @@ describe('/src/models.ts', () => {
     describe('#references.getMyReferencedId()', () => {
       it('should return the id from the ReferenceProperty', () => {
         const model = BaseModel<{
-          myReference: ReferenceValueType<TEST_MODEL_TYPE>
+          myReference: ModelReference<TEST_MODEL_TYPE>
         }>('ModelName', {
           properties: {
-            myReference: ReferenceProperty(TEST_MODEL_1),
+            myReference: ModelReferenceProperty(TEST_MODEL_1),
           },
         })
         const instance = model.create({ myReference: 'unit-test-id' })

@@ -10,11 +10,11 @@ import {
   ModelInstance,
   ModelOptions,
   ModelFactory,
-  ReferenceFunctions,
+  ModelReferenceFunctions,
   PropertyGetters,
   OptionalModelOptions,
-  ReferencePropertyInstance,
-  ReferenceValueType,
+  ModelReferencePropertyInstance,
+  ModelReference,
   PropertyValidators,
   FunctionalModel,
   ModelInstanceInputData,
@@ -99,7 +99,7 @@ const BaseModel: ModelFactory = <
     const startingInternals: {
       readonly get: PropertyGetters<T, TModel> & { readonly id: () => string }
       readonly validators: PropertyValidators<T, TModel>
-      readonly references: ReferenceFunctions
+      readonly references: ModelReferenceFunctions
     } = {
       get: {} as PropertyGetters<T, TModel> & { readonly id: () => string },
       validators: {},
@@ -119,14 +119,14 @@ const BaseModel: ModelFactory = <
             [key]: propertyValidator,
           },
         }
-        const asReferenced = property as ReferencePropertyInstance<any, any>
+        const asReferenced = property as ModelReferencePropertyInstance<any, any>
         const referencedProperty = asReferenced.getReferencedId
           ? {
               references: {
                 [key]: () =>
                   asReferenced.getReferencedId(
                     // @ts-ignore
-                    instanceValues[key] as ReferenceValueType<any>
+                    instanceValues[key] as ModelReference<any>
                   ),
               },
             }

@@ -5,8 +5,8 @@ import {
   Property,
   DateProperty,
   BooleanProperty,
-  ReferenceProperty,
-  BaseReferenceProperty,
+  ModelReferenceProperty,
+  AdvancedModelReferenceProperty,
   ArrayProperty,
   ConstantValueProperty,
   ObjectProperty,
@@ -28,7 +28,7 @@ import {
   ValueRequiredR,
   ValueOptionalR,
   FunctionalModel,
-  ReferenceValueType,
+  ModelReference,
 } from '../../src/interfaces'
 
 type TestModelType = { name: string }
@@ -646,7 +646,7 @@ describe('/src/properties.ts', () => {
       assert.equal(actual, expected)
     })
   })
-  describe('#BaseReferenceProperty()', () => {
+  describe('#AdvancedModelReferenceProperty()', () => {
     it('should not throw an exception when a custom Model is passed in', () => {
       type MyType = { name: string }
       type MyModel<T extends FunctionalModel> = Model<T> & {
@@ -658,7 +658,7 @@ describe('/src/properties.ts', () => {
       > = ModelInstance<T, TModel> & {
         extended2: () => {}
       }
-      type CustomReferenceType<T extends FunctionalModel> = ReferenceValueType<
+      type CustomReferenceType<T extends FunctionalModel> = ModelReference<
         T,
         MyModel<T>,
         MyModelInstance<T, MyModel<T>>
@@ -671,7 +671,7 @@ describe('/src/properties.ts', () => {
         properties: { name: TextProperty() },
       })
       assert.doesNotThrow(async () => {
-        BaseReferenceProperty<
+        AdvancedModelReferenceProperty<
           MyType,
           MyModel<MyType>,
           MyModelInstance<MyType, MyModel<MyType>>,
@@ -680,23 +680,23 @@ describe('/src/properties.ts', () => {
       })
     })
   })
-  describe('#ReferenceProperty()', () => {
+  describe('#ModelReferenceProperty()', () => {
     it('should throw an exception if a model value is not passed in', () => {
       assert.throws(() => {
         const input = ['obj-id']
         // @ts-ignore
-        const actual = ReferenceProperty(null, {})
+        const actual = ModelReferenceProperty(null, {})
       })
     })
-    describe('#meta.getReferencedModel()', () => {
+    describe('#getReferencedModel()', () => {
       it('should return the same value passed in as the model', async () => {
-        const property = ReferenceProperty(TestModel1)
+        const property = ModelReferenceProperty(TestModel1)
         const actual = property.getReferencedModel()
         const expected = TestModel1
         assert.deepEqual(actual, expected)
       })
       it('should allow a function input for model to allow delayed creation', async () => {
-        const property = ReferenceProperty(() => TestModel1)
+        const property = ModelReferenceProperty(() => TestModel1)
         const actual = property.getReferencedModel()
         const expected = TestModel1
         assert.deepEqual(actual, expected)
@@ -704,7 +704,7 @@ describe('/src/properties.ts', () => {
     })
     describe('#createGetter()', () => {
       it('should return "obj-id" when no fetcher is used', async () => {
-        const actual = await ReferenceProperty<TestModelType>(
+        const actual = await ModelReferenceProperty<TestModelType>(
           TestModel1,
           {}
         ).createGetter('obj-id')()
@@ -712,7 +712,7 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
       it('should allow null as the input', async () => {
-        const actual = await ReferenceProperty<
+        const actual = await ModelReferenceProperty<
           TestModelType,
           ValueOptionalR<TestModelType>
         >(TestModel1, {}).createGetter(null)()
@@ -720,7 +720,7 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
       it('should return "obj-id" from {}.id when no fetcher is used', async () => {
-        const actual = await ReferenceProperty<TestModelType>(
+        const actual = await ModelReferenceProperty<TestModelType>(
           TestModel1,
           {}
         ).createGetter(
@@ -731,7 +731,7 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
       it('should return 123 from {}.id when no fetcher is used', async () => {
-        const actual = await ReferenceProperty<TestModelType>(
+        const actual = await ModelReferenceProperty<TestModelType>(
           TestModel1,
           {}
         ).createGetter(123)()
@@ -750,7 +750,7 @@ describe('/src/properties.ts', () => {
           return Promise.resolve(m as any)
         }
 
-        const actual = (await ReferenceProperty<TestModelType>(TestModel1, {
+        const actual = (await ModelReferenceProperty<TestModelType>(TestModel1, {
           fetcher: modelFetcher,
         }).createGetter(123)()) as ModelInstance<
           TestModelType,
@@ -762,7 +762,7 @@ describe('/src/properties.ts', () => {
       })
       it('should return "obj-id" if no config passed', async () => {
         // @ts-ignore
-        const actual = (await ReferenceProperty(TestModel1, null).createGetter(
+        const actual = (await ModelReferenceProperty(TestModel1, null).createGetter(
           'obj-id'
         )()) as string
         const expected = 'obj-id'
@@ -785,7 +785,7 @@ describe('/src/properties.ts', () => {
             }) as unknown as ModelInstance<T, TModel>
           )
         }
-        const actual = (await ReferenceProperty<
+        const actual = (await ModelReferenceProperty<
           TestModelType,
           ValueOptionalR<TestModelType>
         >(TestModel1, {
@@ -797,7 +797,7 @@ describe('/src/properties.ts', () => {
       it('should provide the passed in model and the instance values when switch-a-roo fetcher is used', async () => {
         const input = 'obj-id'
         const fetcher = sinon.stub().callsFake((modelName, id) => ({ id }))
-        await ReferenceProperty(TestModel1, {
+        await ModelReferenceProperty(TestModel1, {
           fetcher,
         }).createGetter(input)()
         const actual = fetcher.getCall(0).args[0]
@@ -813,7 +813,7 @@ describe('/src/properties.ts', () => {
           },
         })
         const input = proto.create({ id, name: 'name' })
-        const instance = (await ReferenceProperty<
+        const instance = (await ModelReferenceProperty<
           TestModelType,
           ValueRequiredR<TestModelType>
         >(TestModel1, {}).createGetter(input)()) as ModelInstance<TestModelType>
@@ -830,7 +830,7 @@ describe('/src/properties.ts', () => {
             },
           })
           const input = proto.create({ id: 'obj-id', name: 'name' })
-          const instance = (await ReferenceProperty<
+          const instance = (await ModelReferenceProperty<
             TestModelType,
             ValueOptionalR<TestModelType>
           >(TestModel1, {}).createGetter(input)()) as ModelInstance<{}>
@@ -856,7 +856,7 @@ describe('/src/properties.ts', () => {
             )
           }
           const input = 123
-          const instance = (await ReferenceProperty(TestModel1, {
+          const instance = (await ModelReferenceProperty(TestModel1, {
             fetcher: modelFetcher,
           }).createGetter(input)()) as ModelInstance<{}>
           const actual = await instance.toObj()
