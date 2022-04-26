@@ -485,5 +485,6 @@ export {
   ModelInstanceMethodClient,
   ModelMethodClient,
   TypedJsonObj,
+  JsonObj,
 }
 /* eslint-enable no-unused-vars */
