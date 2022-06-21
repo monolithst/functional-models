@@ -4,10 +4,15 @@
 ![Feature Tests](https://github.com/monolithst/functional-models/actions/workflows/feature.yml/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/monolithst/functional-models/badge.svg?branch=master)](https://coveralls.io/github/monolithst/functional-models?branch=master)
 
-Love functional javascript but still like composing objects/models? This is the library for you.
-This library empowers the creation of pure JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create readable, read-only, models.
+Love functional javascript/typescript but still like composing objects/models? This is the library for you.
+
+This library empowers the creation of pure JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused everywhere.
+
+This library is fully supportive of both Typescript and Javascript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete! It handles validation as well.
 
 ## Example Usage
+
+
 
     const {
       field,
