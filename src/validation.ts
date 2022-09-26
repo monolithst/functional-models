@@ -410,6 +410,10 @@ const createModelValidator = <
   return _modelValidator
 }
 
+const isValid = <T extends FunctionalModel, TModel extends Model<T>>(errors: ModelErrors<T, TModel>) => {
+  return Object.keys(errors).length < 1
+}
+
 export {
   isNumber,
   isBoolean,
@@ -431,5 +435,6 @@ export {
   createModelValidator,
   arrayType,
   referenceTypeMatch,
+  isValid,
   TYPE_PRIMITIVES,
 }

@@ -5,6 +5,7 @@ import sinon from 'sinon'
 import { BaseModel } from '../../src/models'
 import { TextProperty } from '../../src/properties'
 import {
+  isValid,
   isNumber,
   isBoolean,
   isInteger,
@@ -388,6 +389,12 @@ describe('/src/validation.ts', () => {
     it('should return undefined with a value of 1', () => {
       const actual = isInteger(1)
       assert.isUndefined(actual)
+    })
+  })
+  describe('#isValid()', () => {
+    it('should return false if there is a model error', () => {
+      const actual = isValid({ overall: ['a model error']})
+      assert.isFalse(actual)
     })
   })
   describe('#createModelValidator()', () => {
