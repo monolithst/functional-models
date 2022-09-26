@@ -750,9 +750,12 @@ describe('/src/properties.ts', () => {
           return Promise.resolve(m as any)
         }
 
-        const actual = (await ModelReferenceProperty<TestModelType>(TestModel1, {
-          fetcher: modelFetcher,
-        }).createGetter(123)()) as ModelInstance<
+        const actual = (await ModelReferenceProperty<TestModelType>(
+          TestModel1,
+          {
+            fetcher: modelFetcher,
+          }
+        ).createGetter(123)()) as ModelInstance<
           TestModelType,
           Model<TestModelType>
         >
@@ -762,9 +765,10 @@ describe('/src/properties.ts', () => {
       })
       it('should return "obj-id" if no config passed', async () => {
         // @ts-ignore
-        const actual = (await ModelReferenceProperty(TestModel1, null).createGetter(
-          'obj-id'
-        )()) as string
+        const actual = (await ModelReferenceProperty(
+          TestModel1,
+          null
+        ).createGetter('obj-id')()) as string
         const expected = 'obj-id'
         assert.deepEqual(actual, expected)
       })

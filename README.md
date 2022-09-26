@@ -13,8 +13,9 @@ This library is fully supportive of both Typescript and Javascript. In fact, the
 Functional Models was born out of the enjoyment and power of working with Django models.
 
 # Primary Features
+
 - Define models that have properties, methods, and methods on the model itself.
-- Create instances of models 
+- Create instances of models
 - Validate model instances
 - ORM ready via the functional-models-orm package, with DynamoDb, Mongo, in-memory datastores supported.
 - Many common properties out of the box.
@@ -36,7 +37,7 @@ Functional Models was born out of the enjoyment and power of working with Django
         // id: UniqueId(), # this property is provided for free!
         make: TextProperty({ maxLength: 20, minLength: 3, required: true}),
         model: TextProperty({ maxLength: 20, minLength: 3, required: true}),
-        color: TextProperty({ 
+        color: TextProperty({
           maxLength: 10,
           minLength: 3,
           choices: ['red', 'green', 'blue', 'black', 'white'],
@@ -89,15 +90,14 @@ Functional Models was born out of the enjoyment and power of working with Django
     // Key is the property's name, and an array of validation errors for that property.
     // {"year": ['Value is too long']}
 
-
 ## Simple TypeScript Example Usage
-While functional-mode3ls works very well and easy without TypeScript, using typescript empowers 
+
+While functional-mode3ls works very well and easy without TypeScript, using typescript empowers
 modern code completion engines to show the properties/methods on models and model instances.
 Libraries built ontop of functional-models is encouraged to use TypeScript, while applications,
 may or may not be as useful, given the overhead of typing. NOTE: Behind the covers functional-models
 typing, is extremely strict, and verbose, which can make it somewhat difficult to work with, but
 it provides the backbone of expressive and clear typing.
-
 
     import {
       BaseModel as Model,
@@ -115,7 +115,7 @@ it provides the backbone of expressive and clear typing.
       make: string,
       model: string,
       color: string,
-      year?: number, // NOTE: Clearly indicates a property is optional. 
+      year?: number, // NOTE: Clearly indicates a property is optional.
       lastModified: Date,
     }
 
@@ -125,7 +125,7 @@ it provides the backbone of expressive and clear typing.
         // id: UniqueId(), # this property is provided for free!
         make: TextProperty({ maxLength: 20, minLength: 3, required: true}),
         model: TextProperty({ maxLength: 20, minLength: 3, required: true}),
-        color: TextProperty({ 
+        color: TextProperty({
           maxLength: 10,
           minLength: 3,
           choices: ['red', 'green', 'blue', 'black', 'white'],
@@ -149,7 +149,7 @@ it provides the backbone of expressive and clear typing.
     const Trucks2 = Model<TruckType>('Trucks2', {
       properties: {
         make: TextProperty({ maxLength: 20, minLength: 3, required: true}),
-        color: TextProperty({ 
+        color: TextProperty({
           maxLength: 10,
           minLength: 3,
           choices: ['red', 'green', 'blue', 'black', 'white'],
@@ -159,9 +159,9 @@ it provides the backbone of expressive and clear typing.
       }
     })
 
-
 ## Validation
-Validation is baked into the functional-models framwork. Both individual properties as well as an entire model instance can be covered by validators. The following are the interfaces for a validator. Validation overall is a combination of property validator components as well as model validator components. These components combine together to create a complete validation picture of a model. 
+
+Validation is baked into the functional-models framwork. Both individual properties as well as an entire model instance can be covered by validators. The following are the interfaces for a validator. Validation overall is a combination of property validator components as well as model validator components. These components combine together to create a complete validation picture of a model.
 
 Here is an example of a model instance failing validation.
 
@@ -187,14 +187,14 @@ Here is an example of a model instance failing validation.
     * }
     */
 
-
 ### Property validators
+
 A property validator validates the value of a property. The inputs are the value, a model instance, the JavaScript object representation of the model, and optional configurations that are passed into the validator. The return can either be a string error or undefined if there are no errors. This function can be asynchronous, such as doing database lookups.
 
     /**
     * An example validator function that only allows the value of 5.
     * @constructor
-    * @param {string} value - The value to be tested. 
+    * @param {string} value - The value to be tested.
     * @param {string} instance - A model instance, which can be used for cross referencing.
     * @param {string} instanceData - The JavaScript object representation of the model.
     * @param {string} configurations - An optional configuration object passed in as part of validating.
@@ -204,7 +204,7 @@ A property validator validates the value of a property. The inputs are the value
       value, // any kind of value.
       instance, // A ModelInstance,
       instanceData: JavaScript object representation,
-      configurations: {} 
+      configurations: {}
     ) =>  {
       return value === 5
         ? undefined
@@ -214,7 +214,7 @@ A property validator validates the value of a property. The inputs are the value
     /**
     * An example async validator function that checks a database using an object passed into the configurations.
     * @constructor
-    * @param {string} value - The value to be tested. 
+    * @param {string} value - The value to be tested.
     * @param {string} instance - A model instance, which can be used for cross referencing.
     * @param {string} instanceData - The JavaScript object representation of the model.
     * @param {string} configurations - An optional configuration object passed in as part of validating.
@@ -224,16 +224,17 @@ A property validator validates the value of a property. The inputs are the value
       value, // any kind of value.
       instance, // A ModelInstance,
       instanceData: JavaScript object representation,
-      configurations: {} 
+      configurations: {}
     ) =>  {
       const result = await configurations.someDatabaseObj.check(value)
       if (result) {
         return 'Some sort of database error'
       }
-      return undefined 
+      return undefined
     }
 
 ### Model Validators
+
 Model validators allows one to check values across a model, ensuring that multiple values work together. The inputs are the model instance, the JavaScript object representation, and optional configurations. The return can either be a string error or undefined if there are no errors. This function can be asynchronous, such as doing database lookups.
 
     /**
@@ -247,29 +248,30 @@ Model validators allows one to check values across a model, ensuring that multip
     const checkForDuplicateValues = (
       instance, // A ModelInstance,
       instanceData: JavaScript object representation,
-      configurations: {} 
+      configurations: {}
     ) =>  {
       if(instanceData.firstProperty === instanceData.secondProperty) {
         return 'Both properties must have different values'
       }
-      return undefined 
+      return undefined
     }
 
-
 ## Properties and Custom Properties
+
 There are numerous properties that are supported out of the box that cover most data modeling needs. It is also very easy to create custom properties that encapsulate unique choices
 validation requirements, etc.
 
 ### List of Properties Out-Of-The-Box
-- UniqueId                        // A UUID property
-- DateProperty                    // A property for dates. Includes the ability to "autoNow".
-- ArrayProperty                   // An array property which can be used to limit types within it.
-- ModelReferenceProperty          // A property that references another property. (Think Foreign Key)
-- AdvancedModelReferenceProperty  // A more fuller/advanced property for referencing other properties.
-- IntegerProperty                 // A property for integers.
-- TextProperty                    // A text or string property.
-- ConstantValueProperty           // A property that contains a single, unchanging, static value. 
-- NumberProperty                  // A property for float/number types.
-- ObjectProperty                  // A property that has a JavaScript object. (Not a foreign key references)
-- EmailProperty                   // An email property.
-- BooleanProperty                 // A true or false value property.
+
+- UniqueId // A UUID property
+- DateProperty // A property for dates. Includes the ability to "autoNow".
+- ArrayProperty // An array property which can be used to limit types within it.
+- ModelReferenceProperty // A property that references another property. (Think Foreign Key)
+- AdvancedModelReferenceProperty // A more fuller/advanced property for referencing other properties.
+- IntegerProperty // A property for integers.
+- TextProperty // A text or string property.
+- ConstantValueProperty // A property that contains a single, unchanging, static value.
+- NumberProperty // A property for float/number types.
+- ObjectProperty // A property that has a JavaScript object. (Not a foreign key references)
+- EmailProperty // An email property.
+- BooleanProperty // A true or false value property.

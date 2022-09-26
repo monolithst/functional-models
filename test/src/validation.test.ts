@@ -393,7 +393,7 @@ describe('/src/validation.ts', () => {
   })
   describe('#isValid()', () => {
     it('should return false if there is a model error', () => {
-      const actual = isValid({ overall: ['a model error']})
+      const actual = isValid({ overall: ['a model error'] })
       assert.isFalse(actual)
     })
   })

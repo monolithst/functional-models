@@ -119,7 +119,10 @@ const BaseModel: ModelFactory = <
             [key]: propertyValidator,
           },
         }
-        const asReferenced = property as ModelReferencePropertyInstance<any, any>
+        const asReferenced = property as ModelReferencePropertyInstance<
+          any,
+          any
+        >
         const referencedProperty = asReferenced.getReferencedId
           ? {
               references: {

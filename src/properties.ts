@@ -350,9 +350,7 @@ const AdvancedModelReferenceProperty = <
   const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
 
   const _getId =
-    (
-      instanceValues: ModelReference<T, TModel, TModelInstance> | TModifier
-    ) =>
+    (instanceValues: ModelReference<T, TModel, TModelInstance> | TModifier) =>
     (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
@@ -409,23 +407,27 @@ const AdvancedModelReferenceProperty = <
     return _getId(instanceValues)()
   }
 
-  const p: ModelReferencePropertyInstance<T, TModifier, TModel, TModelInstance> =
-    merge(
-      Property<TModifier>(
-        PROPERTY_TYPES.ReferenceProperty,
-        merge({}, config, {
-          validators,
-          lazyLoadMethod,
-        }),
-        additionalMetadata
-      ),
-      {
-        getReferencedId: (
-          instanceValues: ModelReference<T, TModel, TModelInstance>
-        ) => _getId(instanceValues)(),
-        getReferencedModel: _getModel,
-      }
-    )
+  const p: ModelReferencePropertyInstance<
+    T,
+    TModifier,
+    TModel,
+    TModelInstance
+  > = merge(
+    Property<TModifier>(
+      PROPERTY_TYPES.ReferenceProperty,
+      merge({}, config, {
+        validators,
+        lazyLoadMethod,
+      }),
+      additionalMetadata
+    ),
+    {
+      getReferencedId: (
+        instanceValues: ModelReference<T, TModel, TModelInstance>
+      ) => _getId(instanceValues)(),
+      getReferencedModel: _getModel,
+    }
+  )
   return p
 }
 

@@ -1,5 +1,10 @@
 import { BaseModel } from '../../src/models'
-import { Model, ModelInstance, ModelInstanceMethod, ModelMethod } from '../../src/interfaces'
+import {
+  Model,
+  ModelInstance,
+  ModelInstanceMethod,
+  ModelMethod,
+} from '../../src/interfaces'
 
 type MyType = {
   modelMethod: ModelMethod<MyType>
@@ -18,10 +23,16 @@ describe('miscellaneous', () => {
         },
         instanceMethods: {
           method: (instance: ModelInstance<MyType>, model: Model<MyType>) => {},
-          method2: (instance: ModelInstance<MyType>, model: Model<MyType>) => {},
-          method3: (instance: ModelInstance<MyType>, model: Model<MyType>) => {},
-        }
+          method2: (
+            instance: ModelInstance<MyType>,
+            model: Model<MyType>
+          ) => {},
+          method3: (
+            instance: ModelInstance<MyType>,
+            model: Model<MyType>
+          ) => {},
+        },
       })
-    }) 
+    })
   })
 })
