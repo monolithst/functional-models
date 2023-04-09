@@ -15,13 +15,14 @@ import { isPromise } from '../../src/utils'
 import sinon from 'sinon'
 import { assert } from 'chai'
 import { BaseModel } from '../../src/models'
-import { Property, TextProperty } from '../../src/properties'
-import { WrapperInstanceMethod, WrapperModelMethod } from '../../src/methods'
-import {
+import { 
+  Property, 
+  TextProperty,
   UniqueId,
   IntegerProperty,
   ModelReferenceProperty,
 } from '../../src/properties'
+import { WrapperInstanceMethod, WrapperModelMethod } from '../../src/methods'
 
 type TEST_MODEL_TYPE = {
   name: string
@@ -657,6 +658,22 @@ describe('/src/models.ts', () => {
       })
     })
     describe('#getPrimaryKey()', () => {
+      it('should return the id of a primary key that has a delayed implementation', async () => {
+        const model = BaseModel<{id: string}>('ModelName', { 
+          properties: {
+            id: TextProperty({ lazyLoadMethod: () => {
+              return Promise.resolve()
+                .then(() => 'delayed-id')
+            }})
+          }
+        })
+        const expected = 'delayed-id'
+        //@ts-ignore
+        const instance = model.create({})
+        const actual = await instance.getPrimaryKey()
+        assert.equal(actual, expected)
+
+      })
       it('should return the id field when no primaryKey is passed', async () => {
         const model = BaseModel('ModelName', { properties: {} })
         const expected = 'my-primary-key'
@@ -665,9 +682,11 @@ describe('/src/models.ts', () => {
         assert.equal(actual, expected)
       })
       it('should return the primaryKey field when "primaryKey" is passed as primaryKey', async () => {
-        const model = BaseModel('ModelName', {
+        const model = BaseModel<{ primaryKey: string }>('ModelName', {
           getPrimaryKeyName: () => 'primaryKey',
-          properties: {},
+          properties: {
+            primaryKey: TextProperty({ required: true })
+          },
         })
         const expected = 'my-primary-key'
         const instance = model.create({ primaryKey: expected })

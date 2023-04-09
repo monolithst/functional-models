@@ -89,9 +89,10 @@ const BaseModel: ModelFactory = <
 
   // @ts-ignore
   const getPrimaryKeyName = () => modelDefinition.getPrimaryKeyName()
-  const getPrimaryKey = (t: ModelInstanceInputData<T>) =>
-    // @ts-ignore
-    t[getPrimaryKeyName()] as string
+  const getPrimaryKey = (loadedInternals: any, t: ModelInstanceInputData<T>) => {
+    const property = loadedInternals.get[getPrimaryKeyName()]
+    return property()
+  }
 
   const create = (instanceValues: ModelInstanceInputData<T>) => {
     // eslint-disable-next-line functional/no-let
@@ -167,7 +168,7 @@ const BaseModel: ModelFactory = <
     instance = merge(loadedInternals, {
       getModel,
       toObj,
-      getPrimaryKey: () => getPrimaryKey(instanceValues),
+      getPrimaryKey: () => getPrimaryKey(loadedInternals, instanceValues),
       getPrimaryKeyName,
       validate,
       methods,

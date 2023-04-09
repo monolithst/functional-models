@@ -766,7 +766,9 @@ describe('/src/properties.ts', () => {
       it('should return "obj-id" if no config passed', async () => {
         // @ts-ignore
         const actual = (await ModelReferenceProperty(
+        // @ts-ignore
           TestModel1,
+        // @ts-ignore
           null
         ).createGetter('obj-id')()) as string
         const expected = 'obj-id'
