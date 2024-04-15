@@ -5,11 +5,11 @@ import {
   FunctionalValue,
   Model,
   ModelInstance,
-  ModelReference,
   PrimaryKeyType,
   PropertyConfig,
   PropertyModifier,
   PropertyValidatorComponent,
+  PropertyValidatorComponentTypeAdvanced,
 } from './interfaces'
 import { createHeadAndTail } from './utils'
 import {
@@ -24,11 +24,8 @@ const isModelInstance = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
   TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
-  TModifier extends PropertyModifier<
-    ModelReference<T, TModel, TModelInstance>
-  > = ModelReference<T, TModel, TModelInstance>,
 >(
-  instanceValues: TModifier
+  instanceValues: any
 ): boolean => {
   return Boolean(
     instanceValues && (instanceValues as TModelInstance).getPrimaryKeyName
@@ -73,7 +70,7 @@ const isReferencedProperty = (
 
 const getCommonTextValidators = <TModifier extends PropertyModifier<string>>(
   config: PropertyConfig<TModifier>
-) => {
+): readonly PropertyValidatorComponent<any>[] => {
   return [
     getValidatorFromConfigElseEmpty(config?.maxLength, maxTextLength),
     getValidatorFromConfigElseEmpty(config?.minLength, minTextLength),
@@ -87,7 +84,7 @@ const getValidatorFromConfigElseEmpty = <
   input: TValue | undefined,
   // eslint-disable-next-line no-unused-vars
   validatorGetter: (t: TValue) => PropertyValidatorComponent<T>
-) => {
+): PropertyValidatorComponent<T> => {
   if (input !== undefined) {
     const validator = validatorGetter(input)
     return validator
@@ -97,7 +94,7 @@ const getValidatorFromConfigElseEmpty = <
 
 const getCommonNumberValidators = <TModifier extends PropertyModifier<number>>(
   config: PropertyConfig<TModifier>
-) => {
+): readonly PropertyValidatorComponent<any>[] => {
   return [
     getValidatorFromConfigElseEmpty(config?.minValue, minNumber),
     getValidatorFromConfigElseEmpty(config?.maxValue, maxNumber),
@@ -106,8 +103,11 @@ const getCommonNumberValidators = <TModifier extends PropertyModifier<number>>(
 
 const mergeValidators = <T extends Arrayable<FunctionalValue>>(
   config: PropertyConfig<T> | undefined,
-  validators: readonly PropertyValidatorComponent<any>[]
-) => {
+  validators: readonly (
+    | PropertyValidatorComponent<any>
+    | PropertyValidatorComponentTypeAdvanced<any, any>
+  )[]
+): PropertyValidatorComponent<any>[] => {
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 

@@ -51,16 +51,16 @@ const _createModelDefWithPrimaryKey = <
   TModel extends Model<T>,
   TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
-  keyToProperty: ModelDefinition<T, TModel, TModelInstance>
+  modelDefinition: ModelDefinition<T, TModel, TModelInstance>
 ): ModelDefinition<T, TModel, TModelInstance> => {
   const properties = merge(
     {
       id: UniqueId({ required: true }),
     },
-    keyToProperty.properties
+    modelDefinition.properties
   )
   return {
-    ...keyToProperty,
+    ...modelDefinition,
     getPrimaryKeyName: () => 'id',
     properties,
   }
@@ -85,9 +85,11 @@ const BaseModel: ModelFactory = <
   // eslint-disable-next-line functional/no-let
   let model: Nullable<TModel> = null
   const theOptions = _convertOptions(options)
+  /*
   modelDefinition = !modelDefinition.getPrimaryKeyName
-    ? _createModelDefWithPrimaryKey(modelDefinition)
+    ? _createModelDefWithPrimaryKey<T, TModel, TModelInstance>(modelDefinition)
     : modelDefinition
+   */
 
   // @ts-ignore
   const getPrimaryKeyName = () => modelDefinition.getPrimaryKeyName()
@@ -202,6 +204,7 @@ const BaseModel: ModelFactory = <
   }, {}) as ModelMethodGetters<T, TModel>
 
   // This sets the model that is used by the instances later.
+  // @ts-ignore
   model = merge(
     {},
     {
@@ -217,8 +220,9 @@ const BaseModel: ModelFactory = <
       getOptions: () => theOptions,
       methods: fleshedOutModelFunctions,
     }
-  ) as unknown as TModel
-  return model as TModel
+  )
+  //return model as TModel
+  return null as unknown as TModel
 }
 
 export { BaseModel }

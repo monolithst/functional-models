@@ -26,6 +26,7 @@ import {
   FunctionalModel,
   JsonAble,
   PropertyModifier,
+  PropertyValidatorComponentTypeAdvanced,
 } from './interfaces'
 import {
   isModelInstance,
@@ -49,7 +50,7 @@ const Property = <
   type: string,
   config: PropertyConfig<TValue> = {},
   additionalMetadata = {}
-) => {
+): PropertyInstance<TValue, T, TModel, TModelInstance> => {
   if (!type && !config?.type) {
     throw new Error(`Property type must be provided.`)
   }
@@ -315,7 +316,9 @@ const AdvancedModelReferenceProperty = <
     return model
   }
 
-  const validators = mergeValidators(config, [referenceTypeMatch<T>(model)])
+  const validators = mergeValidators(config, [
+    referenceTypeMatch<T>(model),
+  ] as PropertyValidatorComponentTypeAdvanced<any, any>[])
 
   const _getId =
     (instanceValues: ModelReference<T, TModel, TModelInstance> | TModifier) =>

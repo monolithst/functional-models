@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "lib": ["es2021", "dom", "es2015"],
+    "lib": ["es2021", "dom", "es2017"],
     "module": "commonjs",
     "rootDir": "./src",
     "declaration": true,
@@ -16,6 +16,7 @@
     "node_modules",
     "dist",
     "stepDefinitions",
+    "coverage",
     "test"
   ]
 }

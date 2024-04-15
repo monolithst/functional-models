@@ -254,13 +254,13 @@ const aggregateValidator = <T extends FunctionalModel>(
   methodOrMethods:
     | PropertyValidatorComponent<T>
     | readonly PropertyValidatorComponent<T>[]
-) => {
+): PropertyValidator<T> => {
   const toDo = Array.isArray(methodOrMethods)
     ? methodOrMethods
     : [methodOrMethods]
 
   const _aggregativeValidator: PropertyValidator<T> = async (
-    instance: ModelInstance<T, any>,
+    instance: ModelInstance<T, Model<T>>,
     instanceData: T | JsonAble,
     propertyConfiguration
   ) => {
@@ -274,7 +274,7 @@ const aggregateValidator = <T extends FunctionalModel>(
   return _aggregativeValidator
 }
 
-const emptyValidator: PropertyValidatorComponentSync<any> = () => undefined
+const emptyValidator = <T extends FunctionalModel>() => undefined
 
 const _boolChoice =
   <T extends FunctionalModel>(
@@ -316,9 +316,9 @@ const createPropertyValidator = <
 >(
   valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>,
   config: PropertyConfig<TValue>
-) => {
+): PropertyValidator<T, TModel, TModelInstance> => {
   const _propertyValidator = async <T extends FunctionalModel>(
-    instance: ModelInstance<T, any>,
+    instance: TModelInstance,
     instanceData: T | JsonAble,
     propertyConfiguration: ValidatorConfiguration
   ): Promise<ValidationErrors> => {
@@ -336,7 +336,7 @@ const createPropertyValidator = <
           return emptyValidator
         }),
         ...(config.validators ? config.validators : []),
-      ].filter(x => x)
+      ].filter(x => x) as PropertyValidatorComponent<T>[]
       const value = await valueGetter()
       const isRequiredValue = config.required
         ? true
@@ -346,6 +346,7 @@ const createPropertyValidator = <
       }
       const validator = aggregateValidator<T>(value, validators)
       const errors = await validator(
+        // @ts-ignore
         instance,
         instanceData,
         propertyConfiguration
