@@ -18,7 +18,7 @@ type MethodInput<T extends FunctionalModel, TModel extends Model<T>> = (
 
 function WrapperInstanceMethod<
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
 >(method: InstanceMethodInput<T, TModel>): ModelInstanceMethod<T, TModel> {
   const r: ModelInstanceMethod<T, TModel> = (
     instance: ModelInstance<T, TModel>,
@@ -32,7 +32,7 @@ function WrapperInstanceMethod<
 
 function WrapperModelMethod<
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
 >(method: MethodInput<T, TModel>): ModelMethod<T, TModel> {
   const r: ModelMethod<T, TModel> = (
     model: TModel,

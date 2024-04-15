@@ -22,10 +22,11 @@ import {
   ModelMethod,
   ModelMethodGetters,
 } from './interfaces'
+import { singularize, toTitleCase } from './utils'
 
 const _defaultOptions = <
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
 >(): ModelOptions<T, TModel> => ({
   instanceCreatedCallback: null,
 })
@@ -33,7 +34,7 @@ const _defaultOptions = <
 const _convertOptions = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
   options?: OptionalModelOptions<T, TModel, TModelInstance>
 ) => {
@@ -48,28 +49,29 @@ const _convertOptions = <
 const _createModelDefWithPrimaryKey = <
   T extends FunctionalModel,
   TModel extends Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
   keyToProperty: ModelDefinition<T, TModel, TModelInstance>
 ): ModelDefinition<T, TModel, TModelInstance> => {
-  return {
-    getPrimaryKeyName: () => 'id',
-    modelMethods: keyToProperty.modelMethods,
-    instanceMethods: keyToProperty.instanceMethods,
-    properties: {
+  const properties = merge(
+    {
       id: UniqueId({ required: true }),
-      ...keyToProperty.properties,
     },
-    modelValidators: keyToProperty.modelValidators,
+    keyToProperty.properties
+  )
+  return {
+    ...keyToProperty,
+    getPrimaryKeyName: () => 'id',
+    properties,
   }
 }
 
 const BaseModel: ModelFactory = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
-  modelName: string,
+  pluralName: string,
   modelDefinition: ModelDefinition<T, TModel, TModelInstance>,
   options?: OptionalModelOptions<T, TModel, TModelInstance>
 ): TModel => {
@@ -89,7 +91,7 @@ const BaseModel: ModelFactory = <
 
   // @ts-ignore
   const getPrimaryKeyName = () => modelDefinition.getPrimaryKeyName()
-  const getPrimaryKey = (loadedInternals: any, t: ModelInstanceInputData<T>) => {
+  const getPrimaryKey = (loadedInternals: any) => {
     const property = loadedInternals.get[getPrimaryKeyName()]
     return property()
   }
@@ -97,19 +99,25 @@ const BaseModel: ModelFactory = <
   const create = (instanceValues: ModelInstanceInputData<T>) => {
     // eslint-disable-next-line functional/no-let
     let instance: Nullable<TModelInstance> = null
-    const startingInternals: {
-      readonly get: PropertyGetters<T, TModel> & { readonly id: () => string }
-      readonly validators: PropertyValidators<T, TModel>
-      readonly references: ModelReferenceFunctions
-    } = {
-      get: {} as PropertyGetters<T, TModel> & { readonly id: () => string },
+    const startingInternals: Readonly<{
+      get: PropertyGetters<T, TModel> & { id: () => string }
+      validators: PropertyValidators<T, TModel>
+      references: ModelReferenceFunctions
+    }> = {
+      get: {} as PropertyGetters<T, TModel> & Readonly<{ id: () => string }>,
       validators: {},
       references: {},
     }
     const loadedInternals = Object.entries(modelDefinition.properties).reduce(
       (acc, [key, property]) => {
-        // @ts-ignore
-        const propertyGetter = property.createGetter(instanceValues[key])
+        const propertyGetter = () => {
+          return property.createGetter(
+            // @ts-ignore
+            instanceValues[key],
+            instanceValues,
+            instance
+          )()
+        }
         // @ts-ignore
         const propertyValidator = property.getValidator(propertyGetter)
         const fleshedOutInstanceProperties = {
@@ -168,7 +176,7 @@ const BaseModel: ModelFactory = <
     instance = merge(loadedInternals, {
       getModel,
       toObj,
-      getPrimaryKey: () => getPrimaryKey(loadedInternals, instanceValues),
+      getPrimaryKey: () => getPrimaryKey(loadedInternals),
       getPrimaryKeyName,
       validate,
       methods,
@@ -198,7 +206,11 @@ const BaseModel: ModelFactory = <
     {},
     {
       create,
-      getName: () => modelName,
+      getName: () => pluralName,
+      getSingularName: () =>
+        modelDefinition.singularName || singularize(pluralName),
+      getDisplayName: () =>
+        modelDefinition.displayName || toTitleCase(pluralName),
       getModelDefinition: () => modelDefinition,
       getPrimaryKeyName,
       getPrimaryKey,

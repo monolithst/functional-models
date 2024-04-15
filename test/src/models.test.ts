@@ -15,8 +15,8 @@ import { isPromise } from '../../src/utils'
 import sinon from 'sinon'
 import { assert } from 'chai'
 import { BaseModel } from '../../src/models'
-import { 
-  Property, 
+import {
+  Property,
   TextProperty,
   UniqueId,
   IntegerProperty,
@@ -209,6 +209,7 @@ describe('/src/models.ts', () => {
         },
       })
       const instance = model.create({ value: 3 })
+      // @ts-ignore
       const actual = instance.get.id()
       const value = isPromise(actual)
       assert.isOk(value)
@@ -348,6 +349,44 @@ describe('/src/models.ts', () => {
           },
         })
         const actual = model.getPrimaryKeyName()
+        assert.equal(actual, expected)
+      })
+    })
+    describe('#getSingularName()', () => {
+      it('should return Model for Models', () => {
+        const Models = BaseModel<{ myString: ModelMethod }>('Models', {
+          properties: {},
+        })
+        const actual = Models.getSingularName()
+        const expected = 'Model'
+        assert.equal(actual, expected)
+      })
+      it('should return "CustomSingularName" when using the custom singularName', () => {
+        const Models = BaseModel<{ myString: ModelMethod }>('Models', {
+          properties: {},
+          singularName: 'CustomSingularName',
+        })
+        const actual = Models.getSingularName()
+        const expected = 'CustomSingularName'
+        assert.equal(actual, expected)
+      })
+    })
+    describe('#getDisplayName()', () => {
+      it('should return Models for "models"', () => {
+        const Models = BaseModel<{ myString: ModelMethod }>('models', {
+          properties: {},
+        })
+        const actual = Models.getDisplayName()
+        const expected = 'Models'
+        assert.equal(actual, expected)
+      })
+      it('should return "Custom Display Name" when using the custom display name', () => {
+        const Models = BaseModel<{ myString: ModelMethod }>('Models', {
+          properties: {},
+          displayName: 'Custom Display Name',
+        })
+        const actual = Models.getDisplayName()
+        const expected = 'Custom Display Name'
         assert.equal(actual, expected)
       })
     })
@@ -583,6 +622,7 @@ describe('/src/models.ts', () => {
         }
         const model = BaseModel('name', input)
         const instance = model.create({ id: expected, type: 'my-type' })
+        // @ts-ignore
         const actual = instance.get.id()
         assert.equal(actual, expected)
       })
@@ -595,6 +635,7 @@ describe('/src/models.ts', () => {
         }
         const model = BaseModel<{ type: string }>('name', input)
         const instance = model.create({ id: expected, type: 'my-type' })
+        // @ts-ignore
         const actual = instance.get.id()
         // @ts-ignore
         assert.isOk(actual.then)
@@ -659,20 +700,20 @@ describe('/src/models.ts', () => {
     })
     describe('#getPrimaryKey()', () => {
       it('should return the id of a primary key that has a delayed implementation', async () => {
-        const model = BaseModel<{id: string}>('ModelName', { 
+        const model = BaseModel<{ id: string }>('ModelName', {
           properties: {
-            id: TextProperty({ lazyLoadMethod: () => {
-              return Promise.resolve()
-                .then(() => 'delayed-id')
-            }})
-          }
+            id: TextProperty({
+              lazyLoadMethod: () => {
+                return Promise.resolve().then(() => 'delayed-id')
+              },
+            }),
+          },
         })
         const expected = 'delayed-id'
         //@ts-ignore
         const instance = model.create({})
         const actual = await instance.getPrimaryKey()
         assert.equal(actual, expected)
-
       })
       it('should return the id field when no primaryKey is passed', async () => {
         const model = BaseModel('ModelName', { properties: {} })
@@ -685,7 +726,7 @@ describe('/src/models.ts', () => {
         const model = BaseModel<{ primaryKey: string }>('ModelName', {
           getPrimaryKeyName: () => 'primaryKey',
           properties: {
-            primaryKey: TextProperty({ required: true })
+            primaryKey: TextProperty({ required: true }),
           },
         })
         const expected = 'my-primary-key'

@@ -113,7 +113,7 @@ const meetsRegex =
   <T extends FunctionalValue>(
     regex: string | RegExp,
     flags?: string,
-    errorMessage: string = 'Format was invalid'
+    errorMessage = 'Format was invalid'
   ): ValuePropertyValidatorComponent<T> =>
   (value: T) => {
     const reg = new RegExp(regex, flags)
@@ -168,7 +168,7 @@ const isRequired: ValuePropertyValidatorComponent<any> = (value?: any) => {
 }
 
 const maxNumber =
-  (max: Number): ValuePropertyValidatorComponent<number> =>
+  (max: number): ValuePropertyValidatorComponent<number> =>
   (value: number) => {
     // @ts-ignore
     const numberError = isNumber(value)
@@ -182,8 +182,8 @@ const maxNumber =
   }
 
 const minNumber =
-  (min: Number): ValuePropertyValidatorComponent<number> =>
-  (value: Number) => {
+  (min: number): ValuePropertyValidatorComponent<number> =>
+  (value: number) => {
     // @ts-ignore
     const numberError = isNumber(value)
     if (numberError) {
@@ -196,7 +196,7 @@ const minNumber =
   }
 
 const maxTextLength =
-  (max: Number): ValuePropertyValidatorComponent<string> =>
+  (max: number): ValuePropertyValidatorComponent<string> =>
   (value: string) => {
     // @ts-ignore
     const stringError = isString(value)
@@ -210,7 +210,7 @@ const maxTextLength =
   }
 
 const minTextLength =
-  (min: Number): ValuePropertyValidatorComponent<string> =>
+  (min: number): ValuePropertyValidatorComponent<string> =>
   (value: string) => {
     // @ts-ignore
     const stringError = isString(value)
@@ -282,20 +282,13 @@ const _boolChoice =
   ) =>
   (configValue: any) => {
     const func = method(configValue)
-    const validatorWrapper: PropertyValidatorComponentSync<T> = (
-      value: any,
-      modelInstance: ModelInstance<T, any>,
-      modelData: T | JsonAble,
-      configurations: ValidatorConfiguration
-    ) => {
-      return func(value, modelInstance, modelData, configurations)
-    }
+    const validatorWrapper: PropertyValidatorComponentSync<T> = func
     return validatorWrapper
   }
 
-type MethodConfigDict<T extends FunctionalModel> = {
-  readonly [s: string]: (config: any) => PropertyValidatorComponentSync<T>
-}
+type MethodConfigDict<T extends FunctionalModel> = Readonly<{
+  [s: string]: (config: any) => PropertyValidatorComponentSync<T>
+}>
 
 const simpleFuncWrap =
   <T extends FunctionalModel>(validator: PropertyValidatorComponentSync<T>) =>
@@ -304,7 +297,7 @@ const simpleFuncWrap =
   }
 
 const CONFIG_TO_VALIDATE_METHOD = <
-  T extends FunctionalModel
+  T extends FunctionalModel,
 >(): MethodConfigDict<T> => ({
   required: _boolChoice<T>(simpleFuncWrap(isRequired)),
   isInteger: _boolChoice<T>(simpleFuncWrap(isInteger)),
@@ -319,7 +312,7 @@ const createPropertyValidator = <
   TValue extends Arrayable<FunctionalValue>,
   T extends FunctionalModel = FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
   valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>,
   config: PropertyConfig<TValue>
@@ -365,7 +358,7 @@ const createPropertyValidator = <
 
 const createModelValidator = <
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
 >(
   validators: PropertyValidators<T, TModel>,
   modelValidators?: readonly ModelValidatorComponent<T, TModel>[]
@@ -399,9 +392,12 @@ const createModelValidator = <
       ).filter(x => x) as readonly string[]
       const propertyErrors = propertyValidationErrors
         .filter(([, errors]) => Boolean(errors) && errors.length > 0)
-        .reduce((acc, [key, errors]) => {
-          return merge(acc, { [String(key)]: errors })
-        }, {} as ModelErrors<T, TModel>)
+        .reduce(
+          (acc, [key, errors]) => {
+            return merge(acc, { [String(key)]: errors })
+          },
+          {} as ModelErrors<T, TModel>
+        )
       return modelValidationErrors.length > 0
         ? merge(propertyErrors, { overall: modelValidationErrors })
         : propertyErrors
