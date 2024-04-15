@@ -3,7 +3,6 @@ import {
   Arrayable,
   FunctionalModel,
   FunctionalValue,
-  Model,
   ModelInstance,
   PrimaryKeyType,
   PropertyConfig,
@@ -20,18 +19,6 @@ import {
   minTextLength,
 } from './validation'
 
-const isModelInstance = <
-  T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
->(
-  instanceValues: any
-): boolean => {
-  return Boolean(
-    instanceValues && (instanceValues as TModelInstance).getPrimaryKeyName
-  )
-}
-
 const getValueForReferencedModel = async (
   modelInstance: ModelInstance<any>,
   path: string
@@ -47,9 +34,7 @@ const getValueForReferencedModel = async (
       `Value was not an object type. Likely fetcher was not provided to get referenced model instance.`
     )
   }
-  const [nestedHead, nestedTail] = createHeadAndTail(tail.split('.'), '.')
-  const nestedValue = await modelReference.get[nestedHead]()
-  return nestedTail ? get(nestedValue, nestedTail) : nestedValue
+  return get(modelReference, tail)
 }
 
 const getValueForModelInstance = async (
@@ -112,7 +97,6 @@ const mergeValidators = <T extends Arrayable<FunctionalValue>>(
 }
 
 export {
-  isModelInstance,
   isReferencedProperty,
   getValueForModelInstance,
   getValueForReferencedModel,

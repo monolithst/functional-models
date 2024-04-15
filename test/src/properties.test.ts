@@ -24,7 +24,6 @@ import {
   Model,
   ModelFetcher,
   ModelInstance,
-  ModelInstanceInputData,
   PrimaryKeyType,
   ValueOptional,
   ValueRequired,
@@ -33,6 +32,7 @@ import {
   FunctionalModel,
   ModelReference,
 } from '../../src/interfaces'
+import { TypedJsonObj } from '../../src/interfaces'
 
 chai.use(asPromised)
 
@@ -402,7 +402,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'testme@email.com',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = 'testme@email.com'
@@ -415,7 +415,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'testme@email.com',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -437,7 +437,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           true,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -455,7 +455,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'changed',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = 'constant'
@@ -469,7 +469,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'changed',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -494,7 +494,7 @@ describe('/src/properties.ts', () => {
             complex: { it: 'is' },
           },
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = { my: 'object', complex: { it: 'is' } }
@@ -510,7 +510,7 @@ describe('/src/properties.ts', () => {
             complex: { it: 'is' },
           },
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -539,7 +539,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = 5
@@ -550,7 +550,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5.123,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = 5.123
@@ -563,7 +563,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -576,7 +576,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5.123,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -599,7 +599,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -612,7 +612,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           2,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -625,7 +625,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           3,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -654,7 +654,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = 5
@@ -667,7 +667,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -680,7 +680,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5.123,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -703,7 +703,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -716,7 +716,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           2,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -729,7 +729,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           3,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -758,7 +758,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'basic input',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = 'basic input'
@@ -771,7 +771,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'basic input',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -794,7 +794,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'hello',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -807,7 +807,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'hello',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -820,7 +820,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'hello',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -838,7 +838,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [1, 2, 3],
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = [1, 2, 3]
@@ -849,7 +849,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [1, 2, 3],
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = [1, 2, 3]
@@ -878,7 +878,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [1, 2, 3],
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
@@ -893,7 +893,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [1, 'string', 3],
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
@@ -906,7 +906,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [4, 4, 5, 5, 6, 6],
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
@@ -919,7 +919,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [4, 4, 3, 5, 5, 6, 6],
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
@@ -1030,7 +1030,7 @@ describe('/src/properties.ts', () => {
         const actual = instance.createGetter(
           'not-my-value',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         assert.isFunction(actual)
       })
@@ -1039,7 +1039,7 @@ describe('/src/properties.ts', () => {
         const actual = await instance.createGetter(
           'not-my-value',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
@@ -1049,7 +1049,7 @@ describe('/src/properties.ts', () => {
         const actual = await instance.createGetter(
           'my-value',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
@@ -1059,7 +1059,7 @@ describe('/src/properties.ts', () => {
         const actual = await instance.createGetter(
           () => 'my-value',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
@@ -1081,7 +1081,7 @@ describe('/src/properties.ts', () => {
         const getter = uniqueProperty.createGetter(
           'my-uuid',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )
         const actual = await getter()
         const expected = 'my-uuid'
@@ -1095,7 +1095,7 @@ describe('/src/properties.ts', () => {
       const instance = proto.createGetter(
         new Date(),
         {},
-        {} as unknown as ModelInstance<any>
+        {} as unknown as ModelInstance<FunctionalModel>
       )
       assert.isOk(await instance())
     })
@@ -1104,7 +1104,7 @@ describe('/src/properties.ts', () => {
       const instance = proto.createGetter(
         undefined,
         {},
-        {} as unknown as ModelInstance<any>
+        {} as unknown as ModelInstance<FunctionalModel>
       )
       assert.isUndefined(await instance())
     })
@@ -1113,7 +1113,7 @@ describe('/src/properties.ts', () => {
       const instance = proto.createGetter(
         new Date(),
         {},
-        {} as unknown as ModelInstance<any>
+        {} as unknown as ModelInstance<FunctionalModel>
       )
       assert.isOk(await instance())
     })
@@ -1122,7 +1122,7 @@ describe('/src/properties.ts', () => {
       const instance = proto.createGetter(
         undefined,
         {},
-        {} as unknown as ModelInstance<any>
+        {} as unknown as ModelInstance<FunctionalModel>
       )
       const first = await instance()
       const second = await instance()
@@ -1136,7 +1136,7 @@ describe('/src/properties.ts', () => {
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<any>
+        {} as unknown as ModelInstance<FunctionalModel>
       )
       const actual = await instance()
       const expected = date
@@ -1149,7 +1149,7 @@ describe('/src/properties.ts', () => {
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<any>
+        {} as unknown as ModelInstance<FunctionalModel>
       )
       const actual = await instance()
       const expected = null
@@ -1161,7 +1161,7 @@ describe('/src/properties.ts', () => {
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<any>
+        {} as unknown as ModelInstance<FunctionalModel>
       )
       const actual = ((await instance()) as Date).toISOString()
       const expected = new Date(date).toISOString()
@@ -1180,11 +1180,7 @@ describe('/src/properties.ts', () => {
       > = ModelInstance<T, TModel> & {
         extended2: () => {}
       }
-      type CustomReferenceType<T extends FunctionalModel> = ModelReference<
-        T,
-        MyModel<T>,
-        MyModelInstance<T, MyModel<T>>
-      >
+      type CustomReferenceType<T extends FunctionalModel> = ModelReference<T>
       const model = BaseModel<
         MyType,
         MyModel<MyType>,
@@ -1196,7 +1192,6 @@ describe('/src/properties.ts', () => {
         AdvancedModelReferenceProperty<
           MyType,
           MyModel<MyType>,
-          MyModelInstance<MyType, MyModel<MyType>>,
           CustomReferenceType<MyType>
         >(model)
       })
@@ -1229,7 +1224,11 @@ describe('/src/properties.ts', () => {
         const actual = await ModelReferenceProperty<TestModelType>(
           TestModel1,
           {}
-        ).createGetter('obj-id', {}, {} as unknown as ModelInstance<any>)()
+        ).createGetter(
+          'obj-id',
+          {},
+          {} as unknown as ModelInstance<FunctionalModel>
+        )()
         const expected = 'obj-id'
         assert.equal(actual, expected)
       })
@@ -1240,7 +1239,7 @@ describe('/src/properties.ts', () => {
         >(TestModel1, {}).createGetter(
           null,
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )()
         const expected = null
         assert.equal(actual, expected)
@@ -1253,7 +1252,7 @@ describe('/src/properties.ts', () => {
           // @ts-ignore
           { id: 'obj-id' },
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )()
         const expected = 'obj-id'
         assert.equal(actual, expected)
@@ -1262,7 +1261,11 @@ describe('/src/properties.ts', () => {
         const actual = await ModelReferenceProperty<TestModelType>(
           TestModel1,
           {}
-        ).createGetter(123, {}, {} as unknown as ModelInstance<any>)()
+        ).createGetter(
+          123,
+          {},
+          {} as unknown as ModelInstance<FunctionalModel>
+        )()
         const expected = 123
         assert.equal(actual, expected)
       })
@@ -1274,7 +1277,7 @@ describe('/src/properties.ts', () => {
         })
 
         const modelFetcher: ModelFetcher = (theirModel: any, key) => {
-          const m = model.create({ id: 123, name: 'switch-a-roo' })
+          const m = { id: 123, name: 'switch-a-roo' }
           return Promise.resolve(m as any)
         }
 
@@ -1286,10 +1289,11 @@ describe('/src/properties.ts', () => {
         ).createGetter(
           123,
           {},
-          {} as unknown as ModelInstance<any>
-        )()) as ModelInstance<TestModelType, Model<TestModelType>>
+          {} as unknown as ModelInstance<FunctionalModel>
+        )()) as TypedJsonObj<TestModelType>
+
         const expected = 'switch-a-roo'
-        assert.deepEqual(actual.get.name(), expected)
+        assert.deepEqual(actual.name, expected)
       })
       it('should return "obj-id" if no config passed', async () => {
         // @ts-ignore
@@ -1301,7 +1305,7 @@ describe('/src/properties.ts', () => {
         ).createGetter(
           'obj-id',
           {},
-          {} as unknown as ModelInstance<any>
+          {} as unknown as ModelInstance<FunctionalModel>
         )()) as string
         const expected = 'obj-id'
         assert.deepEqual(actual, expected)
@@ -1316,14 +1320,12 @@ describe('/src/properties.ts', () => {
           T extends FunctionalModel,
           TModel extends Model<T>,
         >() => {
-          return Promise.resolve(
-            model.create({
-              id: 123,
-              name: 'switch-a-roo',
-            }) as unknown as ModelInstance<T, TModel>
-          )
+          return Promise.resolve({
+            id: 123,
+            name: 'switch-a-roo',
+          } as unknown as TypedJsonObj<T>)
         }
-        const actual = (await ModelReferenceProperty<
+        const actual = await ModelReferenceProperty<
           TestModelType,
           ValueOptionalR<TestModelType>
         >(TestModel1, {
@@ -1331,8 +1333,8 @@ describe('/src/properties.ts', () => {
         }).createGetter(
           null,
           {},
-          {} as unknown as ModelInstance<any>
-        )()) as ModelInstance<TestModelType>
+          {} as unknown as ModelInstance<FunctionalModel>
+        )()
         const expected = null
         assert.deepEqual(actual, expected)
       })
@@ -1341,83 +1343,14 @@ describe('/src/properties.ts', () => {
         const fetcher = sinon.stub().callsFake((modelName, id) => ({ id }))
         await ModelReferenceProperty(TestModel1, {
           fetcher,
-        }).createGetter(input, {}, {} as unknown as ModelInstance<any>)()
+        }).createGetter(
+          input,
+          {},
+          {} as unknown as ModelInstance<FunctionalModel>
+        )()
         const actual = fetcher.getCall(0).args[0]
         const expected = TestModel1
         assert.deepEqual(actual, expected)
-      })
-      it('should take the smartObject as a value', async () => {
-        const id = 'obj-id'
-        const proto = BaseModel<TestModelType>('name', {
-          properties: {
-            id: UniqueId({ value: id }),
-            name: TextProperty({}),
-          },
-        })
-        const input = proto.create({ id, name: 'name' })
-        const instance = (await ModelReferenceProperty<
-          TestModelType,
-          ValueRequiredR<TestModelType>
-        >(TestModel1, {}).createGetter(
-          input,
-          {},
-          {} as unknown as ModelInstance<any>
-        )()) as ModelInstance<TestModelType>
-        // @ts-ignore
-        const actual = await instance.get.id()
-        const expected = 'obj-id'
-        assert.deepEqual(actual, expected)
-      })
-      describe('#toObj()', () => {
-        it('should use the getId of the smartObject passed in when toObj is called', async () => {
-          const proto = BaseModel<TestModelType>('name', {
-            properties: {
-              id: UniqueId({ value: 'obj-id' }),
-              name: TextProperty({}),
-            },
-          })
-          const input = proto.create({ id: 'obj-id', name: 'name' })
-          const instance = (await ModelReferenceProperty<
-            TestModelType,
-            ValueOptionalR<TestModelType>
-          >(TestModel1, {}).createGetter(
-            input,
-            {},
-            {} as unknown as ModelInstance<any>
-          )()) as ModelInstance<{}>
-          const actual = await instance.toObj()
-          const expected = 'obj-id'
-          assert.deepEqual(actual, expected)
-        })
-        it('should return 123 when switch-a-roo fetcher is used and toObj is called', async () => {
-          const model = BaseModel<TestModelType>('Test', {
-            properties: {
-              name: TextProperty(),
-            },
-          })
-          const modelFetcher: ModelFetcher = <
-            T extends FunctionalModel,
-            TModel extends Model<T>,
-          >() => {
-            return Promise.resolve(
-              model.create({
-                id: 123,
-                name: 'switch-a-roo',
-              }) as unknown as ModelInstance<T, TModel>
-            )
-          }
-          const input = 123
-          const instance = (await ModelReferenceProperty(TestModel1, {
-            fetcher: modelFetcher,
-          }).createGetter(
-            input,
-            {},
-            {} as unknown as ModelInstance<any>
-          )()) as ModelInstance<{}>
-          const actual = await instance.toObj()
-          const expected = 123
-          assert.deepEqual(actual, expected)
-        })
       })
     })
   })

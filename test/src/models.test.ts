@@ -1,14 +1,7 @@
 import {
   ModelDefinition,
   ModelReference,
-  ModelMethod,
-  ModelInstanceMethod,
-  ModelInstance,
   ValueRequired,
-  IsAsync,
-  ModelMethodGetters,
-  Model,
-  FunctionalModel,
 } from '../../src/interfaces'
 import { isPromise } from '../../src/utils'
 
@@ -22,7 +15,6 @@ import {
   IntegerProperty,
   ModelReferenceProperty,
 } from '../../src/properties'
-import { WrapperInstanceMethod, WrapperModelMethod } from '../../src/methods'
 
 type TEST_MODEL_TYPE = {
   name: string
@@ -36,128 +28,6 @@ const TEST_MODEL_1 = BaseModel<TEST_MODEL_TYPE>('MyModel', {
 
 describe('/src/models.ts', () => {
   describe('#BaseModel()', () => {
-    it('should be able to use a custom Model<> type for a ModelMethod, so long as you override the methods.', async () => {
-      type MyModel<T extends FunctionalModel> = Model<T> & {
-        methods: ModelMethodGetters<T, MyModel<T>>
-        extended: () => string
-      }
-
-      type ModelType = {
-        simple: number
-        myMethod: ModelMethod<ModelType, MyModel<ModelType>>
-      }
-      const model1 = BaseModel<ModelType>('TestModel1', {
-        properties: {
-          simple: IntegerProperty(),
-        },
-        modelMethods: {
-          myMethod: WrapperModelMethod<ModelType, MyModel<ModelType>>(
-            (model: MyModel<ModelType>, value: string) => {
-              return `hello ${value}`
-            }
-          ),
-        },
-      }) as MyModel<ModelType>
-      const actual = await model1.methods.myMethod('world')
-      const expected = 'hello world'
-      assert.deepEqual(actual, expected)
-    })
-    it('should be able to use a custom ModelInstance<> type for a ModelMethod and ModelMethodInstance', async () => {
-      type MyModelInstance<T extends FunctionalModel> = ModelInstance<T> & {
-        extended: () => string
-      }
-      type ModelType = {
-        simple: number
-        myMethod: ModelMethod<ModelType, Model<ModelType>>
-        myInstanceMethod: ModelInstanceMethod<
-          ModelType,
-          Model<ModelType>,
-          MyModelInstance<ModelType>
-        >
-      }
-      const model1 = BaseModel<ModelType>('TestModel1', {
-        properties: {
-          simple: IntegerProperty(),
-        },
-        modelMethods: {
-          myMethod: (model: Model<ModelType>, value: string) => {
-            return `hello ${value}`
-          },
-        },
-        instanceMethods: {
-          myInstanceMethod: (
-            instance: MyModelInstance<ModelType>,
-            model: Model<ModelType>,
-            value: string
-          ) => {
-            return `hello ${value}`
-          },
-        },
-      })
-      const actual = await model1.methods.myMethod('world')
-      const expected = 'hello world'
-      assert.deepEqual(actual, expected)
-
-      const instance1 = model1.create({
-        simple: 10,
-      }) as MyModelInstance<ModelType>
-      const actual2 = await instance1.methods.myInstanceMethod('world')
-      const expected2 = 'hello world'
-      assert.deepEqual(actual2, expected2)
-    })
-    it('should be able to use a custom ModelInstance<> type for a ModelMethod', async () => {
-      type MyModelInstance<T extends FunctionalModel> = ModelInstance<T> & {
-        extended: () => string
-      }
-      type ModelType = {
-        simple: number
-        myMethod: ModelMethod<ModelType, Model<ModelType>>
-      }
-      const model1 = BaseModel<ModelType>('TestModel1', {
-        properties: {
-          simple: IntegerProperty(),
-        },
-        modelMethods: {
-          myMethod: (model: Model<ModelType>, value: string) => {
-            return `hello ${value}`
-          },
-        },
-      })
-      const actual = await model1.methods.myMethod('world')
-      const expected = 'hello world'
-      assert.deepEqual(actual, expected)
-    })
-    it('should be able to use a custom ModelInstance<> type for a ModelInstanceMethod', async () => {
-      type MyModelInstance<T extends FunctionalModel> = ModelInstance<T> & {
-        extended: () => string
-      }
-      type ModelType = {
-        simple: number
-        myInstanceMethod: ModelInstanceMethod<
-          ModelType,
-          Model<ModelType>,
-          MyModelInstance<ModelType>
-        >
-      }
-      const model1 = BaseModel<ModelType>('TestModel1', {
-        properties: {
-          simple: IntegerProperty(),
-        },
-        instanceMethods: {
-          myInstanceMethod: (
-            instance: MyModelInstance<ModelType>,
-            model: Model<ModelType>,
-            value: string
-          ) => {
-            return `hello ${value}`
-          },
-        },
-      })
-      const instance1 = model1.create({ simple: 10 })
-      const actual = await instance1.methods.myInstanceMethod('world')
-      const expected = 'hello world'
-      assert.deepEqual(actual, expected)
-    })
     it('should have a Promise for ReferenceValueTypes', () => {
       type ModelType1 = { simple: number }
       const model1 = BaseModel<ModelType1>('TestModel1', {
@@ -177,7 +47,12 @@ describe('/src/models.ts', () => {
           ),
         },
       })
-      const instance2 = model2.create({ value: 3, value2: instance1 })
+      const instance2 = model2.create({
+        value: 3,
+        value2: {
+          simple: 5,
+        },
+      })
       const actual = instance2.get.value2()
       if (isPromise(actual)) {
         assert.isOk(actual.then)
@@ -248,76 +123,6 @@ describe('/src/models.ts', () => {
       const expected = 12
       assert.equal(actual, expected)
     })
-    it('should pass a functional instance to the instanceMethods by the time the function is called by a client', () => {
-      const model = BaseModel<{
-        name: string
-        func1: ModelInstanceMethod
-        func2: ModelInstanceMethod
-      }>('ModelName', {
-        properties: {
-          name: TextProperty(),
-        },
-        instanceMethods: {
-          func1: WrapperInstanceMethod(
-            (instance: ModelInstance<any>, model) => {
-              return instance.methods.func2()
-            }
-          ),
-          func2: (instance: ModelInstance<any>, model) => {
-            return 'from instance func2'
-          },
-        },
-      })
-      const instance = model.create({ name: 'name' })
-      const actual = instance.methods.func1()
-      const expected = 'from instance func2'
-      assert.deepEqual(actual, expected)
-    })
-    it('should pass the clients arguments before the model is passed', () => {
-      type MyType = { func1: ModelMethod<MyType>; func2: ModelMethod<MyType> }
-      const model = BaseModel<MyType>('ModelName', {
-        properties: {},
-        modelMethods: {
-          func1: WrapperModelMethod<MyType>((model, input) => {
-            return `${input} ${model.methods.func2()}`
-          }),
-          func2: WrapperModelMethod<MyType>(model => {
-            return 'from func2'
-          }),
-        },
-      })
-      const actual = model.methods.func1('hello')
-      const expected = 'hello from func2'
-      assert.deepEqual(actual, expected)
-    })
-    it('should pass a functional model to the modelFunction by the time the function is called by a client', () => {
-      type MyType = { func1: ModelMethod<MyType>; func2: ModelMethod<MyType> }
-      const model = BaseModel<MyType>('ModelName', {
-        properties: {},
-        modelMethods: {
-          func1: model => {
-            return model.methods.func2()
-          },
-          func2: model => {
-            return 'from func2'
-          },
-        },
-      })
-      const actual = model.methods.func1()
-      const expected = 'from func2'
-      assert.deepEqual(actual, expected)
-    })
-    it('should find model.myString when modelExtension has myString function in it', () => {
-      const model = BaseModel<{ myString: ModelMethod }>('ModelName', {
-        properties: {},
-        modelMethods: {
-          myString: model => {
-            return 'To String'
-          },
-        },
-      })
-      assert.isFunction(model.methods.myString)
-    })
     describe('#getOptions()', () => {
       it('should pass arbitrary options from the BaseModel() call through to the model', () => {
         const model = BaseModel(
@@ -339,14 +144,9 @@ describe('/src/models.ts', () => {
     describe('#getPrimaryKeyName()', () => {
       it('should return "primaryKey" when this value is passed in as the primaryKey', () => {
         const expected = 'primaryKey'
-        const model = BaseModel<{ myString: ModelMethod }>('ModelName', {
+        const model = BaseModel<{}>('ModelName', {
           getPrimaryKeyName: () => expected,
           properties: {},
-          modelMethods: {
-            myString: model => {
-              return 'To String'
-            },
-          },
         })
         const actual = model.getPrimaryKeyName()
         assert.equal(actual, expected)
@@ -354,16 +154,20 @@ describe('/src/models.ts', () => {
     })
     describe('#getSingularName()', () => {
       it('should return Model for Models', () => {
-        const Models = BaseModel<{ myString: ModelMethod }>('Models', {
-          properties: {},
+        const Models = BaseModel<{ myString: string }>('Models', {
+          properties: {
+            myString: TextProperty(),
+          },
         })
         const actual = Models.getSingularName()
         const expected = 'Model'
         assert.equal(actual, expected)
       })
       it('should return "CustomSingularName" when using the custom singularName', () => {
-        const Models = BaseModel<{ myString: ModelMethod }>('Models', {
-          properties: {},
+        const Models = BaseModel<{ myString: string }>('Models', {
+          properties: {
+            myString: TextProperty(),
+          },
           singularName: 'CustomSingularName',
         })
         const actual = Models.getSingularName()
@@ -373,16 +177,20 @@ describe('/src/models.ts', () => {
     })
     describe('#getDisplayName()', () => {
       it('should return Models for "models"', () => {
-        const Models = BaseModel<{ myString: ModelMethod }>('models', {
-          properties: {},
+        const Models = BaseModel<{ myString: string }>('models', {
+          properties: {
+            myString: TextProperty(),
+          },
         })
         const actual = Models.getDisplayName()
         const expected = 'Models'
         assert.equal(actual, expected)
       })
       it('should return "Custom Display Name" when using the custom display name', () => {
-        const Models = BaseModel<{ myString: ModelMethod }>('Models', {
-          properties: {},
+        const Models = BaseModel<{ myString: string }>('Models', {
+          properties: {
+            myString: TextProperty(),
+          },
           displayName: 'Custom Display Name',
         })
         const actual = Models.getDisplayName()
@@ -421,21 +229,6 @@ describe('/src/models.ts', () => {
         })
         const instance = model.create({ myPrimaryKeyId: 'blah' })
         assert.isFunction(instance.get.myPrimaryKeyId)
-      })
-      it('should find instance.methods.toString when in instanceMethods', () => {
-        const model = BaseModel<{ toString: ModelInstanceMethod }>(
-          'ModelName',
-          {
-            properties: {},
-            instanceMethods: {
-              toString: instance => {
-                return 'An instance'
-              },
-            },
-          }
-        )
-        const instance = model.create({})
-        assert.isFunction(instance.methods.toString)
       })
       it('should call all the instanceCreatedCallback functions when create() is called', () => {
         const input = {
@@ -502,24 +295,6 @@ describe('/src/models.ts', () => {
         const actual = instance.getModel().getModelDefinition()
           .properties.myProperty
         assert.isOk(actual)
-      })
-      it('should flow through the additional special functions within the keyValues', () => {
-        const input = {
-          properties: {
-            myProperty: TextProperty({ required: true }),
-          },
-          instanceMethods: {
-            custom: () => 'works',
-          },
-        }
-        const model = BaseModel<{
-          myProperty: string
-          custom: ModelInstanceMethod
-        }>('name', input)
-        const instance = model.create({ myProperty: 'value' })
-        const actual = instance.methods.custom()
-        const expected = 'works'
-        assert.equal(actual, expected)
       })
       it('should return an object that contains .getModel().getName()===test-the-name', () => {
         const input = {

@@ -4,7 +4,6 @@ import { createModelValidator } from './validation'
 import { UniqueId } from './properties'
 import {
   Model,
-  InstanceMethodGetters,
   Nullable,
   ModelDefinition,
   ModelInstance,
@@ -17,10 +16,7 @@ import {
   ModelReference,
   PropertyValidators,
   FunctionalModel,
-  ModelInstanceInputData,
-  ModelInstanceMethod,
-  ModelMethod,
-  ModelMethodGetters,
+  TypedJsonObj,
 } from './interfaces'
 import { singularize, toTitleCase } from './utils'
 
@@ -49,10 +45,9 @@ const _convertOptions = <
 const _createModelDefWithPrimaryKey = <
   T extends FunctionalModel,
   TModel extends Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
-  modelDefinition: ModelDefinition<T, TModel, TModelInstance>
-): ModelDefinition<T, TModel, TModelInstance> => {
+  modelDefinition: ModelDefinition<T, TModel>
+): ModelDefinition<T, TModel> => {
   const properties = merge(
     {
       id: UniqueId({ required: true }),
@@ -72,7 +67,7 @@ const BaseModel: ModelFactory = <
   TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
   pluralName: string,
-  modelDefinition: ModelDefinition<T, TModel, TModelInstance>,
+  modelDefinition: ModelDefinition<T, TModel>,
   options?: OptionalModelOptions<T, TModel, TModelInstance>
 ): TModel => {
   /*
@@ -85,11 +80,9 @@ const BaseModel: ModelFactory = <
   // eslint-disable-next-line functional/no-let
   let model: Nullable<TModel> = null
   const theOptions = _convertOptions(options)
-  /*
   modelDefinition = !modelDefinition.getPrimaryKeyName
-    ? _createModelDefWithPrimaryKey<T, TModel, TModelInstance>(modelDefinition)
+    ? _createModelDefWithPrimaryKey<T, TModel>(modelDefinition)
     : modelDefinition
-   */
 
   // @ts-ignore
   const getPrimaryKeyName = () => modelDefinition.getPrimaryKeyName()
@@ -98,15 +91,15 @@ const BaseModel: ModelFactory = <
     return property()
   }
 
-  const create = (instanceValues: ModelInstanceInputData<T>) => {
+  const create = (instanceValues: TypedJsonObj<T>) => {
     // eslint-disable-next-line functional/no-let
     let instance: Nullable<TModelInstance> = null
     const startingInternals: Readonly<{
-      get: PropertyGetters<T, TModel> & { id: () => string }
+      get: PropertyGetters<T> & { id: () => string }
       validators: PropertyValidators<T, TModel>
       references: ModelReferenceFunctions
     }> = {
-      get: {} as PropertyGetters<T, TModel> & Readonly<{ id: () => string }>,
+      get: {} as PropertyGetters<T> & Readonly<{ id: () => string }>,
       validators: {},
       references: {},
     }
@@ -150,19 +143,6 @@ const BaseModel: ModelFactory = <
       },
       startingInternals
     )
-    const methods = Object.entries(
-      modelDefinition.instanceMethods || {}
-    ).reduce((acc, [key, func]) => {
-      return merge(acc, {
-        [key]: (...args: readonly any[]) => {
-          return (func as ModelInstanceMethod<T, TModel, TModelInstance>)(
-            instance as TModelInstance,
-            model as TModel,
-            ...args
-          )
-        },
-      })
-    }, {}) as InstanceMethodGetters<T, TModel>
 
     const getModel = () => model as TModel
     const toObj = toJsonAble(loadedInternals.get)
@@ -181,7 +161,6 @@ const BaseModel: ModelFactory = <
       getPrimaryKey: () => getPrimaryKey(loadedInternals),
       getPrimaryKeyName,
       validate,
-      methods,
     }) as TModelInstance
 
     if (theOptions.instanceCreatedCallback) {
@@ -192,16 +171,6 @@ const BaseModel: ModelFactory = <
     }
     return instance
   }
-
-  const fleshedOutModelFunctions = Object.entries(
-    modelDefinition.modelMethods || {}
-  ).reduce((acc, [key, func]) => {
-    return merge(acc, {
-      [key]: (...args: readonly any[]) => {
-        return (func as ModelMethod<T, TModel>)(model as TModel, ...args)
-      },
-    })
-  }, {}) as ModelMethodGetters<T, TModel>
 
   // This sets the model that is used by the instances later.
   // @ts-ignore
@@ -218,11 +187,9 @@ const BaseModel: ModelFactory = <
       getPrimaryKeyName,
       getPrimaryKey,
       getOptions: () => theOptions,
-      methods: fleshedOutModelFunctions,
     }
   )
-  //return model as TModel
-  return null as unknown as TModel
+  return model as TModel
 }
 
 export { BaseModel }

@@ -8,11 +8,9 @@ import {
   ModelValidatorComponent,
   PropertyValidatorComponent,
   PropertyValidatorComponentSync,
-  PropertyValidatorComponentTypeAdvanced,
   JsonAble,
   PropertyValidator,
   PropertyConfig,
-  MaybeFunction,
   PropertyValidators,
   ValueGetter,
   Arrayable,
@@ -223,32 +221,6 @@ const minTextLength =
     return undefined
   }
 
-const referenceTypeMatch = <TModel extends FunctionalModel>(
-  referencedModel: MaybeFunction<Model<TModel>>
-): PropertyValidatorComponentTypeAdvanced<
-  ModelInstance<TModel, any>,
-  TModel
-> => {
-  return (value?: ModelInstance<TModel, any>) => {
-    if (!value) {
-      return 'Must include a value'
-    }
-    // This needs to stay here, as it delays the creation long enough for
-    // self referencing types.
-    const model =
-      typeof referencedModel === 'function'
-        ? referencedModel()
-        : referencedModel
-    // Assumption: By the time this is received, value === a model instance.
-    const eModel = model.getName()
-    const aModel = value.getModel().getName()
-    if (eModel !== aModel) {
-      return `Model should be ${eModel} instead, received ${aModel}`
-    }
-    return undefined
-  }
-}
-
 const aggregateValidator = <T extends FunctionalModel>(
   value: any,
   methodOrMethods:
@@ -274,7 +246,7 @@ const aggregateValidator = <T extends FunctionalModel>(
   return _aggregativeValidator
 }
 
-const emptyValidator = <T extends FunctionalModel>() => undefined
+const emptyValidator = () => undefined
 
 const _boolChoice =
   <T extends FunctionalModel>(
@@ -296,10 +268,23 @@ const simpleFuncWrap =
     return validator
   }
 
+const includeOrDont =
+  <T extends FunctionalModel>(
+    method: () => PropertyValidatorComponentSync<T>
+  ) =>
+  (configValue: any) => {
+    if (configValue === false) {
+      return emptyValidator
+    }
+    const func = method()
+    const validatorWrapper: PropertyValidatorComponentSync<T> = func
+    return validatorWrapper
+  }
+
 const CONFIG_TO_VALIDATE_METHOD = <
   T extends FunctionalModel,
 >(): MethodConfigDict<T> => ({
-  required: _boolChoice<T>(simpleFuncWrap(isRequired)),
+  required: includeOrDont(simpleFuncWrap(isRequired)),
   isInteger: _boolChoice<T>(simpleFuncWrap(isInteger)),
   isNumber: _boolChoice<T>(simpleFuncWrap(isNumber)),
   isString: _boolChoice<T>(simpleFuncWrap(isString)),
@@ -367,7 +352,7 @@ const createModelValidator = <
   const _modelValidator = async (
     instance: ModelInstance<T, TModel>,
     propertyConfiguration: ValidatorConfiguration
-  ): Promise<ModelErrors<T, TModel>> => {
+  ): Promise<ModelErrors<T>> => {
     return Promise.resolve().then(async () => {
       if (!instance) {
         throw new Error(`Instance cannot be empty`)
@@ -393,12 +378,9 @@ const createModelValidator = <
       ).filter(x => x) as readonly string[]
       const propertyErrors = propertyValidationErrors
         .filter(([, errors]) => Boolean(errors) && errors.length > 0)
-        .reduce(
-          (acc, [key, errors]) => {
-            return merge(acc, { [String(key)]: errors })
-          },
-          {} as ModelErrors<T, TModel>
-        )
+        .reduce((acc, [key, errors]) => {
+          return merge(acc, { [String(key)]: errors })
+        }, {} as ModelErrors<T>)
       return modelValidationErrors.length > 0
         ? merge(propertyErrors, { overall: modelValidationErrors })
         : propertyErrors
@@ -407,9 +389,7 @@ const createModelValidator = <
   return _modelValidator
 }
 
-const isValid = <T extends FunctionalModel, TModel extends Model<T>>(
-  errors: ModelErrors<T, TModel>
-) => {
+const isValid = <T extends FunctionalModel>(errors: ModelErrors<T>) => {
   return Object.keys(errors).length < 1
 }
 
@@ -433,7 +413,6 @@ export {
   createPropertyValidator,
   createModelValidator,
   arrayType,
-  referenceTypeMatch,
   isValid,
   TYPE_PRIMITIVES,
 }

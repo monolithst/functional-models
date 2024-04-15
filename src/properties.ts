@@ -1,10 +1,5 @@
 import merge from 'lodash/merge'
-import {
-  createPropertyValidator,
-  isType,
-  referenceTypeMatch,
-  meetsRegex,
-} from './validation'
+import { createPropertyValidator, isType, meetsRegex } from './validation'
 import { PROPERTY_TYPES } from './constants'
 import { lazyValue } from './lazy'
 import { createHeadAndTail, createUuid } from './utils'
@@ -22,14 +17,11 @@ import {
   Arrayable,
   PropertyValidator,
   ModelReferencePropertyInstance,
-  ModelInstanceInputData,
   FunctionalModel,
   JsonAble,
   PropertyModifier,
-  PropertyValidatorComponentTypeAdvanced,
 } from './interfaces'
 import {
-  isModelInstance,
   getValueForModelInstance,
   getValueForReferencedModel,
   isReferencedProperty,
@@ -113,12 +105,12 @@ const Property = <
       valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>
     ) => {
       const validator = createPropertyValidator(valueGetter, config)
-      // eslint-disable-next-line functional/prefer-tacit
-      const _propertyValidatorWrapper: PropertyValidator<TModel> = async (
-        instance,
-        instanceData,
-        propertyConfiguration
-      ) => {
+      const _propertyValidatorWrapper: PropertyValidator<
+        T,
+        TModel,
+        TModelInstance
+        // eslint-disable-next-line functional/prefer-tacit
+      > = async (instance, instanceData, propertyConfiguration) => {
         // @ts-ignore
         return validator<TModel>(instance, instanceData, propertyConfiguration)
       }
@@ -279,15 +271,15 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
 
 const ModelReferenceProperty = <
   T extends FunctionalModel,
-  TModifier extends PropertyModifier<
-    ModelReference<T, Model<T>, ModelInstance<T, Model<T>>>
-  > = ModelReference<T, Model<T>, ModelInstance<T, Model<T>>>,
+  TModifier extends PropertyModifier<ModelReference<T>> = PropertyModifier<
+    ModelReference<T>
+  >,
 >(
   model: MaybeFunction<Model<T>>,
   config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  AdvancedModelReferenceProperty<T, Model<T>, ModelInstance<T>, TModifier>(
+  AdvancedModelReferenceProperty<T, Model<T>, TModifier>(
     model,
     config,
     additionalMetadata
@@ -296,10 +288,9 @@ const ModelReferenceProperty = <
 const AdvancedModelReferenceProperty = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
-  TModifier extends PropertyModifier<
-    ModelReference<T, TModel, TModelInstance>
-  > = ModelReference<T, TModel, TModelInstance>,
+  TModifier extends PropertyModifier<ModelReference<T>> = PropertyModifier<
+    ModelReference<T>
+  >,
 >(
   model: MaybeFunction<TModel>,
   config: PropertyConfig<TModifier> = {},
@@ -316,13 +307,10 @@ const AdvancedModelReferenceProperty = <
     return model
   }
 
-  const validators = mergeValidators(config, [
-    referenceTypeMatch<T>(model),
-  ] as PropertyValidatorComponentTypeAdvanced<any, any>[])
+  const validators = mergeValidators(config, [])
 
   const _getId =
-    (instanceValues: ModelReference<T, TModel, TModelInstance> | TModifier) =>
-    (): Maybe<PrimaryKeyType> => {
+    (instanceValues: ModelReference<T>) => (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
       }
@@ -332,57 +320,29 @@ const AdvancedModelReferenceProperty = <
       if (typeof instanceValues === 'string') {
         return instanceValues
       }
-      if ((instanceValues as TModelInstance).getPrimaryKey) {
-        return (instanceValues as TModelInstance).getPrimaryKey()
-      }
 
       const theModel = _getModel()
       const primaryKey = theModel.getPrimaryKeyName()
 
-      // @ts-ignore
-      return (instanceValues as ModelInstanceInputData<T>)[
-        primaryKey
-      ] as PrimaryKeyType
+      return (instanceValues as T)[primaryKey] as PrimaryKeyType
     }
 
-  const lazyLoadMethod = async (instanceValues: TModifier) => {
-    const valueIsModelInstance = isModelInstance(instanceValues)
-    const _getInstanceReturn = (objToUse: TModifier) => {
-      // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
-      const objIsModelInstance =
-        objToUse && (objToUse as TModelInstance).getPrimaryKeyName
-      // @ts-ignore
-      const instance = objIsModelInstance
-        ? objToUse
-        : _getModel().create(objToUse as ModelInstanceInputData<T>)
-      // We are replacing the toObj function, because the reference type in the end should be the primary key when serialized.
-      return merge({}, instance, {
-        toObj: _getId(instanceValues),
-      })
-    }
-
-    // @ts-ignore
-    if (valueIsModelInstance) {
-      return _getInstanceReturn(instanceValues)
-    }
+  const lazyLoadMethod = async (instanceValues: T) => {
+    // Path for returning a TypedJsonObj / T
     if (config?.fetcher) {
       const id = await _getId(instanceValues)()
       const model = _getModel()
       if (id !== null && id !== undefined) {
-        const obj = await config.fetcher<T>(model, id)
-        return _getInstanceReturn(obj as TModifier)
+        return config.fetcher<T>(model, id)
       }
       return null
     }
+
+    // This is just an id.
     return _getId(instanceValues)()
   }
 
-  const p: ModelReferencePropertyInstance<
-    T,
-    TModifier,
-    TModel,
-    TModelInstance
-  > = merge(
+  const p: ModelReferencePropertyInstance<T, TModifier> = merge(
     Property<TModifier>(
       PROPERTY_TYPES.ReferenceProperty,
       merge({}, config, {
@@ -392,9 +352,8 @@ const AdvancedModelReferenceProperty = <
       additionalMetadata
     ),
     {
-      getReferencedId: (
-        instanceValues: ModelReference<T, TModel, TModelInstance>
-      ) => _getId(instanceValues)(),
+      getReferencedId: (instanceValues: ModelReference<T>) =>
+        _getId(instanceValues)(),
       getReferencedModel: _getModel,
     }
   )
