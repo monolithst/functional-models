@@ -66,7 +66,7 @@ describe('/src/properties.ts', () => {
         })
       )
     })
-    it('should resolve "/" when no values are provided', async () => {
+    it('should resolve "undefined" when no values are provided', async () => {
       const MyModels = BaseModel<{ id: string; name: string; year: number }>(
         'MyModels',
         {
@@ -81,7 +81,25 @@ describe('/src/properties.ts', () => {
       // @ts-ignore
       const instance = MyModels.create(data)
       const actual = await instance.get.id()
-      const expected = '/'
+      const expected = undefined
+      assert.equal(actual, expected)
+    })
+    it('should resolve "undefined" when one value is not provided', async () => {
+      const MyModels = BaseModel<{ id: string; name: string; year: number }>(
+        'MyModels',
+        {
+          properties: {
+            id: NaturalIdProperty(['year', 'name'], '/', {}, {}),
+            name: TextProperty({ required: true }),
+            year: IntegerProperty({ required: true }),
+          },
+        }
+      )
+      const data = { id: '', name: 'name' }
+      // @ts-ignore
+      const instance = MyModels.create(data)
+      const actual = await instance.get.id()
+      const expected = undefined
       assert.equal(actual, expected)
     })
     it('should find 2022-mike when propertyKeys=[year, name], joiner=- and the values are 2022 and mike', async () => {

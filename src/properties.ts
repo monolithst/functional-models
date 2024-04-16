@@ -362,11 +362,11 @@ const AdvancedModelReferenceProperty = <
 
 /**
  * An Id that is naturally formed by the other properties within a model.
- * Instead of a unique id because "globally unique" the model is unique because
- * the composition of values of properties
+ * Instead of having a "globally unique" id the model is unique because
+ * the composition of values of properties.
  * @param propertyKeys A list (in order) of property keys needed to make the id. These keys can take nested paths
  * if a property is an object, array, or even a model instance object. Example: 'nested.path.here'.
- * Note: If ANY of the properties are undefined an exception is thrown.
+ * Note: If ANY of the properties are undefined, the key becomes undefined. This is to ensure key structure integrity.
  * Additionally, if the property key points to a referenced model 1 of 2 things will happen.
  * 1. If the key is not nested (Example: model.myReferenceObj) then the key to the referenced model will be used.
  * 2. If the key IS nested (Example: model.myReferenceObj.name) then the instance will be retrieved and then the
@@ -400,6 +400,10 @@ const NaturalIdProperty = <TModifier extends PropertyModifier<string>>(
             : getValueForModelInstance(modelInstance, key))
           return acc.concat(value)
         }, Promise.resolve([]))
+        // If any of these values are not set, we do not want to have a value at all.
+        if (data.some(value => value === undefined)) {
+          return undefined
+        }
         return data.join(joiner)
       },
     }),
