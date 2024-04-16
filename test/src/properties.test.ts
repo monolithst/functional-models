@@ -46,7 +46,7 @@ const TestModel1 = BaseModel<TestModelType>('TestModel1', {
 
 describe('/src/properties.ts', () => {
   describe('#NaturalIdProperty()', () => {
-    it('should throw an exception if a propertyKey returns an undefined value', () => {
+    it('should NOT throw an exception if a propertyKey returns an undefined value', () => {
       const MyModels = BaseModel<{ id: string; name: string; year: number }>(
         'MyModels',
         {
@@ -60,11 +60,29 @@ describe('/src/properties.ts', () => {
       const data = { id: '', year: 2022 }
       // @ts-ignore
       const instance = MyModels.create(data)
-      assert.isRejected(
+      assert.isFulfilled(
         Promise.resolve().then(async () => {
           await instance.get.id()
         })
       )
+    })
+    it('should resolve "/" when no values are provided', async () => {
+      const MyModels = BaseModel<{ id: string; name: string; year: number }>(
+        'MyModels',
+        {
+          properties: {
+            id: NaturalIdProperty(['year', 'name'], '/', {}, {}),
+            name: TextProperty({ required: true }),
+            year: IntegerProperty({ required: true }),
+          },
+        }
+      )
+      const data = { id: '' }
+      // @ts-ignore
+      const instance = MyModels.create(data)
+      const actual = await instance.get.id()
+      const expected = '/'
+      assert.equal(actual, expected)
     })
     it('should find 2022-mike when propertyKeys=[year, name], joiner=- and the values are 2022 and mike', async () => {
       const MyModels = BaseModel<{ id: string; name: string; year: number }>(
@@ -145,7 +163,7 @@ describe('/src/properties.ts', () => {
       const expected = '2022/5/10'
       assert.equal(actual, expected)
     })
-    it('should throw an exception when a fetcher is not used when a nested key is requested', async () => {
+    it('should NOT throw an exception when a fetcher is not used when a nested key is requested', async () => {
       const Model1 = BaseModel<{ id: string; name: string }>('Model1', {
         properties: {
           id: NumberProperty(),
@@ -180,7 +198,7 @@ describe('/src/properties.ts', () => {
       })
       const data = { id: '', year: 2022, foreignKey1: 5, foreignKey2: 10 }
       const instance = MyModels.create(data)
-      await assert.isRejected(
+      await assert.isFulfilled(
         Promise.resolve().then(async () => {
           await instance.get.id()
         })

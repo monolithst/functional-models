@@ -29,11 +29,6 @@ const getValueForReferencedModel = async (
     return modelInstance.references[head]()
   }
   const modelReference = await modelInstance.get[head]()
-  if (typeof modelReference !== 'object') {
-    throw new Error(
-      `Value was not an object type. Likely fetcher was not provided to get referenced model instance.`
-    )
-  }
   return get(modelReference, tail)
 }
 

@@ -398,10 +398,6 @@ const NaturalIdProperty = <TModifier extends PropertyModifier<string>>(
           const value = await (isReferencedProperty(modelInstance, head)
             ? getValueForReferencedModel(modelInstance, key)
             : getValueForModelInstance(modelInstance, key))
-          if (value === undefined) {
-            throw new Error(`${key} was undefined but cannot be.`)
-          }
-
           return acc.concat(value)
         }, Promise.resolve([]))
         return data.join(joiner)
