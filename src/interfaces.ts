@@ -161,17 +161,19 @@ interface ModelReferencePropertyInstance<
   T extends FunctionalModel,
   TProperty extends Arrayable<FunctionalValue>,
   TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 > extends PropertyInstance<TProperty> {
   readonly getReferencedId: (
-    instanceValues: ModelReference<T>
+    instanceValues: ModelReference<T, TModel, TModelInstance>
   ) => Maybe<PrimaryKeyType>
   readonly getReferencedModel: () => TModel
 }
 
-type ModelReference<T extends FunctionalModel> =
-  | T
-  | TypedJsonObj<T>
-  | PrimaryKeyType
+type ModelReference<
+  T extends FunctionalModel,
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
+> = T | TModelInstance | TypedJsonObj<T> | PrimaryKeyType
 
 type DefaultPropertyValidators = Readonly<{
   required?: boolean
@@ -204,10 +206,14 @@ type PropertyConfigContents<T extends Arrayable<FunctionalValue>> = Readonly<{
 type ModelFetcher = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
   model: TModel,
   primaryKey: PrimaryKeyType
-) => Promise<T | TypedJsonObj<T>> | Promise<null> | Promise<undefined>
+) =>
+  | Promise<T | TModelInstance | TypedJsonObj<T>>
+  | Promise<null>
+  | Promise<undefined>
 
 type PropertyConfig<T extends Arrayable<FunctionalValue>> =
   | (PropertyConfigContents<T> & DefaultPropertyValidators)

@@ -25,6 +25,7 @@ import {
   createModelValidator,
   createPropertyValidator,
   TYPE_PRIMITIVES,
+  referenceTypeMatch,
 } from '../../src/validation'
 import {
   ModelValidatorComponent,
@@ -538,6 +539,63 @@ describe('/src/validation.ts', () => {
         type: ['error2'],
       }
       assert.deepEqual(actual, expected)
+    })
+  })
+  describe('#referenceTypeMatch()', () => {
+    it('should return an error if undefined is passed as a value', () => {
+      const myModel = TestModel1.create({})
+      const actual = referenceTypeMatch(TestModel1)(
+        // @ts-ignore
+        undefined,
+        EMPTY_MODEL_INSTANCE,
+        {},
+        {}
+      )
+      assert.isOk(actual)
+    })
+    it('should return an error if null is passed as a value', () => {
+      const myModel = TestModel1.create({})
+      const actual = referenceTypeMatch(TestModel1)(
+        // @ts-ignore
+        null,
+        EMPTY_MODEL_INSTANCE,
+        {},
+        {}
+      )
+      assert.isOk(actual)
+    })
+    it('should allow a function for a model', async () => {
+      const myModel = EMPTY_MODEL.create({})
+      const actual = referenceTypeMatch<EMPTY_MODEL_TYPE>(() => EMPTY_MODEL)(
+        myModel,
+        myModel,
+        await myModel.toObj(),
+        {}
+      )
+      const expected = undefined
+      assert.equal(actual, expected)
+    })
+    it('should validate when the correct object matches the model', async () => {
+      const myModel = EMPTY_MODEL.create({})
+      const actual = referenceTypeMatch<EMPTY_MODEL_TYPE>(EMPTY_MODEL)(
+        myModel,
+        myModel,
+        await myModel.toObj(),
+        {}
+      )
+      const expected = undefined
+      assert.equal(actual, expected)
+    })
+    it('should return an error when the input does not match the model', () => {
+      const myModel = EMPTY_MODEL.create({})
+      const actual = referenceTypeMatch(TestModel1)(
+        // @ts-ignore
+        myModel,
+        myModel,
+        {},
+        {}
+      )
+      assert.isOk(actual)
     })
   })
   describe('#createPropertyValidator()', () => {
