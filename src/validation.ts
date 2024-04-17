@@ -19,6 +19,8 @@ import {
   ValidatorConfiguration,
   ValuePropertyValidatorComponent,
   ValidationErrors,
+  MaybeFunction,
+  PropertyValidatorComponentTypeAdvanced,
 } from './interfaces'
 
 const TYPE_PRIMITIVES = {
@@ -393,6 +395,38 @@ const isValid = <T extends FunctionalModel>(errors: ModelErrors<T>) => {
   return Object.keys(errors).length < 1
 }
 
+const referenceTypeMatch = <
+  T extends FunctionalModel,
+  TModel extends Model<T> = Model<T>,
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
+>(
+  referencedModel: MaybeFunction<TModel>
+): PropertyValidatorComponentTypeAdvanced<
+  ModelInstance<T, TModel>,
+  T,
+  TModel,
+  TModelInstance
+> => {
+  return (value?: ModelInstance<T, TModel>) => {
+    if (!value) {
+      return 'Must include a value'
+    }
+    // This needs to stay here, as it delays the creation long enough for
+    // self referencing types.
+    const model =
+      typeof referencedModel === 'function'
+        ? referencedModel()
+        : referencedModel
+    // Assumption: By the time this is received, value === a model instance.
+    const eModel = model.getName()
+    const aModel = value.getModel().getName()
+    if (eModel !== aModel) {
+      return `Model should be ${eModel} instead, received ${aModel}`
+    }
+    return undefined
+  }
+}
+
 export {
   isNumber,
   isBoolean,
@@ -415,4 +449,5 @@ export {
   arrayType,
   isValid,
   TYPE_PRIMITIVES,
+  referenceTypeMatch,
 }

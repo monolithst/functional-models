@@ -5,7 +5,12 @@ import {
   toObj,
   FunctionalModel,
   TypedJsonObj,
+  ModelInstance,
 } from './interfaces'
+
+const isModelInstance = (obj: any): obj is ModelInstance<any> => {
+  return Boolean(obj.toObj)
+}
 
 const _getValue = async (value: any): Promise<JsonAble | null> => {
   if (value === undefined) {
@@ -20,9 +25,8 @@ const _getValue = async (value: any): Promise<JsonAble | null> => {
     return _getValue(await asFunction())
   }
   // Nested Object
-  const asModel = value.toObj
-  if (asModel) {
-    return _getValue(await asModel())
+  if (isModelInstance(value)) {
+    return _getValue(await value.toObj())
   }
   // Dates
   const asDate = value as Date

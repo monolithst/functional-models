@@ -29,6 +29,14 @@ const getValueForReferencedModel = async (
     return modelInstance.references[head]()
   }
   const modelReference = await modelInstance.get[head]()
+  if (modelReference.toObj) {
+    const [nestedHead, nestedTail] = createHeadAndTail(tail.split('.'), '.')
+    const value = await modelReference.get[nestedHead]()
+    if (nestedTail) {
+      return get(value, nestedTail)
+    }
+    return value
+  }
   return get(modelReference, tail)
 }
 
@@ -91,6 +99,11 @@ const mergeValidators = <T extends Arrayable<FunctionalValue>>(
   return [...validators, ...(config?.validators ? config.validators : [])]
 }
 
+const isModelInstance = (obj: any): obj is ModelInstance<any, any> => {
+  // @ts-ignore
+  return Boolean(obj && obj.getPrimaryKeyName)
+}
+
 export {
   isReferencedProperty,
   getValueForModelInstance,
@@ -99,4 +112,5 @@ export {
   getValidatorFromConfigElseEmpty,
   getCommonNumberValidators,
   mergeValidators,
+  isModelInstance,
 }

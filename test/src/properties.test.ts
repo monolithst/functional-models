@@ -142,16 +142,16 @@ describe('/src/properties.ts', () => {
         primaryKey: PrimaryKeyType
       ) => {
         if (model.getName() === 'Model1') {
-          return {
+          return Model1.create({
             id: 5,
             name: 'fake-model-data',
-          }
+          })
         }
         if (model.getName() === 'Model2') {
-          return {
+          return Model2.create({
             id: 10,
             name: 'fake-model-data-2',
-          }
+          })
         }
         throw new Error(`Not gonna happen`)
       }
@@ -244,16 +244,16 @@ describe('/src/properties.ts', () => {
         primaryKey: PrimaryKeyType
       ) => {
         if (model.getName() === 'Model1') {
-          return {
+          return Model1.create({
             id: 5,
             name: 'fake-model-data',
-          }
+          })
         }
         if (model.getName() === 'Model2') {
-          return {
+          return Model2.create({
             id: 10,
             name: 'fake-model-data-2',
-          }
+          })
         }
         throw new Error(`Not gonna happen`)
       }
@@ -309,16 +309,16 @@ describe('/src/properties.ts', () => {
         primaryKey: PrimaryKeyType
       ) => {
         if (model.getName() === 'Model1') {
-          return {
+          return Model1.create({
             id: 5,
             name: 'fake-model-data',
-          }
+          })
         }
         if (model.getName() === 'Model2') {
-          return {
+          return Model2.create({
             id: 10,
             name: 'fake-model-data-2',
-          }
+          })
         }
         throw new Error(`Not gonna happen`)
       }
@@ -1228,6 +1228,7 @@ describe('/src/properties.ts', () => {
         AdvancedModelReferenceProperty<
           MyType,
           MyModel<MyType>,
+          MyModelInstance<MyType, MyModel<MyType>>,
           CustomReferenceType<MyType>
         >(model)
       })
@@ -1305,6 +1306,25 @@ describe('/src/properties.ts', () => {
         const expected = 123
         assert.equal(actual, expected)
       })
+      it('should return a shallow object with a replaced toObj() function that returns 123 from when a ModelInstance is used and no fetcher is used', async () => {
+        const fakeModel = {
+          getPrimaryKeyName: () => 'not-real',
+          getPrimaryKey: () => 123,
+        }
+        const modelInstance = await ModelReferenceProperty<TestModelType>(
+          TestModel1,
+          {}
+        ).createGetter(
+          // @ts-ignore
+          fakeModel,
+          {},
+          {} as unknown as ModelInstance<FunctionalModel>
+        )()
+        // @ts-ignore
+        const actual = await modelInstance?.toObj()
+        const expected = 123
+        assert.equal(actual, expected)
+      })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
         const model = BaseModel<TestModelType>('Test', {
           properties: {
@@ -1313,7 +1333,7 @@ describe('/src/properties.ts', () => {
         })
 
         const modelFetcher: ModelFetcher = (theirModel: any, key) => {
-          const m = { id: 123, name: 'switch-a-roo' }
+          const m = model.create({ id: 123, name: 'switch-a-roo' })
           return Promise.resolve(m as any)
         }
 
@@ -1326,10 +1346,10 @@ describe('/src/properties.ts', () => {
           123,
           {},
           {} as unknown as ModelInstance<FunctionalModel>
-        )()) as TypedJsonObj<TestModelType>
+        )()) as ModelInstance<TestModelType>
 
         const expected = 'switch-a-roo'
-        assert.deepEqual(actual.name, expected)
+        assert.deepEqual(actual.get.name(), expected)
       })
       it('should return "obj-id" if no config passed', async () => {
         // @ts-ignore
