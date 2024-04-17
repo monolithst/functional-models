@@ -4,7 +4,6 @@ import { createModelValidator } from './validation'
 import { UniqueId } from './properties'
 import {
   Model,
-  InstanceMethodGetters,
   Nullable,
   ModelDefinition,
   ModelInstance,
@@ -17,15 +16,13 @@ import {
   ModelReference,
   PropertyValidators,
   FunctionalModel,
-  ModelInstanceInputData,
-  ModelInstanceMethod,
-  ModelMethod,
-  ModelMethodGetters,
+  TypedJsonObj,
 } from './interfaces'
+import { singularize, toTitleCase } from './utils'
 
 const _defaultOptions = <
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
 >(): ModelOptions<T, TModel> => ({
   instanceCreatedCallback: null,
 })
@@ -33,7 +30,7 @@ const _defaultOptions = <
 const _convertOptions = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
   options?: OptionalModelOptions<T, TModel, TModelInstance>
 ) => {
@@ -48,29 +45,29 @@ const _convertOptions = <
 const _createModelDefWithPrimaryKey = <
   T extends FunctionalModel,
   TModel extends Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
 >(
-  keyToProperty: ModelDefinition<T, TModel, TModelInstance>
-): ModelDefinition<T, TModel, TModelInstance> => {
-  return {
-    getPrimaryKeyName: () => 'id',
-    modelMethods: keyToProperty.modelMethods,
-    instanceMethods: keyToProperty.instanceMethods,
-    properties: {
+  modelDefinition: ModelDefinition<T, TModel>
+): ModelDefinition<T, TModel> => {
+  const properties = merge(
+    {
       id: UniqueId({ required: true }),
-      ...keyToProperty.properties,
     },
-    modelValidators: keyToProperty.modelValidators,
+    modelDefinition.properties
+  )
+  return {
+    ...modelDefinition,
+    getPrimaryKeyName: () => 'id',
+    properties,
   }
 }
 
 const BaseModel: ModelFactory = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
-  modelName: string,
-  modelDefinition: ModelDefinition<T, TModel, TModelInstance>,
+  pluralName: string,
+  modelDefinition: ModelDefinition<T, TModel>,
   options?: OptionalModelOptions<T, TModel, TModelInstance>
 ): TModel => {
   /*
@@ -84,32 +81,38 @@ const BaseModel: ModelFactory = <
   let model: Nullable<TModel> = null
   const theOptions = _convertOptions(options)
   modelDefinition = !modelDefinition.getPrimaryKeyName
-    ? _createModelDefWithPrimaryKey(modelDefinition)
+    ? _createModelDefWithPrimaryKey<T, TModel>(modelDefinition)
     : modelDefinition
 
   // @ts-ignore
   const getPrimaryKeyName = () => modelDefinition.getPrimaryKeyName()
-  const getPrimaryKey = (loadedInternals: any, t: ModelInstanceInputData<T>) => {
+  const getPrimaryKey = (loadedInternals: any) => {
     const property = loadedInternals.get[getPrimaryKeyName()]
     return property()
   }
 
-  const create = (instanceValues: ModelInstanceInputData<T>) => {
+  const create = (instanceValues: TypedJsonObj<T>) => {
     // eslint-disable-next-line functional/no-let
     let instance: Nullable<TModelInstance> = null
-    const startingInternals: {
-      readonly get: PropertyGetters<T, TModel> & { readonly id: () => string }
-      readonly validators: PropertyValidators<T, TModel>
-      readonly references: ModelReferenceFunctions
-    } = {
-      get: {} as PropertyGetters<T, TModel> & { readonly id: () => string },
+    const startingInternals: Readonly<{
+      get: PropertyGetters<T> & { id: () => string }
+      validators: PropertyValidators<T, TModel>
+      references: ModelReferenceFunctions
+    }> = {
+      get: {} as PropertyGetters<T> & Readonly<{ id: () => string }>,
       validators: {},
       references: {},
     }
     const loadedInternals = Object.entries(modelDefinition.properties).reduce(
       (acc, [key, property]) => {
-        // @ts-ignore
-        const propertyGetter = property.createGetter(instanceValues[key])
+        const propertyGetter = () => {
+          return property.createGetter(
+            // @ts-ignore
+            instanceValues[key],
+            instanceValues,
+            instance
+          )()
+        }
         // @ts-ignore
         const propertyValidator = property.getValidator(propertyGetter)
         const fleshedOutInstanceProperties = {
@@ -140,19 +143,6 @@ const BaseModel: ModelFactory = <
       },
       startingInternals
     )
-    const methods = Object.entries(
-      modelDefinition.instanceMethods || {}
-    ).reduce((acc, [key, func]) => {
-      return merge(acc, {
-        [key]: (...args: readonly any[]) => {
-          return (func as ModelInstanceMethod<T, TModel, TModelInstance>)(
-            instance as TModelInstance,
-            model as TModel,
-            ...args
-          )
-        },
-      })
-    }, {}) as InstanceMethodGetters<T, TModel>
 
     const getModel = () => model as TModel
     const toObj = toJsonAble(loadedInternals.get)
@@ -168,10 +158,9 @@ const BaseModel: ModelFactory = <
     instance = merge(loadedInternals, {
       getModel,
       toObj,
-      getPrimaryKey: () => getPrimaryKey(loadedInternals, instanceValues),
+      getPrimaryKey: () => getPrimaryKey(loadedInternals),
       getPrimaryKeyName,
       validate,
-      methods,
     }) as TModelInstance
 
     if (theOptions.instanceCreatedCallback) {
@@ -183,29 +172,23 @@ const BaseModel: ModelFactory = <
     return instance
   }
 
-  const fleshedOutModelFunctions = Object.entries(
-    modelDefinition.modelMethods || {}
-  ).reduce((acc, [key, func]) => {
-    return merge(acc, {
-      [key]: (...args: readonly any[]) => {
-        return (func as ModelMethod<T, TModel>)(model as TModel, ...args)
-      },
-    })
-  }, {}) as ModelMethodGetters<T, TModel>
-
   // This sets the model that is used by the instances later.
+  // @ts-ignore
   model = merge(
     {},
     {
       create,
-      getName: () => modelName,
+      getName: () => pluralName,
+      getSingularName: () =>
+        modelDefinition.singularName || singularize(pluralName),
+      getDisplayName: () =>
+        modelDefinition.displayName || toTitleCase(pluralName),
       getModelDefinition: () => modelDefinition,
       getPrimaryKeyName,
       getPrimaryKey,
       getOptions: () => theOptions,
-      methods: fleshedOutModelFunctions,
     }
-  ) as unknown as TModel
+  )
   return model as TModel
 }
 

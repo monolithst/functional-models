@@ -1,18 +1,8 @@
 import merge from 'lodash/merge'
-import {
-  createPropertyValidator,
-  emptyValidator,
-  maxTextLength,
-  minTextLength,
-  minNumber,
-  maxNumber,
-  isType,
-  referenceTypeMatch,
-  meetsRegex,
-} from './validation'
+import { createPropertyValidator, isType, meetsRegex } from './validation'
 import { PROPERTY_TYPES } from './constants'
 import { lazyValue } from './lazy'
-import { createUuid } from './utils'
+import { createHeadAndTail, createUuid } from './utils'
 import {
   ModelReference,
   ModelInstance,
@@ -25,50 +15,34 @@ import {
   ValueGetter,
   MaybeFunction,
   Arrayable,
-  PropertyValidatorComponent,
   PropertyValidator,
   ModelReferencePropertyInstance,
-  ModelInstanceInputData,
   FunctionalModel,
   JsonAble,
   PropertyModifier,
 } from './interfaces'
+import {
+  getValueForModelInstance,
+  getValueForReferencedModel,
+  isReferencedProperty,
+  getCommonTextValidators,
+  getCommonNumberValidators,
+  mergeValidators,
+} from './lib'
 
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
-
-const _getValidatorFromConfigElseEmpty = <
-  T extends FunctionalModel,
-  TValue extends FunctionalValue
->(
-  input: TValue | undefined,
-  // eslint-disable-next-line no-unused-vars
-  validatorGetter: (t: TValue) => PropertyValidatorComponent<T>
-) => {
-  if (input !== undefined) {
-    const validator = validatorGetter(input)
-    return validator
-  }
-  return emptyValidator
-}
-
-const _mergeValidators = <T extends Arrayable<FunctionalValue>>(
-  config: PropertyConfig<T> | undefined,
-  validators: readonly PropertyValidatorComponent<any>[]
-) => {
-  return [...validators, ...(config?.validators ? config.validators : [])]
-}
 
 const Property = <
   TValue extends Arrayable<FunctionalValue>,
   T extends FunctionalModel = FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
   type: string,
   config: PropertyConfig<TValue> = {},
   additionalMetadata = {}
-) => {
+): PropertyInstance<TValue, T, TModel, TModelInstance> => {
   if (!type && !config?.type) {
     throw new Error(`Property type must be provided.`)
   }
@@ -96,7 +70,9 @@ const Property = <
     getConstantValue,
     getPropertyType: () => type,
     createGetter: (
-      instanceValue: TValue
+      instanceValue: TValue,
+      modelData: T,
+      instance: TModelInstance
     ): ValueGetter<TValue, T, TModel, TModelInstance> => {
       const value = getConstantValue()
       if (value !== undefined) {
@@ -111,12 +87,16 @@ const Property = <
       }
       const method = lazyLoadMethod
         ? // eslint-disable-next-line no-unused-vars
-          (lazyValue(lazyLoadMethod) as (value: TValue) => Promise<TValue>)
+          (lazyValue(lazyLoadMethod) as (
+            value: TValue,
+            modelData: T,
+            modelInstance: TModelInstance
+          ) => Promise<TValue>)
         : typeof instanceValue === 'function'
-        ? (instanceValue as () => TValue)
-        : () => instanceValue
+          ? (instanceValue as () => TValue)
+          : () => instanceValue
       const r: ValueGetter<TValue, T, TModel, TModelInstance> = () => {
-        const result = method(instanceValue)
+        const result = method(instanceValue, modelData, instance)
         return valueSelector(result)
       }
       return r
@@ -125,11 +105,13 @@ const Property = <
       valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>
     ) => {
       const validator = createPropertyValidator(valueGetter, config)
-      const _propertyValidatorWrapper: PropertyValidator<TModel> = async (
-        instance,
-        instanceData,
-        propertyConfiguration
-      ) => {
+      const _propertyValidatorWrapper: PropertyValidator<
+        T,
+        TModel,
+        TModelInstance
+        // eslint-disable-next-line functional/prefer-tacit
+      > = async (instance, instanceData, propertyConfiguration) => {
+        // @ts-ignore
         return validator<TModel>(instance, instanceData, propertyConfiguration)
       }
       return _propertyValidatorWrapper
@@ -176,7 +158,7 @@ const ArrayProperty = <T extends FunctionalValue>(
   )
 
 const ObjectProperty = <
-  TModifier extends PropertyModifier<{ readonly [s: string]: JsonAble }>
+  TModifier extends PropertyModifier<Readonly<{ [s: string]: JsonAble }>>,
 >(
   config = {},
   additionalMetadata = {}
@@ -184,7 +166,7 @@ const ObjectProperty = <
   Property<TModifier>(
     PROPERTY_TYPES.ObjectProperty,
     merge(config, {
-      validators: _mergeValidators(config, [isType('object')]),
+      validators: mergeValidators(config, [isType('object')]),
     }),
     additionalMetadata
   )
@@ -197,14 +179,7 @@ const TextProperty = <TModifier extends PropertyModifier<string>>(
     PROPERTY_TYPES.TextProperty,
     merge(config, {
       isString: true,
-      validators: _mergeValidators(config, [
-        _getValidatorFromConfigElseEmpty(config?.maxLength, (value: number) =>
-          maxTextLength(value)
-        ),
-        _getValidatorFromConfigElseEmpty(config?.minLength, (value: number) =>
-          minTextLength(value)
-        ),
-      ]),
+      validators: mergeValidators(config, getCommonTextValidators(config)),
     }),
     additionalMetadata
   )
@@ -217,14 +192,7 @@ const IntegerProperty = <TModifier extends PropertyModifier<number>>(
     PROPERTY_TYPES.IntegerProperty,
     merge(config, {
       isInteger: true,
-      validators: _mergeValidators(config, [
-        _getValidatorFromConfigElseEmpty(config?.minValue, value =>
-          minNumber(value)
-        ),
-        _getValidatorFromConfigElseEmpty(config?.maxValue, value =>
-          maxNumber(value)
-        ),
-      ]),
+      validators: mergeValidators(config, getCommonNumberValidators(config)),
     }),
     additionalMetadata
   )
@@ -237,20 +205,13 @@ const NumberProperty = <TModifier extends PropertyModifier<number>>(
     PROPERTY_TYPES.NumberProperty,
     merge(config, {
       isNumber: true,
-      validators: _mergeValidators(config, [
-        _getValidatorFromConfigElseEmpty(config?.minValue, value =>
-          minNumber(value)
-        ),
-        _getValidatorFromConfigElseEmpty(config?.maxValue, value =>
-          maxNumber(value)
-        ),
-      ]),
+      validators: mergeValidators(config, getCommonNumberValidators(config)),
     }),
     additionalMetadata
   )
 
 const ConstantValueProperty = <
-  TModifier extends PropertyModifier<FunctionalValue>
+  TModifier extends PropertyModifier<FunctionalValue>,
 >(
   value: TModifier,
   config: PropertyConfig<TModifier> = {},
@@ -271,7 +232,7 @@ const EmailProperty = <TModifier extends PropertyModifier<string>>(
   TextProperty<TModifier>(
     merge(config, {
       type: PROPERTY_TYPES.EmailProperty,
-      validators: _mergeValidators(config, [meetsRegex(EMAIL_REGEX)]),
+      validators: mergeValidators(config, [meetsRegex(EMAIL_REGEX)]),
     }),
     additionalMetadata
   )
@@ -310,15 +271,15 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
 
 const ModelReferenceProperty = <
   T extends FunctionalModel,
-  TModifier extends PropertyModifier<
-    ModelReference<T, Model<T>, ModelInstance<T, Model<T>>>
-  > = ModelReference<T, Model<T>, ModelInstance<T, Model<T>>>
+  TModifier extends PropertyModifier<ModelReference<T>> = PropertyModifier<
+    ModelReference<T>
+  >,
 >(
   model: MaybeFunction<Model<T>>,
   config: PropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
-  AdvancedModelReferenceProperty<T, Model<T>, ModelInstance<T>, TModifier>(
+  AdvancedModelReferenceProperty<T, Model<T>, TModifier>(
     model,
     config,
     additionalMetadata
@@ -327,10 +288,9 @@ const ModelReferenceProperty = <
 const AdvancedModelReferenceProperty = <
   T extends FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
-  TModifier extends PropertyModifier<
-    ModelReference<T, TModel, TModelInstance>
-  > = ModelReference<T, TModel, TModelInstance>
+  TModifier extends PropertyModifier<ModelReference<T>> = PropertyModifier<
+    ModelReference<T>
+  >,
 >(
   model: MaybeFunction<TModel>,
   config: PropertyConfig<TModifier> = {},
@@ -347,11 +307,10 @@ const AdvancedModelReferenceProperty = <
     return model
   }
 
-  const validators = _mergeValidators(config, [referenceTypeMatch<T>(model)])
+  const validators = mergeValidators(config, [])
 
   const _getId =
-    (instanceValues: ModelReference<T, TModel, TModelInstance> | TModifier) =>
-    (): Maybe<PrimaryKeyType> => {
+    (instanceValues: ModelReference<T>) => (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
         return null
       }
@@ -361,58 +320,29 @@ const AdvancedModelReferenceProperty = <
       if (typeof instanceValues === 'string') {
         return instanceValues
       }
-      if ((instanceValues as TModelInstance).getPrimaryKey) {
-        return (instanceValues as TModelInstance).getPrimaryKey()
-      }
 
       const theModel = _getModel()
       const primaryKey = theModel.getPrimaryKeyName()
 
-      // @ts-ignore
-      return (instanceValues as ModelInstanceInputData<T>)[
-        primaryKey
-      ] as PrimaryKeyType
+      return (instanceValues as T)[primaryKey] as PrimaryKeyType
     }
 
-  const lazyLoadMethod = async (instanceValues: TModifier) => {
-    const valueIsModelInstance =
-      instanceValues && (instanceValues as TModelInstance).getPrimaryKeyName
-    const _getInstanceReturn = (objToUse: TModifier) => {
-      // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
-      const objIsModelInstance =
-        objToUse && (objToUse as TModelInstance).getPrimaryKeyName
-      // @ts-ignore
-      const instance = objIsModelInstance
-        ? objToUse
-        : _getModel().create(objToUse as ModelInstanceInputData<T>)
-      // We are replacing the toObj function, because the reference type in the end should be the primary key when serialized.
-      return merge({}, instance, {
-        toObj: _getId(instanceValues),
-      })
-    }
-
-    // @ts-ignore
-    if (valueIsModelInstance) {
-      return _getInstanceReturn(instanceValues)
-    }
+  const lazyLoadMethod = async (instanceValues: T) => {
+    // Path for returning a TypedJsonObj / T
     if (config?.fetcher) {
       const id = await _getId(instanceValues)()
       const model = _getModel()
       if (id !== null && id !== undefined) {
-        const obj = await config.fetcher<T>(model, id)
-        return _getInstanceReturn(obj as TModifier)
+        return config.fetcher<T>(model, id)
       }
       return null
     }
+
+    // This is just an id.
     return _getId(instanceValues)()
   }
 
-  const p: ModelReferencePropertyInstance<
-    T,
-    TModifier,
-    TModel,
-    TModelInstance
-  > = merge(
+  const p: ModelReferencePropertyInstance<T, TModifier> = merge(
     Property<TModifier>(
       PROPERTY_TYPES.ReferenceProperty,
       merge({}, config, {
@@ -422,18 +352,72 @@ const AdvancedModelReferenceProperty = <
       additionalMetadata
     ),
     {
-      getReferencedId: (
-        instanceValues: ModelReference<T, TModel, TModelInstance>
-      ) => _getId(instanceValues)(),
+      getReferencedId: (instanceValues: ModelReference<T>) =>
+        _getId(instanceValues)(),
       getReferencedModel: _getModel,
     }
   )
   return p
 }
 
+/**
+ * An Id that is naturally formed by the other properties within a model.
+ * Instead of having a "globally unique" id the model is unique because
+ * the composition of values of properties.
+ * @param propertyKeys A list (in order) of property keys needed to make the id. These keys can take nested paths
+ * if a property is an object, array, or even a model instance object. Example: 'nested.path.here'.
+ * Note: If ANY of the properties are undefined, the key becomes undefined. This is to ensure key structure integrity.
+ * Additionally, if the property key points to a referenced model 1 of 2 things will happen.
+ * 1. If the key is not nested (Example: model.myReferenceObj) then the key to the referenced model will be used.
+ * 2. If the key IS nested (Example: model.myReferenceObj.name) then the instance will be retrieved and then the
+ * property for that model instance is used.
+ * @param joiner A string that will be passed to ".join()" for creating a single string.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
+const NaturalIdProperty = <TModifier extends PropertyModifier<string>>(
+  propertyKeys: readonly string[],
+  joiner: string,
+  config: PropertyConfig<TModifier> = {},
+  additionalMetadata = {}
+) =>
+  Property<TModifier>(
+    PROPERTY_TYPES.TextProperty,
+    merge(config, {
+      isString: true,
+      validators: mergeValidators(config, getCommonTextValidators(config)),
+      lazyLoadMethod: async (
+        value: string | undefined,
+        model: FunctionalModel,
+        modelInstance: ModelInstance<any>
+      ) => {
+        const data = await propertyKeys.reduce(async (accP, key) => {
+          const acc = await accP
+          const [head] = createHeadAndTail(key.split('.'), '.')
+          const value = await (isReferencedProperty(modelInstance, head)
+            ? getValueForReferencedModel(modelInstance, key)
+            : getValueForModelInstance(modelInstance, key))
+          return acc.concat(value)
+        }, Promise.resolve([]))
+        // If any of these values are not set, we do not want to have a value at all.
+        if (data.some(value => value === undefined)) {
+          return undefined
+        }
+        return data.join(joiner)
+      },
+    }),
+    additionalMetadata
+  )
+
+// We are adding this here to normalize the name, while maintaining backwards compatability.
+const UniqueIdProperty = UniqueId
+
 export {
   Property,
+  NaturalIdProperty,
   UniqueId,
+  UniqueIdProperty,
   DateProperty,
   ArrayProperty,
   ModelReferenceProperty,

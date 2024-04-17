@@ -15,7 +15,7 @@ const _getValue = async (value: any): Promise<JsonAble | null> => {
     return null
   }
   const type = typeof value
-  const asFunction = value as Function
+  const asFunction = value as (...args: any[]) => any
   if (type === 'function') {
     return _getValue(await asFunction())
   }

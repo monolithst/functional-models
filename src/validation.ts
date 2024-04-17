@@ -8,11 +8,9 @@ import {
   ModelValidatorComponent,
   PropertyValidatorComponent,
   PropertyValidatorComponentSync,
-  PropertyValidatorComponentTypeAdvanced,
   JsonAble,
   PropertyValidator,
   PropertyConfig,
-  MaybeFunction,
   PropertyValidators,
   ValueGetter,
   Arrayable,
@@ -113,7 +111,7 @@ const meetsRegex =
   <T extends FunctionalValue>(
     regex: string | RegExp,
     flags?: string,
-    errorMessage: string = 'Format was invalid'
+    errorMessage = 'Format was invalid'
   ): ValuePropertyValidatorComponent<T> =>
   (value: T) => {
     const reg = new RegExp(regex, flags)
@@ -168,7 +166,7 @@ const isRequired: ValuePropertyValidatorComponent<any> = (value?: any) => {
 }
 
 const maxNumber =
-  (max: Number): ValuePropertyValidatorComponent<number> =>
+  (max: number): ValuePropertyValidatorComponent<number> =>
   (value: number) => {
     // @ts-ignore
     const numberError = isNumber(value)
@@ -182,8 +180,8 @@ const maxNumber =
   }
 
 const minNumber =
-  (min: Number): ValuePropertyValidatorComponent<number> =>
-  (value: Number) => {
+  (min: number): ValuePropertyValidatorComponent<number> =>
+  (value: number) => {
     // @ts-ignore
     const numberError = isNumber(value)
     if (numberError) {
@@ -196,7 +194,7 @@ const minNumber =
   }
 
 const maxTextLength =
-  (max: Number): ValuePropertyValidatorComponent<string> =>
+  (max: number): ValuePropertyValidatorComponent<string> =>
   (value: string) => {
     // @ts-ignore
     const stringError = isString(value)
@@ -210,7 +208,7 @@ const maxTextLength =
   }
 
 const minTextLength =
-  (min: Number): ValuePropertyValidatorComponent<string> =>
+  (min: number): ValuePropertyValidatorComponent<string> =>
   (value: string) => {
     // @ts-ignore
     const stringError = isString(value)
@@ -223,44 +221,18 @@ const minTextLength =
     return undefined
   }
 
-const referenceTypeMatch = <TModel extends FunctionalModel>(
-  referencedModel: MaybeFunction<Model<TModel>>
-): PropertyValidatorComponentTypeAdvanced<
-  ModelInstance<TModel, any>,
-  TModel
-> => {
-  return (value?: ModelInstance<TModel, any>) => {
-    if (!value) {
-      return 'Must include a value'
-    }
-    // This needs to stay here, as it delays the creation long enough for
-    // self referencing types.
-    const model =
-      typeof referencedModel === 'function'
-        ? referencedModel()
-        : referencedModel
-    // Assumption: By the time this is received, value === a model instance.
-    const eModel = model.getName()
-    const aModel = value.getModel().getName()
-    if (eModel !== aModel) {
-      return `Model should be ${eModel} instead, received ${aModel}`
-    }
-    return undefined
-  }
-}
-
 const aggregateValidator = <T extends FunctionalModel>(
   value: any,
   methodOrMethods:
     | PropertyValidatorComponent<T>
     | readonly PropertyValidatorComponent<T>[]
-) => {
+): PropertyValidator<T> => {
   const toDo = Array.isArray(methodOrMethods)
     ? methodOrMethods
     : [methodOrMethods]
 
   const _aggregativeValidator: PropertyValidator<T> = async (
-    instance: ModelInstance<T, any>,
+    instance: ModelInstance<T, Model<T>>,
     instanceData: T | JsonAble,
     propertyConfiguration
   ) => {
@@ -274,7 +246,7 @@ const aggregateValidator = <T extends FunctionalModel>(
   return _aggregativeValidator
 }
 
-const emptyValidator: PropertyValidatorComponentSync<any> = () => undefined
+const emptyValidator = () => undefined
 
 const _boolChoice =
   <T extends FunctionalModel>(
@@ -282,20 +254,13 @@ const _boolChoice =
   ) =>
   (configValue: any) => {
     const func = method(configValue)
-    const validatorWrapper: PropertyValidatorComponentSync<T> = (
-      value: any,
-      modelInstance: ModelInstance<T, any>,
-      modelData: T | JsonAble,
-      configurations: ValidatorConfiguration
-    ) => {
-      return func(value, modelInstance, modelData, configurations)
-    }
+    const validatorWrapper: PropertyValidatorComponentSync<T> = func
     return validatorWrapper
   }
 
-type MethodConfigDict<T extends FunctionalModel> = {
-  readonly [s: string]: (config: any) => PropertyValidatorComponentSync<T>
-}
+type MethodConfigDict<T extends FunctionalModel> = Readonly<{
+  [s: string]: (config: any) => PropertyValidatorComponentSync<T>
+}>
 
 const simpleFuncWrap =
   <T extends FunctionalModel>(validator: PropertyValidatorComponentSync<T>) =>
@@ -303,10 +268,23 @@ const simpleFuncWrap =
     return validator
   }
 
+const includeOrDont =
+  <T extends FunctionalModel>(
+    method: () => PropertyValidatorComponentSync<T>
+  ) =>
+  (configValue: any) => {
+    if (configValue === false) {
+      return emptyValidator
+    }
+    const func = method()
+    const validatorWrapper: PropertyValidatorComponentSync<T> = func
+    return validatorWrapper
+  }
+
 const CONFIG_TO_VALIDATE_METHOD = <
-  T extends FunctionalModel
+  T extends FunctionalModel,
 >(): MethodConfigDict<T> => ({
-  required: _boolChoice<T>(simpleFuncWrap(isRequired)),
+  required: includeOrDont(simpleFuncWrap(isRequired)),
   isInteger: _boolChoice<T>(simpleFuncWrap(isInteger)),
   isNumber: _boolChoice<T>(simpleFuncWrap(isNumber)),
   isString: _boolChoice<T>(simpleFuncWrap(isString)),
@@ -319,13 +297,13 @@ const createPropertyValidator = <
   TValue extends Arrayable<FunctionalValue>,
   T extends FunctionalModel = FunctionalModel,
   TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>
+  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
 >(
   valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>,
   config: PropertyConfig<TValue>
-) => {
+): PropertyValidator<T, TModel, TModelInstance> => {
   const _propertyValidator = async <T extends FunctionalModel>(
-    instance: ModelInstance<T, any>,
+    instance: TModelInstance,
     instanceData: T | JsonAble,
     propertyConfiguration: ValidatorConfiguration
   ): Promise<ValidationErrors> => {
@@ -343,7 +321,7 @@ const createPropertyValidator = <
           return emptyValidator
         }),
         ...(config.validators ? config.validators : []),
-      ].filter(x => x)
+      ].filter(x => x) as PropertyValidatorComponent<T>[]
       const value = await valueGetter()
       const isRequiredValue = config.required
         ? true
@@ -353,6 +331,7 @@ const createPropertyValidator = <
       }
       const validator = aggregateValidator<T>(value, validators)
       const errors = await validator(
+        // @ts-ignore
         instance,
         instanceData,
         propertyConfiguration
@@ -365,7 +344,7 @@ const createPropertyValidator = <
 
 const createModelValidator = <
   T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>
+  TModel extends Model<T> = Model<T>,
 >(
   validators: PropertyValidators<T, TModel>,
   modelValidators?: readonly ModelValidatorComponent<T, TModel>[]
@@ -373,7 +352,7 @@ const createModelValidator = <
   const _modelValidator = async (
     instance: ModelInstance<T, TModel>,
     propertyConfiguration: ValidatorConfiguration
-  ): Promise<ModelErrors<T, TModel>> => {
+  ): Promise<ModelErrors<T>> => {
     return Promise.resolve().then(async () => {
       if (!instance) {
         throw new Error(`Instance cannot be empty`)
@@ -401,7 +380,7 @@ const createModelValidator = <
         .filter(([, errors]) => Boolean(errors) && errors.length > 0)
         .reduce((acc, [key, errors]) => {
           return merge(acc, { [String(key)]: errors })
-        }, {} as ModelErrors<T, TModel>)
+        }, {} as ModelErrors<T>)
       return modelValidationErrors.length > 0
         ? merge(propertyErrors, { overall: modelValidationErrors })
         : propertyErrors
@@ -410,9 +389,7 @@ const createModelValidator = <
   return _modelValidator
 }
 
-const isValid = <T extends FunctionalModel, TModel extends Model<T>>(
-  errors: ModelErrors<T, TModel>
-) => {
+const isValid = <T extends FunctionalModel>(errors: ModelErrors<T>) => {
   return Object.keys(errors).length < 1
 }
 
@@ -436,7 +413,6 @@ export {
   createPropertyValidator,
   createModelValidator,
   arrayType,
-  referenceTypeMatch,
   isValid,
   TYPE_PRIMITIVES,
 }

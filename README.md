@@ -21,6 +21,7 @@ Functional Models was born out of the enjoyment and power of working with Django
 - Many common properties out of the box.
 - Supports foreign keys, 1 to 1 as well as 1 to many (via an Array).
 - Supports custom primary key name. (id is used by default)
+- Supports different model namings, (plural, singular, display), and the ability to customize them.
 
 ## Simple JavaScript Example Usage
 
@@ -263,15 +264,60 @@ validation requirements, etc.
 
 ### List of Properties Out-Of-The-Box
 
-- UniqueId // A UUID property
-- DateProperty // A property for dates. Includes the ability to "autoNow".
-- ArrayProperty // An array property which can be used to limit types within it.
-- ModelReferenceProperty // A property that references another property. (Think Foreign Key)
-- AdvancedModelReferenceProperty // A more fuller/advanced property for referencing other properties.
-- IntegerProperty // A property for integers.
-- TextProperty // A text or string property.
-- ConstantValueProperty // A property that contains a single, unchanging, static value.
-- NumberProperty // A property for float/number types.
-- ObjectProperty // A property that has a JavaScript object. (Not a foreign key references)
-- EmailProperty // An email property.
-- BooleanProperty // A true or false value property.
+#### UniqueId
+
+A UUID Property.
+
+#### NaturalIdProperty
+
+An id that is composed of other properties on an object. It is "natural" in the sense that it is
+not an arbitrary id, but rather a mixture of properties that make up a unique instance. This is often
+useful for when creating a "key" property.
+
+NOTE: This property is never automatically updated if the properties changed. It is recommended that
+any model that has a NaturalIdProperty should be deleted and then re-created rather than "updated" if
+any property changes that make up the key composition.
+
+#### DateProperty
+
+A property for dates. Includes the ability to "autoNow".
+
+#### ArrayProperty
+
+An array property which can be used to limit types within it.
+
+#### IntegerProperty
+
+A property for integers.
+
+#### TextProperty
+
+A text or string property.
+
+#### ConstantValueProperty
+
+A property that contains a single, unchanging, static value.
+
+#### NumberProperty
+
+A property for float/number types.
+
+#### ObjectProperty
+
+A property that has a JavaScript object. (Not a foreign key references)
+
+#### EmailProperty
+
+An email property.
+
+#### BooleanProperty
+
+A true or false value property.
+
+#### ModelReferenceProperty
+
+A property that references another property. (Think Foreign Key)
+
+#### AdvancedModelReferenceProperty
+
+A more fuller/advanced property for referencing other properties. Useful for typescripting.

@@ -1,7 +1,7 @@
 import AsyncLock from 'async-lock'
 import { createUuid } from './utils'
 
-const lazyValue = (method: Function) => {
+const lazyValue = (method: (...args: any[]) => any) => {
   const key = createUuid()
   const lock = new AsyncLock()
   /* eslint-disable functional/no-let */

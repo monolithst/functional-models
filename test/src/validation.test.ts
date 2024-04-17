@@ -21,7 +21,6 @@ import {
   minTextLength,
   meetsRegex,
   aggregateValidator,
-  referenceTypeMatch,
   emptyValidator,
   createModelValidator,
   createPropertyValidator,
@@ -44,7 +43,9 @@ const TestModel2 = BaseModel('TestModel2', {
 })
 
 const createTestModel3 = (
-  modelValidators: ModelValidatorComponent<{ name: string }>[]
+  modelValidators: ModelValidatorComponent<{
+    name: string
+  }>[]
 ) =>
   BaseModel<{ name: string }>('TestModel3', {
     properties: {
@@ -79,63 +80,6 @@ describe('/src/validation.ts', () => {
     it('should return undefined if a date', () => {
       const actual = isDate(new Date())
       assert.isUndefined(actual)
-    })
-  })
-  describe('#referenceTypeMatch()', () => {
-    it('should return an error if undefined is passed as a value', () => {
-      const myModel = TestModel1.create({})
-      const actual = referenceTypeMatch(TestModel1)(
-        // @ts-ignore
-        undefined,
-        EMPTY_MODEL_INSTANCE,
-        {},
-        {}
-      )
-      assert.isOk(actual)
-    })
-    it('should return an error if null is passed as a value', () => {
-      const myModel = TestModel1.create({})
-      const actual = referenceTypeMatch(TestModel1)(
-        // @ts-ignore
-        null,
-        EMPTY_MODEL_INSTANCE,
-        {},
-        {}
-      )
-      assert.isOk(actual)
-    })
-    it('should allow a function for a model', async () => {
-      const myModel = EMPTY_MODEL.create({})
-      const actual = referenceTypeMatch<EMPTY_MODEL_TYPE>(() => EMPTY_MODEL)(
-        myModel,
-        myModel,
-        await myModel.toObj(),
-        {}
-      )
-      const expected = undefined
-      assert.equal(actual, expected)
-    })
-    it('should validate when the correct object matches the model', async () => {
-      const myModel = EMPTY_MODEL.create({})
-      const actual = referenceTypeMatch<EMPTY_MODEL_TYPE>(EMPTY_MODEL)(
-        myModel,
-        myModel,
-        await myModel.toObj(),
-        {}
-      )
-      const expected = undefined
-      assert.equal(actual, expected)
-    })
-    it('should return an error when the input does not match the model', () => {
-      const myModel = EMPTY_MODEL.create({})
-      const actual = referenceTypeMatch(TestModel1)(
-        // @ts-ignore
-        myModel,
-        myModel,
-        {},
-        {}
-      )
-      assert.isOk(actual)
     })
   })
   describe('#isNumber()', () => {
@@ -355,26 +299,31 @@ describe('/src/validation.ts', () => {
   })
   describe('#emptyValidator()', () => {
     it('should return undefined with a value of 1', () => {
+      // @ts-ignore
       const actual = emptyValidator(1, EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return undefined with a value of "1"', () => {
+      // @ts-ignore
       const actual = emptyValidator('1', EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return undefined with a value of true', () => {
+      // @ts-ignore
       const actual = emptyValidator(true, EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return undefined with a value of false', () => {
+      // @ts-ignore
       const actual = emptyValidator(false, EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
     })
     it('should return undefined with a value of undefined', () => {
+      // @ts-ignore
       const actual = emptyValidator(undefined, EMPTY_MODEL_INSTANCE, {}, {})
       const expected = undefined
       assert.equal(actual, expected)
@@ -415,17 +364,17 @@ describe('/src/validation.ts', () => {
         id: sinon.stub().returns(undefined),
         name: sinon.stub().returns(undefined),
       }
-      const validator = createModelValidator(properties, [modelValidator])
-      await validator(
-        testModel3.create({
-          id: 'test-id',
-          name: 'my-name',
-        }),
-        {
-          id: 'test-id',
-          name: 'my-name',
-        }
-      )
+      const instance = testModel3.create({
+        id: 'test',
+        name: 'my-name',
+      })
+      const validator = createModelValidator<{ name: string }>(properties, [
+        modelValidator,
+      ])
+      await validator(instance, {
+        id: 'test-id',
+        name: 'my-name',
+      })
       sinon.assert.calledOnce(modelValidator)
     })
     it('should pass the instance into the validator as the first argument', async () => {
@@ -435,7 +384,9 @@ describe('/src/validation.ts', () => {
         id: sinon.stub().returns(undefined),
         name: sinon.stub().returns(undefined),
       }
-      const validator = createModelValidator(properties, [modelValidator])
+      const validator = createModelValidator<{ name: string }>(properties, [
+        modelValidator,
+      ])
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -453,7 +404,9 @@ describe('/src/validation.ts', () => {
         id: sinon.stub().returns(undefined),
         name: sinon.stub().returns(undefined),
       }
-      const validator = createModelValidator(properties, [modelValidator])
+      const validator = createModelValidator<{ name: string }>(properties, [
+        modelValidator,
+      ])
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -471,7 +424,9 @@ describe('/src/validation.ts', () => {
         id: sinon.stub().returns(undefined),
         name: sinon.stub().returns(undefined),
       }
-      const validator = createModelValidator(properties, [modelValidator])
+      const validator = createModelValidator<{ name: string }>(properties, [
+        modelValidator,
+      ])
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -480,6 +435,7 @@ describe('/src/validation.ts', () => {
       const expected = {
         overall: ['my-validation-error'],
       }
+      // @ts-ignore
       assert.deepEqual(actual, expected)
     })
     it('should return no errors when two model validators return undefined', async () => {
@@ -490,7 +446,7 @@ describe('/src/validation.ts', () => {
         id: sinon.stub().returns(undefined),
         name: sinon.stub().returns(undefined),
       }
-      const validator = createModelValidator(properties, [
+      const validator = createModelValidator<{ name: string }>(properties, [
         modelValidator1,
         modelValidator2,
       ])
@@ -507,8 +463,12 @@ describe('/src/validation.ts', () => {
         id: sinon.stub().returns(undefined),
         type: sinon.stub().returns(undefined),
       }
-      const validator = createModelValidator(properties)
-      const testModel3 = BaseModel('Model', { properties: {} })
+      const validator = createModelValidator<{ name: string }>(properties)
+      const testModel3 = BaseModel<{ name: string }>('Model', {
+        properties: {
+          name: TextProperty(),
+        },
+      })
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -523,8 +483,12 @@ describe('/src/validation.ts', () => {
         type: sinon.stub().returns(undefined),
         model: sinon.stub().returns(undefined),
       }
-      const validator = createModelValidator(properties)
-      const testModel3 = BaseModel('Model', { properties: {} })
+      const validator = createModelValidator<{ name: string }>(properties)
+      const testModel3 = BaseModel<{ name: string }>('Model', {
+        properties: {
+          name: TextProperty(),
+        },
+      })
       const instance = testModel3.create({
         id: 'test-id',
         name: 'my-name',
@@ -537,8 +501,12 @@ describe('/src/validation.ts', () => {
         id: sinon.stub().returns(['error1']),
         type: sinon.stub().returns(['error2']),
       }
-      const validator = createModelValidator(properties)
-      const testModel3 = BaseModel('Model', { properties: {} })
+      const validator = createModelValidator<{ type: string }>(properties)
+      const testModel3 = BaseModel<{ type: string }>('Model', {
+        properties: {
+          type: TextProperty(),
+        },
+      })
       const instance = testModel3.create({
         id: 'test-id',
         type: 'my-name',
@@ -555,8 +523,12 @@ describe('/src/validation.ts', () => {
         id: sinon.stub().returns(undefined),
         type: sinon.stub().returns(['error2']),
       }
-      const validator = createModelValidator(properties)
-      const testModel3 = BaseModel('Model', { properties: {} })
+      const validator = createModelValidator<{ type: string }>(properties)
+      const testModel3 = BaseModel<{ type: string }>('Model', {
+        properties: {
+          type: TextProperty(),
+        },
+      })
       const instance = testModel3.create({
         id: 'test-id',
         type: 'my-name',
@@ -571,17 +543,24 @@ describe('/src/validation.ts', () => {
   describe('#createPropertyValidator()', () => {
     it('should accept an undefined configuration', async () => {
       // @ts-ignore
-      const validator = createPropertyValidator(() => [], undefined)
+      const validator = createPropertyValidator<{}, EMPTY_MODEL_TYPE>(
+        () => [],
+        undefined
+      )
       const actual = await validator(EMPTY_MODEL_INSTANCE, {}, {})
       const expected: readonly string[] = []
       assert.deepEqual(actual, expected)
     })
 
     it('should accept unhandled configurations without exception', async () => {
-      const validator = createPropertyValidator(() => null, {
-        // @ts-ignore
-        notarealarg: false,
-      })
+      const validator = createPropertyValidator<null, EMPTY_MODEL_TYPE>(
+        () => null,
+        {
+          // @ts-ignore
+          notarealarg: false,
+        }
+      )
+      // @ts-ignore
       const actual = await validator(EMPTY_MODEL_INSTANCE, {}, {})
       const expected: readonly string[] = []
       assert.deepEqual(actual, expected)

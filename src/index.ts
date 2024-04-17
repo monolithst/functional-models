@@ -7,6 +7,5 @@ import * as interfaces from './interfaces'
 
 export * from './models'
 export * from './properties'
-export * from './methods'
 
 export { constants, errors, validation, serialization, utils, interfaces }

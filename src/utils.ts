@@ -39,11 +39,43 @@ const loweredTitleCase = (string: string) => {
   return `${string.slice(0, 1).toLowerCase()}${string.slice(1)}`
 }
 
-function isPromise<T>(something: any): something is Promise<T> {
+const isPromise = <T>(something: any): something is Promise<T> => {
   if (something?.then) {
     return true
   }
   return false
 }
 
-export { loweredTitleCase, toTitleCase, createUuid, isPromise }
+enum PluralEndings {
+  ves = 'fe',
+  ies = 'y',
+  i = 'us',
+  zes = 'ze',
+  ses = 's',
+  es = 'e',
+  s = '',
+}
+const _singularizingRe = new RegExp(
+  `(${Object.keys(PluralEndings).join('|')})$`,
+  'u'
+)
+
+const singularize = (word: string) => {
+  // @ts-ignore
+  return word.replace(_singularizingRe, r => PluralEndings[r])
+}
+
+const createHeadAndTail = (values: readonly string[], joiner: string) => {
+  const head = values[0]
+  const tail = values.slice(1).join(joiner)
+  return [head, tail]
+}
+
+export {
+  loweredTitleCase,
+  toTitleCase,
+  createUuid,
+  isPromise,
+  createHeadAndTail,
+  singularize,
+}
