@@ -1,4 +1,5 @@
 import merge from 'lodash/merge'
+import get from 'lodash/get'
 import {
   createPropertyValidator,
   isType,
@@ -363,6 +364,14 @@ const AdvancedModelReferenceProperty = <
     if (valueIsModelInstance) {
       return _getInstanceReturn(instanceValues)
     }
+
+    // TypedJson?
+    const theModel = _getModel()
+    const primaryKey = theModel.getPrimaryKeyName()
+    if (get(instanceValues, primaryKey)) {
+      return _getInstanceReturn(instanceValues)
+    }
+
     if (config?.fetcher) {
       const id = await _getId(instanceValues)()
       const model = _getModel()

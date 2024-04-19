@@ -7,6 +7,7 @@
   "scripts": {
     "test": "mocha -r ts-node/register test/**/*.test.ts",
     "test:coverage": "nyc npm run test",
+    "test:watch": "nodemon -e '*' --watch test --watch src --exec npm run test:coverage",
     "commit": "cz",
     "feature-tests": "./node_modules/.bin/cucumber-js -p default",
     "coverage": "nyc --all --reporter=lcov npm test",

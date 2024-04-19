@@ -20,6 +20,7 @@ import {
 } from '../../src/properties'
 import { TYPE_PRIMITIVES, arrayType } from '../../src/validation'
 import { BaseModel } from '../../src/models'
+import { isModelInstance } from '../../src/lib'
 import {
   Model,
   ModelFetcher,
@@ -31,8 +32,8 @@ import {
   ValueOptionalR,
   FunctionalModel,
   ModelReference,
+  TypedJsonObj,
 } from '../../src/interfaces'
-import { TypedJsonObj } from '../../src/interfaces'
 
 chai.use(asPromised)
 
@@ -1281,7 +1282,7 @@ describe('/src/properties.ts', () => {
         const expected = null
         assert.equal(actual, expected)
       })
-      it('should return "obj-id" from {}.id when no fetcher is used', async () => {
+      it('should return an object instance TypedJson when no fetcher is used', async () => {
         const actual = await ModelReferenceProperty<TestModelType>(
           TestModel1,
           {}
@@ -1291,8 +1292,7 @@ describe('/src/properties.ts', () => {
           {},
           {} as unknown as ModelInstance<FunctionalModel>
         )()
-        const expected = 'obj-id'
-        assert.equal(actual, expected)
+        assert.isTrue(isModelInstance(actual))
       })
       it('should return 123 from {}.id when no fetcher is used', async () => {
         const actual = await ModelReferenceProperty<TestModelType>(
@@ -1323,6 +1323,35 @@ describe('/src/properties.ts', () => {
         // @ts-ignore
         const actual = await modelInstance?.toObj()
         const expected = 123
+        assert.equal(actual, expected)
+      })
+      it('should return a ModelInstance from TypedJson<T> set as the value', async () => {
+        type MyType = {
+          id: number
+          name: string
+        }
+        const typedJson: TypedJsonObj<MyType> = {
+          id: 5,
+          name: 'My data',
+        }
+        const MyTypesModel = BaseModel<MyType>('MyTypes', {
+          properties: {
+            id: NumberProperty(),
+            name: TextProperty(),
+          },
+        })
+        const modelInstance = await ModelReferenceProperty<MyType>(
+          MyTypesModel,
+          {}
+        ).createGetter(
+          typedJson,
+          // @ts-ignore
+          typedJson,
+          {} as unknown as ModelInstance<FunctionalModel>
+        )()
+        // @ts-ignore
+        const actual = await modelInstance?.toObj()
+        const expected = 5
         assert.equal(actual, expected)
       })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
