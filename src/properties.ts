@@ -1,5 +1,6 @@
 import merge from 'lodash/merge'
 import get from 'lodash/get'
+import { formatDate } from 'date-fns/format'
 import {
   createPropertyValidator,
   isType,
@@ -40,6 +41,8 @@ import {
 
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
+
+const DEFAULT_JUST_DATE_FORMAT = 'yyyy-MM-dd'
 
 const Property = <
   TValue extends Arrayable<FunctionalValue>,
@@ -128,8 +131,36 @@ const Property = <
   return r
 }
 
+/**
+ * Config object for a date property
+ */
+type DatePropertyConfig<T> = PropertyConfig<T> & {
+  /**
+   * A date-fns format.
+   */
+  format?: string
+  isDateOnly?: boolean
+}
+
+/**
+ * Determines if the value is a Date object.
+ * @param value Any value
+ */
+const isDate = (value: any): value is Date => {
+  if (value === null) {
+    return false
+  }
+  return typeof value === 'object' && value.toISOString
+}
+
+/**
+ * A Property for Dates. Both strings and Date objects.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
-  config: PropertyConfig<TModifier> = {},
+  config: DatePropertyConfig<TModifier> = {},
   additionalMetadata = {}
 ) =>
   Property<TModifier>(
@@ -137,11 +168,24 @@ const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
     merge(
       {
         lazyLoadMethod: (value: Arrayable<FunctionalValue>) => {
-          if (!value && config?.autoNow) {
-            return new Date()
+          if (isDate(value)) {
+            if (config.format) {
+              return formatDate(value, config.format)
+            }
+            if (config.isDateOnly) {
+              return formatDate(value, DEFAULT_JUST_DATE_FORMAT)
+            }
+            return value.toISOString()
           }
-          if (typeof value === 'string') {
-            return new Date(value)
+          if (!value && config?.autoNow) {
+            const date = new Date()
+            if (config.format) {
+              return formatDate(date, config.format)
+            }
+            if (config.isDateOnly) {
+              return formatDate(date, DEFAULT_JUST_DATE_FORMAT)
+            }
+            return date.toISOString()
           }
           return value
         },
