@@ -482,7 +482,7 @@ const DenormalizedProperty = <
         if (value !== undefined) {
           return value
         }
-        return calculate(modelData)
+        return calculate(modelData, modelInstance)
       },
     }),
     additionalMetadata
