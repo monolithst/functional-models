@@ -135,13 +135,14 @@ const Property = <
 /**
  * Config object for a date property
  */
-type DatePropertyConfig<T> = PropertyConfig<T> & {
-  /**
-   * A date-fns format.
-   */
-  format?: string
-  isDateOnly?: boolean
-}
+type DatePropertyConfig<T extends Arrayable<FunctionalValue>> =
+  PropertyConfig<T> & {
+    /**
+     * A date-fns format.
+     */
+    format?: string
+    isDateOnly?: boolean
+  }
 
 /**
  * Determines if the value is a Date object.
