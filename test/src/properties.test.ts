@@ -18,6 +18,7 @@ import {
   IntegerProperty,
   EmailProperty,
   NaturalIdProperty,
+  DenormalizedProperty,
 } from '../../src/properties'
 import { TYPE_PRIMITIVES, arrayType } from '../../src/validation'
 import { BaseModel } from '../../src/models'
@@ -35,6 +36,7 @@ import {
   ModelReference,
   TypedJsonObj,
 } from '../../src/interfaces'
+import { PROPERTY_TYPES } from '../../src/constants'
 
 chai.use(asPromised)
 
@@ -47,6 +49,66 @@ const TestModel1 = BaseModel<TestModelType>('TestModel1', {
 })
 
 describe('/src/properties.ts', () => {
+  describe('#DenormalizedProperty()', () => {
+    it('should return "Hello Dolly"', async () => {
+      type Greeting = {
+        name: string
+        greeting: string
+        displayName?: string
+      }
+
+      const displayNameProperty = DenormalizedProperty<string, Greeting>(
+        'TextProperty',
+        (modelData: TypedJsonObj<Greeting>) => {
+          return `${modelData.greeting} ${modelData.name}`
+        }
+      )
+
+      const getter = displayNameProperty.createGetter(
+        // @ts-ignore
+        undefined,
+        {
+          name: 'Dolly',
+          greeting: 'Hello',
+          displayName: undefined,
+        },
+        {}
+      )
+
+      const actual = await getter()
+      const expected = 'Hello Dolly'
+      assert.deepEqual(actual, expected)
+    })
+    it('should return "Hello Dolly" even though it is incorrect because the displayName has been already set', async () => {
+      type Greeting = {
+        name: string
+        greeting: string
+        displayName?: string
+      }
+
+      const displayNameProperty = DenormalizedProperty<string, Greeting>(
+        'TextProperty',
+        (modelData: TypedJsonObj<Greeting>) => {
+          return `${modelData.greeting} ${modelData.name}`
+        }
+      )
+
+      const getter = displayNameProperty.createGetter(
+        'Hello Dolly',
+        {
+          name: 'Fred',
+          greeting: 'Hello',
+          displayName: 'Hello Dolly',
+        },
+        // @ts-ignore
+        {}
+      )
+
+      const actual = await getter()
+      const expected = 'Hello Dolly'
+      assert.deepEqual(actual, expected)
+    })
+  })
   describe('#NaturalIdProperty()', () => {
     it('should NOT throw an exception if a propertyKey returns an undefined value', () => {
       const MyModels = BaseModel<{ id: string; name: string; year: number }>(

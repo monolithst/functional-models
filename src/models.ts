@@ -192,4 +192,6 @@ const BaseModel: ModelFactory = <
   return model as TModel
 }
 
-export { BaseModel }
+const Model = BaseModel
+
+export { BaseModel, Model }

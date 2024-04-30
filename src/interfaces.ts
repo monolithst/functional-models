@@ -187,6 +187,7 @@ type DefaultPropertyValidators = Readonly<{
 type PropertyConfigContents<T extends Arrayable<FunctionalValue>> = Readonly<{
   type?: string
   defaultValue?: T
+  isDenormalized?: boolean
   value?: T
   choices?: readonly VeryPrimitivesTypes[]
   lazyLoadMethod?: <TData extends FunctionalModel>(
@@ -334,6 +335,11 @@ type OptionalModelOptions<
     }>
   | undefined
 
+type CalculateDenormalization<
+  T extends FunctionalValue,
+  TModel extends FunctionalModel,
+> = (modelData: TypedJsonObj<TModel>) => MaybePromise<T>
+
 export {
   MaybeFunction,
   Maybe,
@@ -381,5 +387,6 @@ export {
   JsonObj,
   ValueRequiredR,
   ValueOptionalR,
+  CalculateDenormalization,
 }
 /* eslint-enable no-unused-vars */

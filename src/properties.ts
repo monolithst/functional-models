@@ -28,6 +28,7 @@ import {
   JsonAble,
   PropertyModifier,
   TypedJsonObj,
+  CalculateDenormalization,
 } from './interfaces'
 import {
   getValueForModelInstance,
@@ -85,9 +86,9 @@ const Property = <
       modelData: T,
       instance: TModelInstance
     ): ValueGetter<TValue, T, TModel, TModelInstance> => {
-      const value = getConstantValue()
-      if (value !== undefined) {
-        return () => value
+      const constantValue = getConstantValue()
+      if (constantValue !== undefined) {
+        return () => constantValue
       }
       const defaultValue = getDefaultValue()
       if (
@@ -134,13 +135,14 @@ const Property = <
 /**
  * Config object for a date property
  */
-type DatePropertyConfig<T> = PropertyConfig<T> & {
-  /**
-   * A date-fns format.
-   */
-  format?: string
-  isDateOnly?: boolean
-}
+type DatePropertyConfig<T extends Arrayable<FunctionalValue>> =
+  PropertyConfig<T> & {
+    /**
+     * A date-fns format.
+     */
+    format?: string
+    isDateOnly?: boolean
+  }
 
 /**
  * Determines if the value is a Date object.
@@ -452,6 +454,47 @@ const AdvancedModelReferenceProperty = <
 }
 
 /**
+ * A property for denormalizing values.
+ * @param propertyType
+ * @param calculate
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
+const DenormalizedProperty = <
+  T extends FunctionalValue,
+  TModel extends FunctionalModel,
+>(
+  propertyType: string,
+  calculate: CalculateDenormalization<T, TModel>,
+  config: PropertyConfig<T> = {},
+  additionalMetadata = {}
+) => {
+  const property = Property<T>(
+    propertyType,
+    merge(config, {
+      isDenormalized: true,
+      lazyLoadMethod: async (
+        value: string | undefined,
+        modelData: TModel,
+        modelInstance: ModelInstance<TModel, any>
+      ) => {
+        console.log('I AM HERE')
+        console.log(value)
+        if (value !== undefined) {
+          return value
+        }
+        return calculate(modelData)
+      },
+    }),
+    additionalMetadata
+  )
+  return merge(property, {
+    calculate,
+  })
+}
+
+/**
  * An Id that is naturally formed by the other properties within a model.
  * Instead of having a "globally unique" id the model is unique because
  * the composition of values of properties.
@@ -520,4 +563,5 @@ export {
   ObjectProperty,
   EmailProperty,
   BooleanProperty,
+  DenormalizedProperty,
 }
