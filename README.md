@@ -349,7 +349,7 @@ const Greetings = Model<Greeting>('Greetings', {
   properties: {
     name: TextProperty(),
     greeting: TextProperty(),
-    displayName: DenormalizedProperty<string>("TextProperty", (modelData: TypedJsonObj<Greeting>) => {
+    displayName: DenormalizedProperty<string>("TextProperty", (modelData: Greeting) => {
       return `${modelData.greeting} ${modelData.name}`
     }),
   }

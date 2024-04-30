@@ -19,6 +19,9 @@ import {
   EmailProperty,
   NaturalIdProperty,
   DenormalizedProperty,
+  DenormalizedIntegerProperty,
+  DenormalizedNumberProperty,
+  DenormalizedTextProperty,
 } from '../../src/properties'
 import { TYPE_PRIMITIVES, arrayType } from '../../src/validation'
 import { BaseModel } from '../../src/models'
@@ -49,6 +52,96 @@ const TestModel1 = BaseModel<TestModelType>('TestModel1', {
 })
 
 describe('/src/properties.ts', () => {
+  describe('#DenormalizedTextProperty()', () => {
+    it('should return "Hello Dolly"', async () => {
+      type Greeting = {
+        name: string
+        greeting: string
+        displayName?: string
+      }
+
+      const displayNameProperty = DenormalizedTextProperty<Greeting>(
+        (modelData: TypedJsonObj<Greeting>) => {
+          return `${modelData.greeting} ${modelData.name}`
+        }
+      )
+
+      const getter = displayNameProperty.createGetter(
+        // @ts-ignore
+        undefined,
+        {
+          name: 'Dolly',
+          greeting: 'Hello',
+          displayName: undefined,
+        },
+        {}
+      )
+
+      const actual = await getter()
+      const expected = 'Hello Dolly'
+      assert.deepEqual(actual, expected)
+    })
+  })
+  describe('#DenormalizedNumberProperty()', () => {
+    it('should return 123.456', async () => {
+      type MyType = {
+        x: number
+        y: number
+        calculated?: number
+      }
+
+      const displayNameProperty = DenormalizedNumberProperty<MyType>(
+        (modelData: MyType) => {
+          return modelData.x + modelData.y
+        }
+      )
+
+      const getter = displayNameProperty.createGetter(
+        // @ts-ignore
+        undefined,
+        {
+          x: 123.0,
+          y: 0.456,
+          calculated: undefined,
+        },
+        {}
+      )
+
+      const actual = await getter()
+      const expected = 123.456
+      assert.deepEqual(actual, expected)
+    })
+  })
+  describe('#DenormalizedIntegerProperty()', () => {
+    it('should return 555', async () => {
+      type MyType = {
+        x: number
+        y: number
+        calculated?: number
+      }
+
+      const displayNameProperty = DenormalizedIntegerProperty<MyType>(
+        (modelData: MyType) => {
+          return modelData.x + modelData.y
+        }
+      )
+
+      const getter = displayNameProperty.createGetter(
+        // @ts-ignore
+        undefined,
+        {
+          x: 222,
+          y: 333,
+          calculated: undefined,
+        },
+        {}
+      )
+
+      const actual = await getter()
+      const expected = 555
+      assert.deepEqual(actual, expected)
+    })
+  })
   describe('#DenormalizedProperty()', () => {
     it('should return "Hello Dolly"', async () => {
       type Greeting = {
@@ -59,7 +152,7 @@ describe('/src/properties.ts', () => {
 
       const displayNameProperty = DenormalizedProperty<string, Greeting>(
         'TextProperty',
-        (modelData: TypedJsonObj<Greeting>) => {
+        (modelData: Greeting) => {
           return `${modelData.greeting} ${modelData.name}`
         }
       )
@@ -88,7 +181,7 @@ describe('/src/properties.ts', () => {
 
       const displayNameProperty = DenormalizedProperty<string, Greeting>(
         'TextProperty',
-        (modelData: TypedJsonObj<Greeting>) => {
+        (modelData: Greeting) => {
           return `${modelData.greeting} ${modelData.name}`
         }
       )

@@ -338,7 +338,7 @@ type OptionalModelOptions<
 type CalculateDenormalization<
   T extends FunctionalValue,
   TModel extends FunctionalModel,
-> = (modelData: TypedJsonObj<TModel>) => MaybePromise<T>
+> = (modelData: TModel) => MaybePromise<T>
 
 export {
   MaybeFunction,
