@@ -1,6 +1,7 @@
 import { assert } from 'chai'
 import chai from 'chai'
 import sinon from 'sinon'
+import { UTCDate } from '@date-fns/utc'
 import asPromised from 'chai-as-promised'
 import {
   UniqueId,
@@ -1176,7 +1177,7 @@ describe('/src/properties.ts', () => {
         {} as unknown as ModelInstance<FunctionalModel>
       )
       const actual = await instance()
-      const expected = date
+      const expected = date.toISOString()
       assert.deepEqual(actual, expected)
     })
     it('should return null, if null config is passed and no value created.', async () => {
@@ -1192,17 +1193,99 @@ describe('/src/properties.ts', () => {
       const expected = null
       assert.deepEqual(actual, expected)
     })
-    it('should return a Date object when a string date is passed in', async () => {
+    it('should return a string when a string date is passed in', async () => {
       const proto = DateProperty({})
-      const date = '2020-01-01T00:00:01Z'
+      const date = '2020-01-01T00:00:01.000Z'
       const instance = proto.createGetter(
         date,
         {},
         {} as unknown as ModelInstance<FunctionalModel>
       )
-      const actual = ((await instance()) as Date).toISOString()
+      const actual = await instance()
       const expected = new Date(date).toISOString()
       assert.equal(actual, expected)
+    })
+    it('should return a string when a date object is passed in', async () => {
+      const proto = DateProperty({})
+      const date = new Date('2020-01-01T00:00:01.000Z')
+      const instance = proto.createGetter(
+        date,
+        {},
+        {} as unknown as ModelInstance<FunctionalModel>
+      )
+      const actual = typeof (await instance())
+      const expected = 'string'
+      assert.equal(actual, expected)
+    })
+    it('should return a string when a date object is passed in', async () => {
+      const proto = DateProperty({})
+      const date = new Date('2020-01-01T00:00:01.000Z')
+      const instance = proto.createGetter(
+        date,
+        {},
+        {} as unknown as ModelInstance<FunctionalModel>
+      )
+      const actual = typeof (await instance())
+      const expected = 'string'
+      assert.equal(actual, expected)
+    })
+    it('should return the expected string when a date object is passed in and format is provided', async () => {
+      const proto = DateProperty({
+        format: 'MMMM',
+      })
+      const date = new UTCDate('2020-01-01T00:00:01.000Z')
+      const instance = proto.createGetter(
+        date,
+        {},
+        {} as unknown as ModelInstance<FunctionalModel>
+      )
+      const actual = await instance()
+      const expected = 'January'
+      assert.equal(actual, expected)
+    })
+    it('should return the expected date only string when a date object is passed in and isDateOnly:true', async () => {
+      const proto = DateProperty({
+        isDateOnly: true,
+      })
+      const date = new UTCDate('2020-01-01T00:00:01.000Z')
+      const instance = proto.createGetter(
+        date,
+        {},
+        {} as unknown as ModelInstance<FunctionalModel>
+      )
+      const actual = await instance()
+      const expected = '2020-01-01'
+      assert.equal(actual, expected)
+    })
+    it('should a date string when autoNow, isDateOnly=true and no value is provided', async () => {
+      const proto = DateProperty({
+        isDateOnly: true,
+        autoNow: true,
+      })
+      const instance = proto.createGetter(
+        null,
+        {},
+        {} as unknown as ModelInstance<FunctionalModel>
+      )
+      const actual = (await instance()) as string
+      const re = /[0-9]{4}-[0-9]{2}-[0-9]{2}/g
+      const found = actual.match(re)
+      assert.isOk(found)
+    })
+    it('should formatted string when autoNow, format=yyyy and no value is provided', async () => {
+      const proto = DateProperty({
+        format: 'yyyy',
+        autoNow: true,
+      })
+      const instance = proto.createGetter(
+        null,
+        {},
+        {} as unknown as ModelInstance<FunctionalModel>
+      )
+      const actual = (await instance()) as string
+      const re = /[0-9]{4}/g
+      const found = actual.match(re)
+      assert.isOk(found)
     })
   })
   describe('#AdvancedModelReferenceProperty()', () => {
