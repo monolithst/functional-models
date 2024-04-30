@@ -455,10 +455,10 @@ const AdvancedModelReferenceProperty = <
 
 /**
  * A property for denormalizing values.
- * @param propertyType
- * @param calculate
- * @param config
- * @param additionalMetadata
+ * @param propertyType - A property type.
+ * @param calculate - A function for calculating the denormalized value.
+ * @param config - A Config
+ * @param additionalMetadata _ Any additional metadata.
  * @constructor
  */
 const DenormalizedProperty = <
@@ -479,12 +479,10 @@ const DenormalizedProperty = <
         modelData: TModel,
         modelInstance: ModelInstance<TModel, any>
       ) => {
-        console.log('I AM HERE')
-        console.log(value)
         if (value !== undefined) {
           return value
         }
-        return calculate(modelData)
+        return calculate(modelData, modelInstance)
       },
     }),
     additionalMetadata
@@ -493,6 +491,72 @@ const DenormalizedProperty = <
     calculate,
   })
 }
+
+/**
+ * A Denormalized Property that is for text.
+ * @param calculate - A function that can get a string
+ * @param config - Any configs
+ * @param additionalMetadata - Optional Metadata
+ * @constructor
+ */
+const DenormalizedTextProperty = <T extends FunctionalModel>(
+  calculate: CalculateDenormalization<string, T>,
+  config: PropertyConfig<string> = {},
+  additionalMetadata = {}
+) =>
+  DenormalizedProperty<string, T>(
+    PROPERTY_TYPES.TextProperty,
+    calculate,
+    merge(config, {
+      isString: true,
+      validators: mergeValidators(config, getCommonTextValidators(config)),
+    }),
+    additionalMetadata
+  )
+
+/**
+ * A Denormalized Property that is for numbers.
+ * @param calculate - A function that can get a string
+ * @param config - Any configs
+ * @param additionalMetadata - Optional Metadata
+ * @constructor
+ */
+const DenormalizedNumberProperty = <T extends FunctionalModel>(
+  calculate: CalculateDenormalization<number, T>,
+  config: PropertyConfig<number> = {},
+  additionalMetadata = {}
+) =>
+  DenormalizedProperty<number, T>(
+    PROPERTY_TYPES.NumberProperty,
+    calculate,
+    merge(config, {
+      isNumber: true,
+      validators: mergeValidators(config, getCommonNumberValidators(config)),
+    }),
+    additionalMetadata
+  )
+
+/**
+ * A Denormalized Property that is for integers.
+ * @param calculate - A function that can get a string
+ * @param config - Any configs
+ * @param additionalMetadata - Optional Metadata
+ * @constructor
+ */
+const DenormalizedIntegerProperty = <T extends FunctionalModel>(
+  calculate: CalculateDenormalization<number, T>,
+  config: PropertyConfig<number> = {},
+  additionalMetadata = {}
+) =>
+  DenormalizedProperty<number, T>(
+    PROPERTY_TYPES.IntegerProperty,
+    calculate,
+    merge(config, {
+      isInteger: true,
+      validators: mergeValidators(config, getCommonNumberValidators(config)),
+    }),
+    additionalMetadata
+  )
 
 /**
  * An Id that is naturally formed by the other properties within a model.
@@ -564,4 +628,7 @@ export {
   EmailProperty,
   BooleanProperty,
   DenormalizedProperty,
+  DenormalizedIntegerProperty,
+  DenormalizedNumberProperty,
+  DenormalizedTextProperty,
 }
