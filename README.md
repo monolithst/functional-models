@@ -328,7 +328,12 @@ A value that is calculated and save if it doesn't exist, using other values for 
 
 NOTE: If the value is provided as part of the instance, it is not re-calculated. If you want to re-calculate it, you must use either the property's method `calculate()` method to get the value and replace the existing OR pass in undefined for the property.
 
+<strong>Incremental data creation such as GUI forms:</strong>
+
+If you are incrementally creating and validating model data, such as a GUI form, you should make your denormalization callback understand that there may be properties that are required, but are not present (yet). What this means, is if you need a particular property's value to be part of the denormalization value, but it isn't there, you should check for the value, and if not there, return undefined. This will allow it to be recalculated later.
+
 <strong>A Strong Word of Caution</strong>
+
 Generally, we would recommend not using this as a primary key in a database. However, if you want to use a DenormalizedProperty as primary key in a database and you want to make changes to an instance, you need to delete the previous entry and then recreate it for every update. A dynamic primary key is not tracked between changes.
 
 <strong>Example</strong>
