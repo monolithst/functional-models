@@ -2,6 +2,7 @@ import merge from 'lodash/merge'
 import { toJsonAble } from './serialization'
 import { createModelValidator } from './validation'
 import { UniqueId } from './properties'
+import { lazyValueSync } from './lazy'
 import {
   Model,
   Nullable,
@@ -105,19 +106,19 @@ const BaseModel: ModelFactory = <
     }
     const loadedInternals = Object.entries(modelDefinition.properties).reduce(
       (acc, [key, property]) => {
-        const propertyGetter = () => {
-          return property.createGetter(
+        const propertyGetter = lazyValueSync(() =>
+          property.createGetter(
             // @ts-ignore
             instanceValues[key],
             instanceValues,
             instance
           )()
-        }
+        )
         // @ts-ignore
         const propertyValidator = property.getValidator(propertyGetter)
         const fleshedOutInstanceProperties = {
           get: {
-            [key]: propertyGetter,
+            [key]: () => propertyGetter(),
           },
           validators: {
             [key]: propertyValidator,

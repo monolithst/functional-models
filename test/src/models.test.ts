@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import {
   ModelDefinition,
   ModelReference,
@@ -474,6 +475,23 @@ describe('/src/models.ts', () => {
       })
     })
     describe('#getPrimaryKey()', () => {
+      it('should return the same id if "toObj()" is called first', async () => {
+        const model = BaseModel<{ uuid: string }>('ModelName', {
+          getPrimaryKeyName: () => 'uuid',
+          properties: {
+            uuid: TextProperty({
+              lazyLoadMethod: (value: string) => {
+                return value || (randomUUID() as string)
+              },
+            }),
+          },
+        })
+        //@ts-ignore
+        const instance = model.create({})
+        const expected = await instance.toObj()
+        const actual = await instance.getPrimaryKey()
+        assert.equal(actual, expected.uuid)
+      })
       it('should return the id of a primary key that has a delayed implementation', async () => {
         const model = BaseModel<{ id: string }>('ModelName', {
           properties: {

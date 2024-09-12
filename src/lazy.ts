@@ -1,6 +1,21 @@
 import AsyncLock from 'async-lock'
 import { createUuid } from './utils'
 
+const lazyValueSync = (method: (...args: any[]) => any) => {
+  /* eslint-disable functional/no-let */
+  let value: any = undefined
+  let called = false
+  return (...args: readonly any[]) => {
+    if (!called) {
+      called = true
+      value = method(...args)
+    }
+
+    return value
+  }
+  /* eslint-enable functional/no-let */
+}
+
 const lazyValue = (method: (...args: any[]) => any) => {
   const key = createUuid()
   const lock = new AsyncLock()
@@ -21,4 +36,4 @@ const lazyValue = (method: (...args: any[]) => any) => {
   /* eslint-enable functional/no-let */
 }
 
-export { lazyValue }
+export { lazyValue, lazyValueSync }

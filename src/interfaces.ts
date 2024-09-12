@@ -193,7 +193,7 @@ type PropertyConfigContents<T extends Arrayable<FunctionalValue>> = Readonly<{
   lazyLoadMethod?: <TData extends FunctionalModel>(
     value: T,
     modelData: TData
-  ) => MaybeLazy<T>
+  ) => T | MaybeLazy<T>
   valueSelector?: (instanceValue: MaybePromise<T>) => T
   validators?: readonly PropertyValidatorComponent<any>[]
   maxLength?: number

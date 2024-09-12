@@ -1,4 +1,4 @@
-import chai from 'chai'
+import chai, { assert } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 chai.use(chaiAsPromised)
 import sinon from 'sinon'
@@ -32,8 +32,6 @@ import {
   PropertyValidator,
   PropertyValidatorComponent,
 } from '../../src/interfaces'
-
-const assert = chai.assert
 
 const TestModel1 = BaseModel('TestModel1', {
   properties: {},
