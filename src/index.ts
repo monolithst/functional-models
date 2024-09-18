@@ -7,5 +7,7 @@ import * as interfaces from './interfaces'
 
 export * from './models'
 export * from './properties'
+export * from './validation'
+export * from './errors'
 
 export { constants, errors, validation, serialization, utils, interfaces }
