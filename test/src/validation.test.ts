@@ -29,6 +29,7 @@ import {
   multiValidator,
   isObject,
   objectValidator,
+  optionalValidator,
 } from '../../src/validation'
 import {
   ModelValidatorComponent,
@@ -63,6 +64,37 @@ const EMPTY_MODEL = BaseModel<EMPTY_MODEL_TYPE>('EmptyModel', {
 const EMPTY_MODEL_INSTANCE = EMPTY_MODEL.create({})
 
 describe('/src/validation.ts', () => {
+  describe('#optionalValidator()', () => {
+    it('should return undefined if object is undefined', () => {
+      const instance = optionalValidator((v: any) =>
+        v === 'pass' ? undefined : 'fail'
+      )
+      const actual = instance(undefined)
+      assert.isUndefined(actual)
+    })
+    it('should return undefined if object is null', () => {
+      const instance = optionalValidator((v: any) =>
+        v === 'pass' ? undefined : 'fail'
+      )
+      const actual = instance(null)
+      assert.isUndefined(actual)
+    })
+    it('should return undefined if validator returns nothing', () => {
+      const instance = optionalValidator((v: any) =>
+        v === 'pass' ? undefined : 'fail'
+      )
+      const actual = instance('pass')
+      assert.isUndefined(actual)
+    })
+    it('should return error if validator fails', () => {
+      const instance = optionalValidator((v: any) =>
+        v === 'pass' ? undefined : 'fail'
+      )
+      const actual = instance('not pass')
+      const expected = 'fail'
+      assert.equal(actual, expected)
+    })
+  })
   describe('#objectValidator()', () => {
     it('should return multiple errors if different properties error', () => {
       const keyToValidators = {
@@ -95,8 +127,8 @@ describe('/src/validation.ts', () => {
         myKey: (obj: object) => undefined,
         myKey2: (obj: object) => 'my-error',
       }
-      // @ts-ignore
       const actual = objectValidator({ required: true, keyToValidators })(
+        // @ts-ignore
         undefined
       )
       const expected = 'Must include a value'

@@ -484,6 +484,17 @@ const objectValidator = <T extends object>({
   }
 }
 
+const optionalValidator = <T extends Arrayable<FunctionalValue>>(
+  validator: ValuePropertyValidatorComponent<T>
+): ValuePropertyValidatorComponent<T> => {
+  return (v: T | undefined): string | undefined => {
+    if (v === undefined || v === null) {
+      return undefined
+    }
+    return validator(v)
+  }
+}
+
 export {
   isNumber,
   isBoolean,
@@ -510,4 +521,5 @@ export {
   multiValidator,
   isObject,
   objectValidator,
+  optionalValidator,
 }
