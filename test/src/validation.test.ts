@@ -26,6 +26,9 @@ import {
   createPropertyValidator,
   TYPE_PRIMITIVES,
   referenceTypeMatch,
+  multiValidator,
+  isObject,
+  objectValidator,
 } from '../../src/validation'
 import {
   ModelValidatorComponent,
@@ -60,6 +63,130 @@ const EMPTY_MODEL = BaseModel<EMPTY_MODEL_TYPE>('EmptyModel', {
 const EMPTY_MODEL_INSTANCE = EMPTY_MODEL.create({})
 
 describe('/src/validation.ts', () => {
+  describe('#objectValidator()', () => {
+    it('should return multiple errors if different properties error', () => {
+      const keyToValidators = {
+        myKey: [(obj: object) => undefined, (obj: object) => 'this-error'],
+        myKey2: (obj: object) => 'my-error',
+      }
+      const obj = {
+        myKey: 'my-value',
+        myKey2: 'my-value-2',
+      }
+      const actual = objectValidator({ keyToValidators })(obj)
+      const expected = 'myKey: this-error, myKey2: my-error'
+      assert.equal(actual, expected)
+    })
+    it('should return an error in a multi validator situation', () => {
+      const keyToValidators = {
+        myKey: [(obj: object) => undefined, (obj: object) => 'this-error'],
+        myKey2: (obj: object) => undefined,
+      }
+      const obj = {
+        myKey: 'my-value',
+        myKey2: 'my-value-2',
+      }
+      const actual = objectValidator({ required: true, keyToValidators })(obj)
+      const expected = 'myKey: this-error'
+      assert.equal(actual, expected)
+    })
+    it('should return an error because object is required and is undefined', () => {
+      const keyToValidators = {
+        myKey: (obj: object) => undefined,
+        myKey2: (obj: object) => 'my-error',
+      }
+      // @ts-ignore
+      const actual = objectValidator({ required: true, keyToValidators })(
+        undefined
+      )
+      const expected = 'Must include a value'
+      assert.equal(actual, expected)
+    })
+    it('should return an error if a property fails validation', () => {
+      const keyToValidators = {
+        myKey: (obj: object) => undefined,
+        myKey2: (obj: object) => 'my-error',
+      }
+      const obj = {
+        myKey: 'my-value',
+        myKey2: 'my-value-2',
+      }
+      const actual = objectValidator({ keyToValidators })(obj)
+      const expected = 'myKey2: my-error'
+      assert.equal(actual, expected)
+    })
+    it('should return an error if actually an array', () => {
+      const keyToValidators = {
+        myKey: (obj: object) => undefined,
+        myKey2: (obj: object) => 'my-error',
+      }
+      // @ts-ignore
+      const actual = objectValidator({ keyToValidators })([])
+      const expected = 'Must be an object, but got an array'
+      assert.equal(actual, expected)
+    })
+    it('should return undefined if all validation passes', () => {
+      const keyToValidators = {
+        myKey: (obj: object) => undefined,
+        myKey2: (obj: object) => undefined,
+      }
+      const obj = {
+        myKey: 'my-value',
+        myKey2: 'my-value-2',
+        myKey3: 'not-actually-checked',
+      }
+      const actual = objectValidator({ keyToValidators })(obj)
+      assert.isUndefined(actual)
+    })
+    it('should return undefined if obj is undefined but not required', () => {
+      const keyToValidators = {
+        myKey: (obj: object) => 'would-error',
+        myKey2: (obj: object) => 'would-error-2',
+      }
+      //@ts-ignore
+      const actual = objectValidator({ keyToValidators })(undefined)
+      assert.isUndefined(actual)
+    })
+  })
+  describe('#isObject()', () => {
+    it('should return not an object error if its not an object', () => {
+      // @ts-ignore
+      const actual = isObject(5)
+      const expected = 'Must be a object'
+      assert.equal(actual, expected)
+    })
+    it('should return undefined if its an object', () => {
+      // @ts-ignore
+      const actual = isObject({})
+      assert.isUndefined(actual)
+    })
+    it('should return array error message because the value is an array', () => {
+      // @ts-ignore
+      const actual = isObject([])
+      const expected = 'Must be an object, but got an array'
+      assert.equal(actual, expected)
+    })
+  })
+  describe('#multiValidator()', () => {
+    it('should fail isString check', () => {
+      const validators = [isRequired, isString, minTextLength(5)]
+      // @ts-ignore
+      const actual = multiValidator(validators)(5)
+      const expected = 'Must be a string'
+      assert.equal(actual, expected)
+    })
+    it('should fail minTextLength check', () => {
+      const validators = [isRequired, isString, minTextLength(5)]
+      const actual = multiValidator(validators)('text')
+      const expected = 'The minimum length is 5'
+      assert.equal(actual, expected)
+    })
+    it('should return undefined when all checks pass', () => {
+      const validators = [isRequired, isString, minTextLength(5)]
+      const actual = multiValidator(validators)('text-is-long')
+      assert.isUndefined(actual)
+    })
+  })
   describe('#isDate()', () => {
     it('should return an error if value is null', () => {
       // @ts-ignore

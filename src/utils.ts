@@ -71,6 +71,17 @@ const createHeadAndTail = (values: readonly string[], joiner: string) => {
   return [head, tail]
 }
 
+const flowFindFirst =
+  <T, TResult>(funcs: ((t: T) => undefined | TResult)[]) =>
+  (input: T) => {
+    return funcs.reduce((acc: undefined | TResult, func) => {
+      if (acc) {
+        return acc
+      }
+      return func(input)
+    }, undefined) as string | TResult
+  }
+
 export {
   loweredTitleCase,
   toTitleCase,
@@ -78,4 +89,5 @@ export {
   isPromise,
   createHeadAndTail,
   singularize,
+  flowFindFirst,
 }

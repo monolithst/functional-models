@@ -106,8 +106,8 @@ const Property = <
             modelInstance: TModelInstance
           ) => Promise<TValue>)
         : typeof instanceValue === 'function'
-        ? (instanceValue as () => TValue)
-        : () => instanceValue
+          ? (instanceValue as () => TValue)
+          : () => instanceValue
       const r: ValueGetter<TValue, T, TModel, TModelInstance> = () => {
         const result = method(instanceValue, modelData, instance)
         return valueSelector(result)

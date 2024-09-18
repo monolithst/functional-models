@@ -6,9 +6,64 @@ import {
   createUuid,
   toTitleCase,
   isPromise,
+  flowFindFirst,
 } from '../../src/utils'
 
 describe('/src/utils.ts', () => {
+  describe('#flowFindFirst()', () => {
+    it('should run 2 out of the 3 functions when the first returns undefined, and the second returns a string', () => {
+      const input = [
+        sinon.stub().callsFake(v => (v === 'cat' ? 'cat' : undefined)),
+        sinon.stub().callsFake(v => (v === 'dog' ? 'dog' : undefined)),
+        sinon
+          .stub()
+          .callsFake(v => (v === 'mongoose' ? 'mongoose' : undefined)),
+      ]
+      const input2 = 'dog'
+      const actual = flowFindFirst(input)(input2)
+      assert.isFalse(input[2].called)
+    })
+    it('should return "dog"', () => {
+      const input = [
+        sinon.stub().callsFake(v => (v === 'cat' ? 'cat' : undefined)),
+        sinon.stub().callsFake(v => (v === 'dog' ? 'dog' : undefined)),
+        sinon
+          .stub()
+          .callsFake(v => (v === 'mongoose' ? 'mongoose' : undefined)),
+      ]
+      const input2 = 'dog'
+      const actual = flowFindFirst(input)(input2)
+      const expected = 'dog'
+      assert.equal(actual, expected)
+    })
+    it('should run 3 out of the 3 functions when all of them return undefined', () => {
+      const input = [
+        sinon.stub().callsFake(v => (v === 'cat' ? 'cat' : undefined)),
+        sinon.stub().callsFake(v => (v === 'dog' ? 'dog' : undefined)),
+        sinon
+          .stub()
+          .callsFake(v => (v === 'mongoose' ? 'mongoose' : undefined)),
+      ]
+      const input2 = 'snake'
+      flowFindFirst(input)(input2)
+      const actual = input.reduce((count, func) => (count += func.callCount), 0)
+      const expected = 3
+      assert.equal(actual, expected)
+    })
+    it('should return undefined when all fail', () => {
+      const input = [
+        sinon.stub().callsFake(v => (v === 'cat' ? 'cat' : undefined)),
+        sinon.stub().callsFake(v => (v === 'dog' ? 'dog' : undefined)),
+        sinon
+          .stub()
+          .callsFake(v => (v === 'mongoose' ? 'mongoose' : undefined)),
+      ]
+      const input2 = 'snake'
+      const actual = flowFindFirst(input)(input2)
+      assert.isUndefined(actual)
+    })
+  })
+
   describe('#isPromise()', () => {
     it('should return false if null is passed in', () => {
       const actual = isPromise(null)

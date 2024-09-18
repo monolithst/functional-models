@@ -22,6 +22,16 @@ import {
   MaybeFunction,
   PropertyValidatorComponentTypeAdvanced,
 } from './interfaces'
+import { flowFindFirst } from './utils'
+
+const multiValidator = <T extends Arrayable<FunctionalValue>>(
+  validators: ValuePropertyValidatorComponent<T>[]
+): ValuePropertyValidatorComponent<T> => {
+  const flow = flowFindFirst<T, string>(
+    validators as ((t: T) => undefined | string)[]
+  )
+  return flow as ValuePropertyValidatorComponent<T>
+}
 
 const TYPE_PRIMITIVES = {
   boolean: 'boolean',
@@ -72,6 +82,10 @@ const isType =
 const isNumber = isType<number>('number')
 const isInteger = _trueOrError<number>(Number.isInteger, 'Must be an integer')
 
+const isObject = multiValidator<object>([
+  isType<object>('object'),
+  x => (Array.isArray(x) ? 'Must be an object, but got an array' : undefined),
+])
 const isBoolean = isType<boolean>('boolean')
 const isString = isType<string>('string')
 const isArray = _trueOrError<readonly FunctionalValue[]>(
@@ -427,6 +441,49 @@ const referenceTypeMatch = <
   }
 }
 
+const objectValidator = <T extends object>({
+  required,
+  keyToValidators,
+}: {
+  required?: boolean
+  keyToValidators: {
+    [s: string]:
+      | ValuePropertyValidatorComponent<any>
+      | ValuePropertyValidatorComponent<any>[]
+  }
+}): ValuePropertyValidatorComponent<T> => {
+  return (obj: T) => {
+    if (!obj) {
+      if (required) {
+        return 'Must include a value'
+      }
+      return undefined
+    }
+    const isNotObj = isObject(obj)
+    if (isNotObj) {
+      return isNotObj
+    }
+    return (
+      Object.entries(obj)
+        .reduce((acc, [key, value]) => {
+          const validators = keyToValidators[key]
+          if (!validators) {
+            return acc
+          }
+          const validator = Array.isArray(validators)
+            ? multiValidator(validators)
+            : validators
+          const error = validator(value)
+          if (error) {
+            return acc.concat(`${key}: ${error}`)
+          }
+          return acc
+        }, [] as string[])
+        .join(', ') || undefined
+    )
+  }
+}
+
 export {
   isNumber,
   isBoolean,
@@ -450,4 +507,7 @@ export {
   isValid,
   TYPE_PRIMITIVES,
   referenceTypeMatch,
+  multiValidator,
+  isObject,
+  objectValidator,
 }
