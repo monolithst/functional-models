@@ -6,257 +6,333 @@
 
 Love functional javascript/typescript but still like composing objects/models? This is the library for you.
 
-This library empowers the creation of pure JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused everywhere.
+This library empowers the creation of pure TypeScript/JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused everywhere. Write validation code, metadata, property descriptions, and more! Functional Models is fully supportive of both Typescript and Javascript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete!
 
-This library is fully supportive of both Typescript and Javascript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete! It handles validation as well.
+Functional Models was born out of the enjoyment and power of working with Django models, but, restricting their "god-like abilities" which can cause developers to make a system nearly impossible to optimize or improve.
 
-Functional Models was born out of the enjoyment and power of working with Django models.
+### Version 3 Updates 
+Version 3 is a major update that changes most of the primary interfaces from Version 2. This version should be simpler to extend (see the companion library [Functional Models Orm](https://github.com/monolithst/functional-models-orm)) making models much easier to reuse across front and back ends. Here is a non-exhaustive list.
+- Model/ModelInstance/ModelFactory types have been reworked, so that they are simpler and much easier to extend
+- Some "automagical" stuff has been removed, because experience has shown them to be more of a hassle than they were worth.
+- Interfaces for ModelType/ModelInstance/ModelDefinitions have been reworked
+- API Endpoint information can be added to a ModelDefinition
+- Additional Value Types added for better differentiation downstream. (Date/Datetime, Text/BigText, etc)
+- Removes dependency on date-fns to lighten the install, and prevent duplicate dependencies.
+- Memoized computations to reduce expensive recalculations. 
+- Promise types allowed in model type. (Perfect for asynchronous loaded properties)
 
 # Primary Features
 
-- Define models that have properties, methods, and methods on the model itself.
+- Define models that have robust properties and are scoped to a namespace or app
 - Create instances of models
 - Validate model instances
-- ORM ready via the functional-models-orm package, with DynamoDb, Mongo, in-memory datastores supported.
-- Many common properties out of the box.
+- ORM ready via the functional-models-orm package, with DynamoDb, Mongo, in-memory, elastic/opensearch, sql datastores supported.
+- Most common properties out of the box.
 - Supports foreign keys, 1 to 1 as well as 1 to many (via an Array).
 - Supports custom primary key name. (id is used by default)
 - Supports different model namings, (plural, singular, display), and the ability to customize them.
+- Add endpoint information
+- Robust typing system making seamless data transitions in and out of model format.
 
 ## Simple JavaScript Example Usage
+```javascript
+const {
+  Model,
+  DatetimeProperty,
+  NumberProperty,
+  TextProperty,
+  UniqueIdProperty,
+} = require('functional-models')
 
-    const {
-      BaseModel: Model,
-      DateProperty,
-      NumberProperty,
-      TextProperty,
-    } = require('functional-models')
+// Create your model. Our recommended standard is to use a plural uppercase name for your variable. (You are creating a Model factory)
+const Trucks = Model({
+  pluralName: 'Trucks',
+  namespace: '@my-package/cars',
+  properties: {
+    id: UniqueIdProperty({ required: true }), 
+    make: TextProperty({ maxLength: 20, minLength: 3, required: true}),
+    model: TextProperty({ maxLength: 20, minLength: 3, required: true}),
+    color: TextProperty({
+      maxLength: 10,
+      minLength: 3,
+      choices: ['red', 'green', 'blue', 'black', 'white'],
+    }),
+    year: NumberProperty({ maxValue: 2500, minValue: 1900}),
+    lastModified: DatetimeProperty({ autoNow: true}),
+  }
+})
 
-    // Create your model. Standard is to use a plural name.
-    const Trucks = Model('Trucks', {
-      properties: {
-        // id: UniqueId(), # this property is provided for free!
-        make: TextProperty({ maxLength: 20, minLength: 3, required: true}),
-        model: TextProperty({ maxLength: 20, minLength: 3, required: true}),
-        color: TextProperty({
-          maxLength: 10,
-          minLength: 3,
-          choices: ['red', 'green', 'blue', 'black', 'white'],
-        }),
-        year: NumberProperty({ maxValue: 2500, minValue: 1900}),
-        lastModified: DateProperty({ autoNow: true}),
-      }
-    })
-
-    // Create an instance of the model.
-    const myTruck = Trucks.create({ make: 'Ford', model: 'F-150', color: 'white', year: 2013})
+// Create an instance of the model. In this case, you don't need 'id', because it gets created automatically with UniquePropertyId()
+const myTruck = Trucks.create({ make: 'Ford', model: 'F-150', color: 'white', year: 2013})
 
 
-    // Get the properties of the model instance.
-    console.log(await myTruck.get.id())     // a random uuid NOTE: this is a promise by default
-    console.log(myTruck.get.make())   // 'Ford'
-    console.log(myTruck.get.model())  // 'F-150'
-    console.log(myTruck.get.color())  // 'white'
-    console.log(myTruck.get.year())   // 2013
+// Get the properties of the model instance.
+console.log(myTruck.get.id())     // a auto generated uuid
+console.log(myTruck.get.make())   // 'Ford'
+console.log(myTruck.get.model())  // 'F-150'
+console.log(myTruck.get.color())  // 'white'
+console.log(myTruck.get.year())   // 2013
 
-    // Get a raw javascript object representation of the model.
-    const obj = await myTruck.toObj()
-    console.log(obj)
-    /*
-    {
-      "id": "a-random-uuid",
-      "make": "Ford",
-      "model": "F-150",
-      "color": "white",
-      "year": 2013
-    }
-    */
+// Get a raw javascript object representation of the model.
+const obj = await myTruck.toObj()
+console.log(obj)
+/*
+{
+  "id": "3561e6c5-422d-46c7-954f-f7261b11d3d4",
+  "make": "Ford",
+  "model": "F-150",
+  "color": "white",
+  "year": 2013
+}
+*/
 
-    // Create a copy of the model from the raw javascript object.
-    const sameTruck = Truck.create(obj)
-    console.log(await myTruck.get.id())     // same as above.
-    console.log(myTruck.get.make())   // 'Ford'
-    console.log(myTruck.get.model())  // 'F-150'
-    console.log(myTruck.get.color())  // 'white'
-    console.log(myTruck.get.year())   // 2013
+// Create a copy of the model from the raw javascript object.
+const sameTruck = Truck.create(obj)
+console.log(myTruck.get.id())     // same as above.
+console.log(myTruck.get.make())   // 'Ford'
+console.log(myTruck.get.model())  // 'F-150'
+console.log(myTruck.get.color())  // 'white'
+console.log(myTruck.get.year())   // 2013
 
-    // Validate the model. An empty object, means no errors.
-    const errors = await sameTruck.validate()
-    console.log(errors) // {}
+// Validate the model. Undefined, means no errors.
+const errors = await sameTruck.validate()
+console.log(errors) // undefined
 
-    const newTruck = Truck({ make: 'Ford', model: 'F-150', color: 'white', year: 20130})
-    const errors2 = await newTruck.validate()
-    console.log(errors2)
+const newTruck = Truck({ make: 'Ford', model: 'F-150', color: 'white', year: 20130})
+const errors2 = await newTruck.validate()
+console.log(errors2)
 
-    // Key is the property's name, and an array of validation errors for that property.
-    // {"year": ['Value is too long']}
+// Key is the property's name, and an array of validation errors for that property.
+// {"year": ['Value is too long']}
+```
 
 ## Simple TypeScript Example Usage
 
-While functional-mode3ls works very well and easy without TypeScript, using typescript empowers
+While functional-models works very well and easy without TypeScript, using typescript empowers
 modern code completion engines to show the properties/methods on models and model instances.
-Libraries built ontop of functional-models is encouraged to use TypeScript, while applications,
+Libraries built on top of functional-models is encouraged to use TypeScript, while applications,
 may or may not be as useful, given the overhead of typing. NOTE: Behind the covers functional-models
 typing, is extremely strict, and verbose, which can make it somewhat difficult to work with, but
-it provides the backbone of expressive and clear typing.
+it provides the backbone of expressive and clear typing that "just works" for nearly all situations.
+```typescript
+import {
+  Model,
+  DatetimeProperty,
+  NumberProperty,
+  TextProperty,
+  UniqueIdProperty,
+} from 'functional-models'
 
-    import {
-      BaseModel as Model,
-      DateProperty,
-      NumberProperty,
-      TextProperty,
-    } from 'functional-models'
+// Create an object type. NOTE: Singular Uppercase
+type VehicleMake = {
+  id: string // Our primary key
+  name: string // A simple text name of the maker
+}
 
-    // Create your model's type
-    type TruckType = {
-      /*
-      * id: string # this property is provided for free. No need to put. If using a custom
-      *     primary key, the property needs to be explicit.
-      */
-      make: string,
-      model: string,
-      color: string,
-      year?: number, // NOTE: Clearly indicates a property is optional.
-      lastModified: Date,
-    }
+// Create your main type that has reference to another type.
+type Vehicle = {
+  id: string // Our primary key
+  make: ModelReference<VehicleMake> // A reference to another model.
+  model: string // A simple text field
+  color: Promise<string> // A property that requires asynchronous to create.
+  year?: number // An optional number property. We enforce this is an integer in the Model Definition
+  lastModified?: DateValueType // A Date|string
+  history?: string // A complex text data type.
+}
 
-    // Create your model. Standard is to use a plural name.
-    const Trucks = Model<TruckType>('Trucks', {
-      properties: {
-        // id: UniqueId(), # this property is provided for free!
-        make: TextProperty({ maxLength: 20, minLength: 3, required: true}),
-        model: TextProperty({ maxLength: 20, minLength: 3, required: true}),
-        color: TextProperty({
-          maxLength: 10,
-          minLength: 3,
-          choices: ['red', 'green', 'blue', 'black', 'white'],
-        }),
-        year: NumberProperty({ maxValue: 2500, minValue: 1900}),
-        lastModified: DateProperty({ autoNow: true}),
-      }
-    })
+// Create a model for the VehicleMake type. NOTE: Plural and Uppercase.
+const VehicleMakes = Model<VehicleMake>({
+  pluralName: 'VehicleMakes',
+  namespace: '@my-package/cars',
+  properties: {
+    id: UniqueIdProperty({ required: true }),
+    name: TextProperty({ required: true }),
+  },
+})
 
-    // Create an instance of the model.
-    const myTruck = Trucks.create({ make: 'Ford', model: 'F-150', color: 'white', year: 2013})
+// Create a model for the Vehicle type
+const Vehicles = Model<Vehicle>({
+  pluralName: 'Vehicles',
+  namespace: '@my-package/cars',
+  properties: {
+    id: UniqueIdProperty({ required: true }),
+    model: TextProperty({
+      maxLength: 20,
+      minLength: 3,
+      required: true,
+    }),
+    color: TextProperty({
+      maxLength: 10,
+      minLength: 3,
+      choices: ['red', 'green', 'blue', 'black', 'white'],
+    }),
+    year: IntegerProperty({
+      maxValue: 2500,
+      minValue: 1900,
+    }),
+    make: ModelReferenceProperty<VehicleMake>(VehicleMakes, { required: true }),
+    history: BigTextProperty({ required: false }),
+    lastModified: DatetimeProperty({ autoNow: true }),
+  },
+})
 
-    // Will cause a typescript error because "make" is a string, not a number.
-    const myTruck2 = Trucks.create({ make: 5, model: 'F-150', color: 'white', year: 2013})
+// Create an instance of our Make. NOTE: The 'id' is to tell the create factory to ignore the id field as it is auto-generated.
+const ford = VehicleMakes.create<'id'>({
+  name: 'Ford',
+})
 
-    // Will NOT cause a typescript error because year is optional.
-    const myTruck = Trucks.create({ make: 'Ford', model: 'F-150', color: 'white' })
+// GOOD: Create an instance of the model.
+const myTruck = Vehicles.create<'id'>({
+  make: ford,
+  model: 'F-150',
+  color: 'white',
+  year: 2013,
+})
+
+// GOOD: You can also use the id to set the make
+const myTruck2 = Vehicles.create<'id'>({
+  make: ford.get.id(),
+  model: 'F-150',
+  color: 'white',
+  year: 2013,
+})
+
+// GOOD: Will NOT cause a typescript error because year is optional.
+const myTruck4 = Vehicles.create<'id'>({
+  make: ford,
+  model: 'F-150',
+  color: 'white',
+})
+
+// ERROR: Will cause a typescript error because year must be a string.
+const myTruck3 = Vehicles.create<'id'>({
+  make: ford,
+  model: 'F-150',
+  color: 'white',
+  year: '2013', // must be a string
+})
 
 
-    // Will cause a typescript error because model is not implemented, even though its required.
-    const Trucks2 = Model<TruckType>('Trucks2', {
-      properties: {
-        make: TextProperty({ maxLength: 20, minLength: 3, required: true}),
-        color: TextProperty({
-          maxLength: 10,
-          minLength: 3,
-          choices: ['red', 'green', 'blue', 'black', 'white'],
-        }),
-        year: NumberProperty({ maxValue: 2500, minValue: 1900}),
-        lastModified: DateProperty({ autoNow: true}),
-      }
-    })
-
+```
 ## Validation
 
-Validation is baked into the functional-models framwork. Both individual properties as well as an entire model instance can be covered by validators. The following are the interfaces for a validator. Validation overall is a combination of property validator components as well as model validator components. These components combine together to create a complete validation picture of a model.
+Validation is baked into the functional-models framework. Both individual properties and an entire model instance can be covered by validators. The following are the interfaces for a validator. Validation overall is a combination of property validator components as well as model validator components. These components combine to create a complete validation picture of a model.
 
-Here is an example of a model instance failing validation.
+When calling validate, you either get undefined (for passing), or you get an object that shows you the errors at both the model and the individual property level. 
 
-    // Call .validate() on the model, and await its result.
-    const errors = await myModelInstance.validate()
+Here is an example of validating different model instances:
+```javascript
+// Call .validate() on the instance, and await its result.
+const errors = await myModelInstance.validate()
 
-    console.log(errors)
+console.log(errors)
 
-    /*
-    * {
-    *   "overall": [
-    *     "This is a custom model validator that failed for the entire model",
-    *     "Here is a second model failing message",
-    *   ],
-    *   "aDateProperty": [
-    *     "A value is required",
-    *     "Value is not a date",
-    *   ],
-    *   "anArrayProperty": [
-    *     "BadChoice is not a valid choice",
-    *   ],
-    *   // the 'otherProperty' did not fail, and therefore is not shown here.
-    * }
-    */
+/*
+* {
+*   "overall": [
+*     "This is a custom model validator that failed for the entire model",
+*     "Here is a second model failing message",
+*   ],
+*   "aDateProperty": [
+*     "A value is required",
+*     "Value is not a date",
+*   ],
+*   "anArrayProperty": [
+*     "BadChoice is not a valid choice",
+*   ],
+*   // the 'otherProperty' did not fail, and therefore is not shown here.
+* }
+*/
+
+// Here is one that passes
+const errors2 = await anotherInstance.validate()
+
+console.log(errors)
+/*
+undefined
+*/
+```
 
 ### Property validators
 
-A property validator validates the value of a property. The inputs are the value, a model instance, the JavaScript object representation of the model, and optional configurations that are passed into the validator. The return can either be a string error or undefined if there are no errors. This function can be asynchronous, such as doing database lookups.
+A property validator validates the value of a property. The inputs are the value, a model instance, the JavaScript object representation of the model, and optional configurations that are passed into the validator. The return can either be a string error or undefined if there are no errors. This function can be asynchronous, such as doing database lookups. An implementation in `functional-models-orm` does a "unique together" database query to make sure that only one entry has the value of two or more properties.
+```javascript
+/**
+* An example validator function that only allows the value of 5.
+* @constructor
+* @param {string} value - The value to be tested.
+* @param {string} instance - A model instance, which can be used for cross referencing.
+* @param {string} instanceData - The JavaScript object representation of the model.
+* @param {string} context - An optional context object passed in as part of validating.
+* @return {string|undefined} - If error, returns a string, otherwise returns undefined.
+*/
+const valueIsFiveValidator = (
+  value, // any kind of value.
+  instance, // A ModelInstance,
+  instanceData, // JavaScript object representation,
+  context={}
+) =>  {
+  return value === 5
+    ? undefined
+    : 'Value is not 5'
+}
 
-    /**
-    * An example validator function that only allows the value of 5.
-    * @constructor
-    * @param {string} value - The value to be tested.
-    * @param {string} instance - A model instance, which can be used for cross referencing.
-    * @param {string} instanceData - The JavaScript object representation of the model.
-    * @param {string} configurations - An optional configuration object passed in as part of validating.
-    * @return {string|undefined} - If error, returns a string, otherwise returns undefined.
-    */
-    const valueIsFiveValidator = (
-      value, // any kind of value.
-      instance, // A ModelInstance,
-      instanceData: JavaScript object representation,
-      configurations: {}
-    ) =>  {
-      return value === 5
-        ? undefined
-        : 'Value is not 5'
-    }
+// A simpler more realistic implementation 
+const valueIsFiveValidator2 = (
+  value
+) =>  {
+  return value === 5
+    ? undefined
+    : 'Value is not 5'
+}
 
-    /**
-    * An example async validator function that checks a database using an object passed into the configurations.
-    * @constructor
-    * @param {string} value - The value to be tested.
-    * @param {string} instance - A model instance, which can be used for cross referencing.
-    * @param {string} instanceData - The JavaScript object representation of the model.
-    * @param {string} configurations - An optional configuration object passed in as part of validating.
-    * @return {Promise<string|undefined>} - Returns a promise, If error, returns a string, otherwise returns undefined.
-    */
-    const checkDatabaseError = async (
-      value, // any kind of value.
-      instance, // A ModelInstance,
-      instanceData: JavaScript object representation,
-      configurations: {}
-    ) =>  {
-      const result = await configurations.someDatabaseObj.check(value)
-      if (result) {
-        return 'Some sort of database error'
-      }
-      return undefined
-    }
+/**
+* An example async validator function that checks a database using an object passed into the configurations.
+* @constructor
+* @param {string} value - The value to be tested.
+* @param {string} instance - A model instance, which can be used for cross referencing.
+* @param {string} context - The JavaScript object representation of the model.
+* @param {string} configurations - An optional context object passed in as part of validating.
+* @return {Promise<string|undefined>} - Returns a promise, If error, returns a string, otherwise returns undefined.
+*/
+const checkDatabaseError = async (
+  value, // any kind of value.
+  instance, // A ModelInstance,
+  instanceData, // JavaScript object representation,
+  context={}
+) =>  {
+  const result = await context.someDatabaseObj.check(value)
+  if (result) {
+    return 'Some sort of database error'
+  }
+  return undefined
+}
+```
 
 ### Model Validators
 
 Model validators allows one to check values across a model, ensuring that multiple values work together. The inputs are the model instance, the JavaScript object representation, and optional configurations. The return can either be a string error or undefined if there are no errors. This function can be asynchronous, such as doing database lookups.
 
-    /**
-    * An example model validator that checks to see if two properties have the same value.
-    * @constructor
-    * @param {string} instance - A model instance, used for cross referencing.
-    * @param {string} instanceData - The JavaScript object representation of the model.
-    * @param {string} configurations - An optional configuration object passed in as part of validating.
-    * @return {string|undefined} - If error, returns a string, otherwise returns undefined.
-    */
-    const checkForDuplicateValues = (
-      instance, // A ModelInstance,
-      instanceData: JavaScript object representation,
-      configurations: {}
-    ) =>  {
-      if(instanceData.firstProperty === instanceData.secondProperty) {
-        return 'Both properties must have different values'
-      }
-      return undefined
-    }
-
+```javascript
+/**
+* An example model validator that checks to see if two properties have the same value.
+* @constructor
+* @param {string} instance - A model instance, used for cross referencing.
+* @param {string} instanceData - The JavaScript object representation of the model.
+* @param {string} context - An optional context object passed in as part of validating.
+* @return {string|undefined} - If error, returns a string, otherwise returns undefined.
+*/
+const checkForDuplicateValues = (
+  instance, // A ModelInstance,
+  instanceData, // JavaScript object representation,
+  context={}
+) =>  {
+  if(instanceData.firstProperty === instanceData.secondProperty) {
+    return 'Both properties must have different values'
+  }
+  return undefined
+}
+```
 ## Properties and Custom Properties
 
 There are numerous properties that are supported out of the box that cover most data modeling needs. It is also very easy to create custom properties that encapsulate unique choices
@@ -264,9 +340,9 @@ validation requirements, etc.
 
 ### List of Properties Out-Of-The-Box
 
-#### UniqueId
+#### UniqueIdProperty
 
-A UUID Property.
+A UUID Property that is automatically generated if not provided.
 
 #### NaturalIdProperty
 
@@ -280,7 +356,11 @@ any property changes that make up the key composition.
 
 #### DateProperty
 
-A property for dates. Includes the ability to "autoNow".
+A property for dates (NOT time). Includes the ability to "autoNow".
+
+#### DatetimeProperty
+
+A property for dates with times.
 
 #### ArrayProperty
 

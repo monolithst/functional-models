@@ -7,9 +7,19 @@ import {
   toTitleCase,
   isPromise,
   flowFindFirst,
+  memoizeAsync,
 } from '../../src/utils'
 
 describe('/src/utils.ts', () => {
+  describe('#memoizeAsync()', () => {
+    it('should only call the method passed in once even after two calls', async () => {
+      const method = sinon.stub().returns('hello-world')
+      const instance = memoizeAsync(method)
+      await instance()
+      await instance()
+      sinon.assert.calledOnce(method)
+    })
+  })
   describe('#flowFindFirst()', () => {
     it('should run 2 out of the 3 functions when the first returns undefined, and the second returns a string', () => {
       const input = [

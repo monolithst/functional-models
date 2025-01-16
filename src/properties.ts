@@ -1,35 +1,41 @@
 import merge from 'lodash/merge'
 import get from 'lodash/get'
-import { formatDate } from 'date-fns/format'
 import {
   createPropertyValidator,
   isType,
+  isValidUuid,
+  maxNumber,
   meetsRegex,
+  minNumber,
   referenceTypeMatch,
 } from './validation'
-import { PROPERTY_TYPES } from './constants'
-import { lazyValue } from './lazy'
-import { createHeadAndTail, createUuid } from './utils'
+import {
+  createHeadAndTail,
+  createUuid,
+  memoizeAsync,
+  memoizeSync,
+} from './utils'
 import {
   ModelReference,
   ModelInstance,
   Maybe,
   PrimaryKeyType,
-  Model,
+  ModelType,
   PropertyInstance,
-  FunctionalValue,
+  DataValue,
   PropertyConfig,
   ValueGetter,
   MaybeFunction,
   Arrayable,
   PropertyValidator,
   ModelReferencePropertyInstance,
-  FunctionalModel,
+  DataDescription,
   JsonAble,
-  PropertyModifier,
-  TypedJsonObj,
+  JsonifiedData,
   CalculateDenormalization,
-} from './interfaces'
+  ValueType,
+  DateValueType,
+} from './types'
 import {
   getValueForModelInstance,
   getValueForReferencedModel,
@@ -40,21 +46,20 @@ import {
   isModelInstance,
 } from './lib'
 
+const MAX_YEAR = 3000
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
 
-const DEFAULT_JUST_DATE_FORMAT = 'yyyy-MM-dd'
-
 const Property = <
-  TValue extends Arrayable<FunctionalValue>,
-  T extends FunctionalModel = FunctionalModel,
-  TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
+  TValue extends Arrayable<DataValue>,
+  T extends DataDescription = DataDescription,
+  TModelExtensions extends object = object,
+  TModelInstanceExtensions extends object = object,
 >(
   type: string,
   config: PropertyConfig<TValue> = {},
   additionalMetadata = {}
-): PropertyInstance<TValue, T, TModel, TModelInstance> => {
+): PropertyInstance<TValue, T, TModelExtensions, TModelInstanceExtensions> => {
   if (!type && !config?.type) {
     throw new Error(`Property type must be provided.`)
   }
@@ -74,7 +79,12 @@ const Property = <
     throw new Error(`valueSelector must be a function`)
   }
 
-  const r: PropertyInstance<TValue, T, TModel, TModelInstance> = {
+  const propertyInstance: PropertyInstance<
+    TValue,
+    T,
+    TModelExtensions,
+    TModelInstanceExtensions
+  > = {
     ...additionalMetadata,
     getConfig: () => config || {},
     getChoices,
@@ -84,8 +94,8 @@ const Property = <
     createGetter: (
       instanceValue: TValue,
       modelData: T,
-      instance: TModelInstance
-    ): ValueGetter<TValue, T, TModel, TModelInstance> => {
+      instance: ModelInstance<T, TModelExtensions, TModelInstanceExtensions>
+    ): ValueGetter<TValue, T, TModelExtensions, TModelInstanceExtensions> => {
       const constantValue = getConstantValue()
       if (constantValue !== undefined) {
         return () => constantValue
@@ -99,51 +109,67 @@ const Property = <
       }
 
       const method = lazyLoadMethod
-        ? // eslint-disable-next-line no-unused-vars
-          (lazyValue(lazyLoadMethod) as (
-            value: TValue,
-            modelData: T,
-            modelInstance: TModelInstance
-          ) => Promise<TValue>)
-        : typeof instanceValue === 'function'
-          ? (instanceValue as () => TValue)
-          : () => instanceValue
-      const r: ValueGetter<TValue, T, TModel, TModelInstance> = () => {
-        const result = method(instanceValue, modelData, instance)
+        ? lazyLoadMethod
+        : config.lazyLoadMethodAtomic
+          ? memoizeAsync(config.lazyLoadMethodAtomic)
+          : typeof instanceValue === 'function'
+            ? (instanceValue as () => TValue)
+            : () => instanceValue
+      const valueGetter: ValueGetter<
+        TValue,
+        T,
+        TModelExtensions,
+        TModelInstanceExtensions
+      > = memoizeSync(() => {
+        // @ts-ignore
+        const result: TValue | Promise<TValue> = method(
+          instanceValue,
+          modelData,
+          // @ts-ignore
+          instance
+        )
         return valueSelector(result)
-      }
-      return r
+      })
+      return valueGetter
     },
     getValidator: (
-      valueGetter: ValueGetter<TValue, T, TModel, TModelInstance>
+      valueGetter: ValueGetter<
+        TValue,
+        T,
+        TModelExtensions,
+        TModelInstanceExtensions
+      >
     ) => {
       const validator = createPropertyValidator(valueGetter, config)
       const _propertyValidatorWrapper: PropertyValidator<
-        T,
-        TModel,
-        TModelInstance
+        T
         // eslint-disable-next-line functional/prefer-tacit
-      > = async (instance, instanceData, propertyConfiguration) => {
-        // @ts-ignore
-        return validator<TModel>(instance, instanceData, propertyConfiguration)
+      > = async (instanceData, propertyConfiguration) => {
+        return validator(instanceData, propertyConfiguration)
       }
       return _propertyValidatorWrapper
     },
   }
-  return r
+  return propertyInstance
 }
 
 /**
  * Config object for a date property
  */
-type DatePropertyConfig<T extends Arrayable<FunctionalValue>> =
-  PropertyConfig<T> & {
-    /**
-     * A date-fns format.
-     */
-    format?: string
-    isDateOnly?: boolean
-  }
+type DatePropertyConfig<T extends Arrayable<DataValue>> = PropertyConfig<T> & {
+  /**
+   * A function that can format the date into a string.
+   * Can use date-fns, moment, or any other function.
+   * @param date - The date will be a date object
+   * @param format - The format property passed in if provided.
+   */
+  formatFunction?: (date: Date, format?: string) => string
+  /**
+   * The format the date should be in. This is a framework agnostic format, and should be based on your format function.
+   * NOTE: If a formatFunction is not provided, this is completely ignored. For dates YYYY/MM/DD is the default and for Datetimes it is ISOString()
+   */
+  format?: string
+}
 
 /**
  * Determines if the value is a Date object.
@@ -162,31 +188,55 @@ const isDate = (value: any): value is Date => {
  * @param additionalMetadata
  * @constructor
  */
-const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
-  config: DatePropertyConfig<TModifier> = {},
+const DateProperty = (
+  config: DatePropertyConfig<DateValueType> = {},
   additionalMetadata = {}
 ) =>
-  Property<TModifier>(
-    PROPERTY_TYPES.DateProperty,
+  Property<DateValueType>(
+    ValueType.Date,
     merge(
       {
-        lazyLoadMethod: (value: Arrayable<FunctionalValue>) => {
+        lazyLoadMethod: (value: Arrayable<DataValue>) => {
           if (isDate(value)) {
-            if (config.format) {
-              return formatDate(value, config.format)
+            if (config.formatFunction) {
+              return config.formatFunction(value, config.format)
             }
-            if (config.isDateOnly) {
-              return formatDate(value, DEFAULT_JUST_DATE_FORMAT)
+            return value.toISOString().split('T')[0]
+          }
+          if (!value && config?.autoNow) {
+            const date = new Date()
+            if (config.formatFunction) {
+              return config.formatFunction(date, config.format)
+            }
+            return date.toISOString().split('T')[0]
+          }
+          return value
+        },
+      },
+      config
+    ),
+    additionalMetadata
+  )
+
+const DatetimeProperty = (
+  config: DatePropertyConfig<DateValueType> = {},
+  additionalMetadata = {}
+) =>
+  Property<DateValueType>(
+    ValueType.Datetime,
+    merge(
+      {
+        lazyLoadMethod: (value: Arrayable<DataValue>) => {
+          if (isDate(value)) {
+            if (config.formatFunction) {
+              return config.formatFunction(value, config.format)
             }
             return value.toISOString()
           }
           if (!value && config?.autoNow) {
             const date = new Date()
-            if (config.format) {
-              return formatDate(date, config.format)
-            }
-            if (config.isDateOnly) {
-              return formatDate(date, DEFAULT_JUST_DATE_FORMAT)
+            if (config.formatFunction) {
+              return config.formatFunction(date, config.format)
             }
             return date.toISOString()
           }
@@ -198,12 +248,12 @@ const DateProperty = <TModifier extends PropertyModifier<Date | string>>(
     additionalMetadata
   )
 
-const ArrayProperty = <T extends FunctionalValue>(
+const ArrayProperty = <T extends DataValue>(
   config = {},
   additionalMetadata = {}
 ) =>
   Property<readonly T[]>(
-    PROPERTY_TYPES.ArrayProperty,
+    ValueType.Array,
     {
       defaultValue: [],
       ...config,
@@ -212,107 +262,162 @@ const ArrayProperty = <T extends FunctionalValue>(
     additionalMetadata
   )
 
-const ObjectProperty = <
-  TModifier extends PropertyModifier<Readonly<{ [s: string]: JsonAble }>>,
->(
+const ObjectProperty = <TModifier extends Readonly<Record<string, JsonAble>>>(
   config = {},
   additionalMetadata = {}
 ) =>
   Property<TModifier>(
-    PROPERTY_TYPES.ObjectProperty,
+    ValueType.Object,
     merge(config, {
-      validators: mergeValidators(config, [isType('object')]),
+      validators: mergeValidators(config, isType('object')),
     }),
     additionalMetadata
   )
 
-const TextProperty = <TModifier extends PropertyModifier<string>>(
-  config: PropertyConfig<TModifier> = {},
+/**
+ * A simple text property. If its possible to put ALOT of text in this field consider using the {@link BigTextProperty}
+ * @param config - Additional Configurations
+ * @param additionalMetadata - Additional Metadata
+ * @constructor
+ */
+const TextProperty = (
+  config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
-  Property<TModifier>(
-    PROPERTY_TYPES.TextProperty,
+  Property<string>(
+    ValueType.Text,
     merge(config, {
       isString: true,
-      validators: mergeValidators(config, getCommonTextValidators(config)),
+      validators: mergeValidators(config, ...getCommonTextValidators(config)),
     }),
     additionalMetadata
   )
 
-const IntegerProperty = <TModifier extends PropertyModifier<number>>(
-  config: PropertyConfig<TModifier> = {},
+/**
+ * A property for large blocks of strings.
+ * @param config - Additional configurations
+ * @param additionalMetadata - Additional metadata
+ * @constructor
+ */
+const BigTextProperty = (
+  config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
-  Property<TModifier>(
-    PROPERTY_TYPES.IntegerProperty,
+  Property<string>(
+    ValueType.BigText,
+    merge(config, {
+      isString: true,
+      validators: mergeValidators(config, ...getCommonTextValidators(config)),
+    }),
+    additionalMetadata
+  )
+
+const IntegerProperty = (
+  config: PropertyConfig<number> = {},
+  additionalMetadata = {}
+) =>
+  Property<number>(
+    ValueType.Integer,
     merge(config, {
       isInteger: true,
-      validators: mergeValidators(config, getCommonNumberValidators(config)),
+      validators: mergeValidators(config, ...getCommonNumberValidators(config)),
     }),
     additionalMetadata
   )
 
-const NumberProperty = <TModifier extends PropertyModifier<number>>(
-  config: PropertyConfig<TModifier> = {},
+/**
+ * An integer property that represents a year. NOTE: This is exclusively focused on a year in a modern context.
+ * Validates from 0 to 3000
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
+const YearProperty = (
+  config: PropertyConfig<number> = {},
   additionalMetadata = {}
 ) =>
-  Property<TModifier>(
-    PROPERTY_TYPES.NumberProperty,
+  Property<number>(
+    ValueType.Integer,
+    merge(config, {
+      isInteger: true,
+      validators: mergeValidators(config, ...getCommonNumberValidators(config)),
+    }),
+    additionalMetadata
+  )
+
+const NumberProperty = (
+  config: PropertyConfig<number> = {},
+  additionalMetadata = {}
+) =>
+  Property<number>(
+    ValueType.Number,
     merge(config, {
       isNumber: true,
-      validators: mergeValidators(config, getCommonNumberValidators(config)),
+      validators: mergeValidators(
+        config,
+        ...getCommonNumberValidators(config),
+        minNumber(0),
+        maxNumber(MAX_YEAR)
+      ),
     }),
     additionalMetadata
   )
 
-const ConstantValueProperty = <
-  TModifier extends PropertyModifier<FunctionalValue>,
->(
-  value: TModifier,
-  config: PropertyConfig<TModifier> = {},
+const ConstantValueProperty = <TDataValue extends Arrayable<DataValue>>(
+  valueType: ValueType,
+  value: TDataValue,
+  config: PropertyConfig<TDataValue> = {},
   additionalMetadata = {}
 ) =>
-  Property<TModifier>(
-    PROPERTY_TYPES.ConstantValueProperty,
+  Property<TDataValue>(
+    valueType,
     merge(config, {
       value,
     }),
     additionalMetadata
   )
 
-const EmailProperty = <TModifier extends PropertyModifier<string>>(
-  config: PropertyConfig<TModifier> = {},
+const EmailProperty = (
+  config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
-  TextProperty<TModifier>(
+  TextProperty(
     merge(config, {
-      type: PROPERTY_TYPES.EmailProperty,
-      validators: mergeValidators(config, [meetsRegex(EMAIL_REGEX)]),
+      type: ValueType.Email,
+      validators: mergeValidators(config, meetsRegex(EMAIL_REGEX)),
     }),
     additionalMetadata
   )
 
-const BooleanProperty = <TModifier extends PropertyModifier<boolean>>(
-  config: PropertyConfig<TModifier> = {},
+const BooleanProperty = (
+  config: PropertyConfig<boolean> = {},
   additionalMetadata = {}
 ) =>
-  Property<TModifier>(
-    PROPERTY_TYPES.BooleanProperty,
+  Property<boolean>(
+    ValueType.Boolean,
     merge(config, {
       isBoolean: true,
     }),
     additionalMetadata
   )
 
-const UniqueId = <TModifier extends PropertyModifier<string>>(
-  config: PropertyConfig<TModifier> = {},
+/**
+ * A property that creates and represents uuids. Equipped with a validator and automatically generates if not provided.
+ * @param config - Additional configurations. If you want to use this for primary keys look at {@link PrimaryKeyUuidProperty}
+ * @param additionalMetadata - Any additional metadata.
+ * @constructor
+ */
+const UniqueIdProperty = (
+  config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
-  Property<TModifier>(
-    PROPERTY_TYPES.UniqueId,
+  Property<string>(
+    ValueType.UniqueId,
     merge(
       {
-        lazyLoadMethod: (value: Arrayable<FunctionalValue>) => {
+        isString: true,
+        validators: mergeValidators(config, isValidUuid),
+        lazyLoadMethod: (value: Arrayable<DataValue>) => {
           if (!value) {
             return createUuid()
           }
@@ -324,33 +429,34 @@ const UniqueId = <TModifier extends PropertyModifier<string>>(
     additionalMetadata
   )
 
-const ModelReferenceProperty = <
-  T extends FunctionalModel,
-  TModifier extends PropertyModifier<ModelReference<T>> = PropertyModifier<
-    ModelReference<T>
-  >,
->(
-  model: MaybeFunction<Model<T>>,
-  config: PropertyConfig<TModifier> = {},
+/**
+ * A UniqueIdProperty that is used for Primary Keys. This adds the { required: true } that is so common.
+ * @param config - Additional configurations. NOTE: required is ALWAYS true.
+ * @param additionalMetadata - Any additional metadata.
+ * @constructor
+ */
+const PrimaryKeyUuidProperty = (
+  config: PropertyConfig<string> = {},
   additionalMetadata = {}
-) =>
-  AdvancedModelReferenceProperty<
-    T,
-    Model<T>,
-    ModelInstance<T, Model<T>>,
-    TModifier
-  >(model, config, additionalMetadata)
+) => UniqueIdProperty(merge(config, { required: true }, additionalMetadata))
+
+const ModelReferenceProperty = <T extends DataDescription>(
+  model: MaybeFunction<ModelType<T>>,
+  config: PropertyConfig<ModelReference<T>> = {},
+  additionalMetadata = {}
+) => AdvancedModelReferenceProperty<T>(model, config, additionalMetadata)
 
 const AdvancedModelReferenceProperty = <
-  T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
-  TModifier extends PropertyModifier<ModelReference<T>> = PropertyModifier<
-    ModelReference<T>
-  >,
+  T extends DataDescription,
+  TModelExtensions extends object = object,
+  TModelInstanceExtensions extends object = object,
 >(
-  model: MaybeFunction<TModel>,
-  config: PropertyConfig<TModifier> = {},
+  model: MaybeFunction<
+    ModelType<T, TModelExtensions, TModelInstanceExtensions>
+  >,
+  config: PropertyConfig<
+    ModelReference<T, TModelExtensions, TModelInstanceExtensions>
+  > = {},
   additionalMetadata = {}
 ) => {
   if (!model) {
@@ -364,17 +470,20 @@ const AdvancedModelReferenceProperty = <
     return model
   }
 
-  const validator = referenceTypeMatch<T, TModel, TModelInstance>(model)
-  const validators = mergeValidators(config, [
-    // @ts-ignore
-    validator,
-  ])
+  // @ts-ignore
+  const validator = referenceTypeMatch(model)
+  const validators = mergeValidators(config, validator)
 
   const _getId =
-    (instanceValues: ModelReference<T, TModel> | TModifier) =>
+    (
+      instanceValues: ModelReference<
+        T,
+        ModelType<T, TModelExtensions, TModelInstanceExtensions>
+      >
+    ) =>
     (): Maybe<PrimaryKeyType> => {
       if (!instanceValues) {
-        return null
+        return undefined
       }
       if (typeof instanceValues === 'number') {
         return instanceValues
@@ -382,28 +491,49 @@ const AdvancedModelReferenceProperty = <
       if (typeof instanceValues === 'string') {
         return instanceValues
       }
-      if ((instanceValues as TModelInstance).getPrimaryKey) {
-        return (instanceValues as TModelInstance).getPrimaryKey()
+      if (
+        (
+          instanceValues as ModelInstance<
+            T,
+            TModelExtensions,
+            TModelInstanceExtensions
+          >
+        ).getPrimaryKey
+      ) {
+        return (
+          instanceValues as ModelInstance<
+            T,
+            TModelExtensions,
+            TModelInstanceExtensions
+          >
+        ).getPrimaryKey()
       }
 
       const theModel = _getModel()
-      const primaryKey = theModel.getPrimaryKeyName()
+      const primaryKey = theModel.getModelDefinition().primaryKeyName
 
-      return (instanceValues as TypedJsonObj<T>)[primaryKey] as PrimaryKeyType
+      return (instanceValues as JsonifiedData<T>)[primaryKey] as PrimaryKeyType
     }
 
-  const lazyLoadMethod = async (instanceValues: TModifier) => {
+  const lazyLoadMethodAtomic = async (
+    instanceValues: ModelReference<
+      T,
+      TModelExtensions,
+      TModelInstanceExtensions
+    >
+  ) => {
     const valueIsModelInstance = isModelInstance(instanceValues)
-    const _getInstanceReturn = (objToUse: TModifier) => {
+
+    const _getInstanceReturn = (objToUse: ModelReference<T>) => {
       // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
       const objIsModelInstance = isModelInstance(objToUse)
-      // @ts-ignore
       const instance = objIsModelInstance
         ? objToUse
-        : _getModel().create(objToUse as TypedJsonObj<T>)
+        : // @ts-ignore
+          _getModel().create(objToUse as JsonifiedData<T>)
       // We are replacing the toObj function, because the reference type in the end should be the primary key when serialized.
       return merge({}, instance, {
-        toObj: _getId(instanceValues),
+        toObj: memoizeAsync(_getId(instanceValues)),
       })
     }
 
@@ -414,7 +544,7 @@ const AdvancedModelReferenceProperty = <
 
     // TypedJson?
     const theModel = _getModel()
-    const primaryKey = theModel.getPrimaryKeyName()
+    const primaryKey = theModel.getModelDefinition().primaryKeyName
     if (get(instanceValues, primaryKey)) {
       return _getInstanceReturn(instanceValues)
     }
@@ -423,8 +553,8 @@ const AdvancedModelReferenceProperty = <
       const id = await _getId(instanceValues)()
       const model = _getModel()
       if (id !== null && id !== undefined) {
-        const obj = await config.fetcher<T>(model, id)
-        return _getInstanceReturn(obj as TModifier)
+        const obj = await config.fetcher(model, id)
+        return _getInstanceReturn(obj as ModelReference<T>)
       }
       return null
     }
@@ -433,21 +563,25 @@ const AdvancedModelReferenceProperty = <
 
   const p: ModelReferencePropertyInstance<
     T,
-    TModifier,
-    TModel,
-    TModelInstance
+    ModelReference<T, TModelExtensions, TModelInstanceExtensions>,
+    TModelExtensions,
+    TModelInstanceExtensions
   > = merge(
-    Property<TModifier>(
-      PROPERTY_TYPES.ReferenceProperty,
+    Property<ModelReference<T, TModelExtensions, TModelInstanceExtensions>>(
+      ValueType.Reference,
       merge({}, config, {
         validators,
-        lazyLoadMethod,
+        lazyLoadMethodAtomic,
       }),
       additionalMetadata
     ),
     {
-      getReferencedId: (instanceValues: ModelReference<T, TModel>) =>
-        _getId(instanceValues)(),
+      getReferencedId: (
+        instanceValues: ModelReference<
+          T,
+          ModelType<T, TModelExtensions, TModelInstanceExtensions>
+        >
+      ) => _getId(instanceValues)(),
       getReferencedModel: _getModel,
     }
   )
@@ -463,22 +597,22 @@ const AdvancedModelReferenceProperty = <
  * @constructor
  */
 const DenormalizedProperty = <
-  T extends FunctionalValue,
-  TModel extends FunctionalModel,
+  TValue extends DataValue,
+  T extends DataDescription,
 >(
   propertyType: string,
-  calculate: CalculateDenormalization<T, TModel>,
-  config: PropertyConfig<T> = {},
+  calculate: CalculateDenormalization<TValue, T>,
+  config: PropertyConfig<TValue> = {},
   additionalMetadata = {}
 ) => {
-  const property = Property<T>(
+  const property = Property<TValue>(
     propertyType,
     merge(config, {
       isDenormalized: true,
-      lazyLoadMethod: async (
+      lazyLoadMethodAtomic: async (
         value: string | undefined,
-        modelData: TModel,
-        modelInstance: ModelInstance<TModel, any>
+        modelData: T,
+        modelInstance: ModelInstance<T, any>
       ) => {
         if (value !== undefined) {
           return value
@@ -500,17 +634,17 @@ const DenormalizedProperty = <
  * @param additionalMetadata - Optional Metadata
  * @constructor
  */
-const DenormalizedTextProperty = <T extends FunctionalModel>(
+const DenormalizedTextProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<string, T>,
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
   DenormalizedProperty<string, T>(
-    PROPERTY_TYPES.TextProperty,
+    ValueType.Text,
     calculate,
     merge(config, {
       isString: true,
-      validators: mergeValidators(config, getCommonTextValidators(config)),
+      validators: mergeValidators(config, ...getCommonTextValidators(config)),
     }),
     additionalMetadata
   )
@@ -522,17 +656,17 @@ const DenormalizedTextProperty = <T extends FunctionalModel>(
  * @param additionalMetadata - Optional Metadata
  * @constructor
  */
-const DenormalizedNumberProperty = <T extends FunctionalModel>(
+const DenormalizedNumberProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<number, T>,
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
 ) =>
   DenormalizedProperty<number, T>(
-    PROPERTY_TYPES.NumberProperty,
+    ValueType.Number,
     calculate,
     merge(config, {
       isNumber: true,
-      validators: mergeValidators(config, getCommonNumberValidators(config)),
+      validators: mergeValidators(config, ...getCommonNumberValidators(config)),
     }),
     additionalMetadata
   )
@@ -544,17 +678,17 @@ const DenormalizedNumberProperty = <T extends FunctionalModel>(
  * @param additionalMetadata - Optional Metadata
  * @constructor
  */
-const DenormalizedIntegerProperty = <T extends FunctionalModel>(
+const DenormalizedIntegerProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<number, T>,
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
 ) =>
   DenormalizedProperty<number, T>(
-    PROPERTY_TYPES.IntegerProperty,
+    ValueType.Integer,
     calculate,
     merge(config, {
       isInteger: true,
-      validators: mergeValidators(config, getCommonNumberValidators(config)),
+      validators: mergeValidators(config, ...getCommonNumberValidators(config)),
     }),
     additionalMetadata
   )
@@ -575,20 +709,20 @@ const DenormalizedIntegerProperty = <T extends FunctionalModel>(
  * @param additionalMetadata
  * @constructor
  */
-const NaturalIdProperty = <TModifier extends PropertyModifier<string>>(
+const NaturalIdProperty = (
   propertyKeys: readonly string[],
   joiner: string,
-  config: PropertyConfig<TModifier> = {},
+  config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
-  Property<TModifier>(
-    PROPERTY_TYPES.TextProperty,
+  Property<string>(
+    ValueType.Text,
     merge(config, {
       isString: true,
-      validators: mergeValidators(config, getCommonTextValidators(config)),
-      lazyLoadMethod: async (
+      validators: mergeValidators(config, ...getCommonTextValidators(config)),
+      lazyLoadMethodAtomic: async (
         value: string | undefined,
-        model: FunctionalModel,
+        model: DataDescription,
         modelInstance: ModelInstance<any>
       ) => {
         const data = await propertyKeys.reduce(async (accP, key) => {
@@ -609,15 +743,12 @@ const NaturalIdProperty = <TModifier extends PropertyModifier<string>>(
     additionalMetadata
   )
 
-// We are adding this here to normalize the name, while maintaining backwards compatability.
-const UniqueIdProperty = UniqueId
-
 export {
   Property,
   NaturalIdProperty,
-  UniqueId,
   UniqueIdProperty,
   DateProperty,
+  DatetimeProperty,
   ArrayProperty,
   ModelReferenceProperty,
   AdvancedModelReferenceProperty,
@@ -632,4 +763,7 @@ export {
   DenormalizedIntegerProperty,
   DenormalizedNumberProperty,
   DenormalizedTextProperty,
+  BigTextProperty,
+  YearProperty,
+  PrimaryKeyUuidProperty,
 }

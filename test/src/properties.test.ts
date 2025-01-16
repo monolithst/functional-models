@@ -1,52 +1,56 @@
 import { assert } from 'chai'
-import chai from 'chai'
+import * as chai from 'chai'
 import sinon from 'sinon'
-import { UTCDate } from '@date-fns/utc'
 import asPromised from 'chai-as-promised'
 import {
-  UniqueId,
-  Property,
-  DateProperty,
-  BooleanProperty,
-  ModelReferenceProperty,
   AdvancedModelReferenceProperty,
   ArrayProperty,
+  BooleanProperty,
   ConstantValueProperty,
-  ObjectProperty,
-  NumberProperty,
-  TextProperty,
-  IntegerProperty,
-  EmailProperty,
-  NaturalIdProperty,
-  DenormalizedProperty,
+  DatetimeProperty,
+  DateProperty,
   DenormalizedIntegerProperty,
   DenormalizedNumberProperty,
+  DenormalizedProperty,
   DenormalizedTextProperty,
+  EmailProperty,
+  IntegerProperty,
+  ModelReferenceProperty,
+  NaturalIdProperty,
+  NumberProperty,
+  ObjectProperty,
+  Property,
+  TextProperty,
+  UniqueIdProperty,
+  BigTextProperty,
 } from '../../src/properties'
-import { TYPE_PRIMITIVES, arrayType } from '../../src/validation'
-import { BaseModel } from '../../src/models'
+import { arrayType } from '../../src/validation'
+import { Model } from '../../src/models'
 import { isModelInstance } from '../../src/lib'
 import {
-  Model,
-  ModelFetcher,
+  DataDescription,
+  ModelInstanceFetcher,
   ModelInstance,
-  PrimaryKeyType,
-  ValueOptional,
-  ValueRequired,
-  ValueRequiredR,
-  ValueOptionalR,
-  FunctionalModel,
   ModelReference,
-  TypedJsonObj,
-} from '../../src/interfaces'
-import { PROPERTY_TYPES } from '../../src/constants'
+  ModelType,
+  PrimaryKeyType,
+  JsonifiedData,
+  ValueOptional,
+  ValueOptionalR,
+  ValueRequired,
+  ValueType,
+  PrimitiveValueType,
+} from '../../src/types'
 
 chai.use(asPromised)
 
-type TestModelType = { name: string }
+type TestModelType = { id: string; name: string }
 
-const TestModel1 = BaseModel<TestModelType>('TestModel1', {
+const TestModel1 = Model<TestModelType>({
+  pluralName: 'TestModel1',
+  namespace: 'functional-models',
   properties: {
+    id: UniqueIdProperty(),
     name: TextProperty(),
   },
 })
@@ -61,7 +65,7 @@ describe('/src/properties.ts', () => {
       }
 
       const displayNameProperty = DenormalizedTextProperty<Greeting>(
-        (modelData: TypedJsonObj<Greeting>) => {
+        (modelData: JsonifiedData<Greeting>) => {
           return `${modelData.greeting} ${modelData.name}`
         }
       )
@@ -204,16 +208,15 @@ describe('/src/properties.ts', () => {
   })
   describe('#NaturalIdProperty()', () => {
     it('should NOT throw an exception if a propertyKey returns an undefined value', () => {
-      const MyModels = BaseModel<{ id: string; name: string; year: number }>(
-        'MyModels',
-        {
-          properties: {
-            id: NaturalIdProperty(['year', 'name'], '-', {}, {}),
-            name: TextProperty({ required: true }),
-            year: IntegerProperty({ required: true }),
-          },
-        }
-      )
+      const MyModels = Model<{ id: string; name: string; year: number }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
+        properties: {
+          id: NaturalIdProperty(['year', 'name'], '-', {}, {}),
+          name: TextProperty({ required: true }),
+          year: IntegerProperty({ required: true }),
+        },
+      })
       const data = { id: '', year: 2022 }
       // @ts-ignore
       const instance = MyModels.create(data)
@@ -224,16 +227,15 @@ describe('/src/properties.ts', () => {
       )
     })
     it('should resolve "undefined" when no values are provided', async () => {
-      const MyModels = BaseModel<{ id: string; name: string; year: number }>(
-        'MyModels',
-        {
-          properties: {
-            id: NaturalIdProperty(['year', 'name'], '/', {}, {}),
-            name: TextProperty({ required: true }),
-            year: IntegerProperty({ required: true }),
-          },
-        }
-      )
+      const MyModels = Model<{ id: string; name: string; year: number }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
+        properties: {
+          id: NaturalIdProperty(['year', 'name'], '/', {}, {}),
+          name: TextProperty({ required: true }),
+          year: IntegerProperty({ required: true }),
+        },
+      })
       const data = { id: '' }
       // @ts-ignore
       const instance = MyModels.create(data)
@@ -242,16 +244,15 @@ describe('/src/properties.ts', () => {
       assert.equal(actual, expected)
     })
     it('should resolve "undefined" when one value is not provided', async () => {
-      const MyModels = BaseModel<{ id: string; name: string; year: number }>(
-        'MyModels',
-        {
-          properties: {
-            id: NaturalIdProperty(['year', 'name'], '/', {}, {}),
-            name: TextProperty({ required: true }),
-            year: IntegerProperty({ required: true }),
-          },
-        }
-      )
+      const MyModels = Model<{ id: string; name: string; year: number }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
+        properties: {
+          id: NaturalIdProperty(['year', 'name'], '/', {}, {}),
+          name: TextProperty({ required: true }),
+          year: IntegerProperty({ required: true }),
+        },
+      })
       const data = { id: '', name: 'name' }
       // @ts-ignore
       const instance = MyModels.create(data)
@@ -260,16 +261,15 @@ describe('/src/properties.ts', () => {
       assert.equal(actual, expected)
     })
     it('should find 2022-mike when propertyKeys=[year, name], joiner=- and the values are 2022 and mike', async () => {
-      const MyModels = BaseModel<{ id: string; name: string; year: number }>(
-        'MyModels',
-        {
-          properties: {
-            id: NaturalIdProperty(['year', 'name'], '-', {}, {}),
-            name: TextProperty({ required: true }),
-            year: IntegerProperty({ required: true }),
-          },
-        }
-      )
+      const MyModels = Model<{ id: string; name: string; year: number }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
+        properties: {
+          id: NaturalIdProperty(['year', 'name'], '-', {}, {}),
+          name: TextProperty({ required: true }),
+          year: IntegerProperty({ required: true }),
+        },
+      })
       const data = { id: '', name: 'mike', year: 2022 }
       const instance = MyModels.create(data)
       // @ts-ignore
@@ -278,33 +278,37 @@ describe('/src/properties.ts', () => {
       assert.equal(actual, expected)
     })
     it('should find 2022/5/10 using multiple model references', async () => {
-      const Model1 = BaseModel<{ id: string; name: string }>('Model1', {
+      const Model1 = Model<{ id: string; name: string }>({
+        pluralName: 'Model1',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           name: TextProperty(),
         },
       })
-      const Model2 = BaseModel<{ id: string; name: string }>('Model2', {
+      const Model2 = Model<{ id: string; name: string }>({
+        pluralName: 'Model2',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           name: TextProperty(),
         },
       })
       // @ts-ignore
-      const customFetcher: ModelFetcher = <
-        T extends FunctionalModel,
-        TModel extends Model<T>,
+      const customFetcher: ModelInstanceFetcher = <
+        T extends DataDescription,
+        TModel extends ModelType<T>,
       >(
         model: TModel,
         primaryKey: PrimaryKeyType
       ) => {
-        if (model.getName() === 'Model1') {
+        if (model.getName() === 'functional-models-model-1') {
           return Model1.create({
             id: 5,
             name: 'fake-model-data',
           })
         }
-        if (model.getName() === 'Model2') {
+        if (model.getName() === 'functional-models-model-2') {
           return Model2.create({
             id: 10,
             name: 'fake-model-data-2',
@@ -312,12 +316,14 @@ describe('/src/properties.ts', () => {
         }
         throw new Error(`Not gonna happen`)
       }
-      const MyModels = BaseModel<{
+      const MyModels = Model<{
         id: string
         year: number
         foreignKey1: ModelReference<{ id: number; name: string }>
         foreignKey2: ModelReference<{ id: number; name: string }>
-      }>('MyModels', {
+      }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
         properties: {
           id: NaturalIdProperty(['year', 'foreignKey1', 'foreignKey2'], '/'),
           foreignKey1: ModelReferenceProperty(Model1, {
@@ -339,24 +345,30 @@ describe('/src/properties.ts', () => {
       assert.equal(actual, expected)
     })
     it('should NOT throw an exception when a fetcher is not used when a nested key is requested', async () => {
-      const Model1 = BaseModel<{ id: string; name: string }>('Model1', {
+      const Model1 = Model<{ id: string; name: string }>({
+        pluralName: 'Model1',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           name: TextProperty(),
         },
       })
-      const Model2 = BaseModel<{ id: string; name: string }>('Model2', {
+      const Model2 = Model<{ id: string; name: string }>({
+        pluralName: 'Model2',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           name: TextProperty(),
         },
       })
-      const MyModels = BaseModel<{
+      const MyModels = Model<{
         id: string
         year: number
         foreignKey1: ModelReference<{ id: number; name: string }>
         foreignKey2: ModelReference<{ id: number; name: string }>
-      }>('MyModels', {
+      }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
         properties: {
           id: NaturalIdProperty(
             ['year', 'foreignKey1', 'foreignKey2.name'],
@@ -379,34 +391,38 @@ describe('/src/properties.ts', () => {
         })
       )
     })
-    it('validates successfully if needing to compute id', async () => {
-      const Model1 = BaseModel<{ id: string; name: string }>('Model1', {
+    it('should validate successfully if needing to compute id', async () => {
+      const Model1 = Model<{ id: string; name: string }>({
+        pluralName: 'Model1',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           name: TextProperty(),
         },
       })
-      const Model2 = BaseModel<{ id: string; name: string }>('Model2', {
+      const Model2 = Model<{ id: string; name: string }>({
+        pluralName: 'Model2',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           name: TextProperty(),
         },
       })
       // @ts-ignore
-      const customFetcher: ModelFetcher = <
-        T extends FunctionalModel,
-        TModel extends Model<T>,
+      const customFetcher: ModelInstanceFetcher = <
+        T extends DataDescription,
+        TModel extends ModelType<T>,
       >(
         model: TModel,
         primaryKey: PrimaryKeyType
       ) => {
-        if (model.getName() === 'Model1') {
+        if (model.getName() === 'functional-models-model-1') {
           return Model1.create({
             id: 5,
             name: 'fake-model-data',
           })
         }
-        if (model.getName() === 'Model2') {
+        if (model.getName() === 'functional-models-model-2') {
           return Model2.create({
             id: 10,
             name: 'fake-model-data-2',
@@ -414,12 +430,14 @@ describe('/src/properties.ts', () => {
         }
         throw new Error(`Not gonna happen`)
       }
-      const MyModels = BaseModel<{
+      const MyModels = Model<{
         id: string
         year: number
         foreignKey1: ModelReference<{ id: number; name: string }>
         foreignKey2: ModelReference<{ id: number; name: string }>
-      }>('MyModels', {
+      }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
         properties: {
           id: NaturalIdProperty(
             ['year', 'foreignKey1', 'foreignKey2'],
@@ -441,37 +459,40 @@ describe('/src/properties.ts', () => {
       const data = { id: '', year: 2022, foreignKey1: 5, foreignKey2: 10 }
       const instance = MyModels.create(data)
       const actual = await instance.validate()
-      const expected = {}
-      assert.deepEqual(actual, expected)
+      assert.isUndefined(actual)
     })
     it('should find 2022/5/fake-model-data-2 using multiple model references AND a nested model reference path', async () => {
-      const Model1 = BaseModel<{ id: string; name: string }>('Model1', {
+      const Model1 = Model<{ id: string; name: string }>({
+        pluralName: 'Model1',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           name: TextProperty(),
         },
       })
-      const Model2 = BaseModel<{ id: string; name: string }>('Model2', {
+      const Model2 = Model<{ id: string; name: string }>({
+        pluralName: 'Model2',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           name: TextProperty(),
         },
       })
       // @ts-ignore
-      const customFetcher: ModelFetcher = <
-        T extends FunctionalModel,
-        TModel extends Model<T>,
+      const customFetcher: ModelInstanceFetcher = <
+        T extends DataDescription,
+        TModel extends ModelType<T>,
       >(
         model: TModel,
         primaryKey: PrimaryKeyType
       ) => {
-        if (model.getName() === 'Model1') {
+        if (model.getName() === 'functional-models-model-1') {
           return Model1.create({
             id: 5,
             name: 'fake-model-data',
           })
         }
-        if (model.getName() === 'Model2') {
+        if (model.getName() === 'functional-models-model-2') {
           return Model2.create({
             id: 10,
             name: 'fake-model-data-2',
@@ -479,12 +500,14 @@ describe('/src/properties.ts', () => {
         }
         throw new Error(`Not gonna happen`)
       }
-      const MyModels = BaseModel<{
+      const MyModels = Model<{
         id: string
         year: number
         foreignKey1: ModelReference<{ id: number; name: string }>
         foreignKey2: ModelReference<{ id: number; name: string }>
-      }>('MyModels', {
+      }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
         properties: {
           id: NaturalIdProperty(
             ['year', 'foreignKey1', 'foreignKey2.name'],
@@ -511,11 +534,13 @@ describe('/src/properties.ts', () => {
       assert.equal(actual, expected)
     })
     it('should find 2022/my-object-data using an object property with a nested key', async () => {
-      const MyModels = BaseModel<{
+      const MyModels = Model<{
         id: string
         year: number
         data: { name: string }
-      }>('MyModels', {
+      }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
         properties: {
           id: NaturalIdProperty(['year', 'data.name'], '/', {}, {}),
           data: ObjectProperty({ required: true }),
@@ -530,21 +555,23 @@ describe('/src/properties.ts', () => {
     })
     it('should find 2022/value using model references and a deeply nested value in ObjectProperty', async () => {
       type Model1Type = { id: string; data: { deeply: { nested: string } } }
-      const Model1 = BaseModel<Model1Type>('Model1', {
+      const Model1 = Model<Model1Type>({
+        pluralName: 'Model1',
+        namespace: 'functional-models',
         properties: {
           id: NumberProperty(),
           data: ObjectProperty(),
         },
       })
       // @ts-ignore
-      const customFetcher: ModelFetcher = <
-        T extends FunctionalModel,
-        TModel extends Model<T>,
+      const customFetcher: ModelInstanceFetcher = <
+        T extends DataDescription,
+        TModel extends ModelType<T>,
       >(
         model: TModel,
         primaryKey: PrimaryKeyType
       ) => {
-        if (model.getName() === 'Model1') {
+        if (model.getName() === 'functional-models-model-1') {
           return {
             id: 5,
             data: {
@@ -556,11 +583,13 @@ describe('/src/properties.ts', () => {
         }
         throw new Error(`Not gonna happen`)
       }
-      const MyModels = BaseModel<{
+      const MyModels = Model<{
         id: string
         year: number
         foreignKey1: ModelReference<Model1Type>
-      }>('MyModels', {
+      }>({
+        pluralName: 'MyModels',
+        namespace: 'functional-models',
         properties: {
           id: NaturalIdProperty(
             ['year', 'foreignKey1.data.deeply.nested'],
@@ -595,7 +624,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'testme@email.com',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = 'testme@email.com'
@@ -608,7 +637,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'testme@email.com',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -630,7 +659,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           true,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -643,12 +672,14 @@ describe('/src/properties.ts', () => {
   describe('#ConstantValueProperty()', () => {
     describe('#createGetter()', () => {
       it('should always have the value passed in', async () => {
-        const PropertyInstance =
-          ConstantValueProperty<ValueRequired<string>>('constant')
+        const PropertyInstance = ConstantValueProperty<ValueRequired<string>>(
+          ValueType.Text,
+          'constant'
+        )
         const getter = PropertyInstance.createGetter(
           'changed',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = 'constant'
@@ -657,12 +688,14 @@ describe('/src/properties.ts', () => {
     })
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
-        const PropertyInstance =
-          ConstantValueProperty<ValueRequired<string>>('constant')
+        const PropertyInstance = ConstantValueProperty<ValueRequired<string>>(
+          ValueType.Text,
+          'constant'
+        )
         const getter = PropertyInstance.createGetter(
           'changed',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -687,7 +720,7 @@ describe('/src/properties.ts', () => {
             complex: { it: 'is' },
           },
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = { my: 'object', complex: { it: 'is' } }
@@ -703,7 +736,7 @@ describe('/src/properties.ts', () => {
             complex: { it: 'is' },
           },
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -732,7 +765,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = 5
@@ -743,7 +776,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5.123,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = 5.123
@@ -756,7 +789,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -769,7 +802,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5.123,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -792,7 +825,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -805,7 +838,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           2,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -818,7 +851,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           3,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -847,7 +880,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = 5
@@ -860,7 +893,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -873,7 +906,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5.123,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -896,7 +929,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           5,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -909,7 +942,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           2,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -922,7 +955,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           3,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -933,6 +966,14 @@ describe('/src/properties.ts', () => {
     })
   })
 
+  describe('#BigTextProperty()', () => {
+    it('should create a property with a type BigText', () => {
+      const property = BigTextProperty()
+      const actual = property.getPropertyType()
+      const expected = 'BigText'
+      assert.equal(actual, expected)
+    })
+  })
   describe('#TextProperty()', () => {
     it('should be able to create even with a null config', () => {
       assert.doesNotThrow(() => {
@@ -951,7 +992,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'basic input',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = 'basic input'
@@ -964,7 +1005,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'basic input',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -987,7 +1028,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'hello',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -1000,7 +1041,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'hello',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -1013,7 +1054,7 @@ describe('/src/properties.ts', () => {
         const getter = PropertyInstance.createGetter(
           'hello',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = PropertyInstance.getValidator(getter)
         // @ts-ignore
@@ -1031,7 +1072,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [1, 2, 3],
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = [1, 2, 3]
@@ -1042,7 +1083,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [1, 2, 3],
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = [1, 2, 3]
@@ -1071,7 +1112,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [1, 2, 3],
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
@@ -1081,12 +1122,12 @@ describe('/src/properties.ts', () => {
       })
       it('should error an array passed in when it doesnt have the right types', async () => {
         const theProperty = ArrayProperty({
-          validators: [arrayType(TYPE_PRIMITIVES.integer)],
+          validators: [arrayType(PrimitiveValueType.integer)],
         })
         const getter = theProperty.createGetter(
           [1, 'string', 3],
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
@@ -1099,7 +1140,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [4, 4, 5, 5, 6, 6],
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
@@ -1112,7 +1153,7 @@ describe('/src/properties.ts', () => {
         const getter = theProperty.createGetter(
           [4, 4, 3, 5, 5, 6, 6],
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const validator = theProperty.getValidator(getter)
         // @ts-ignore
@@ -1223,7 +1264,7 @@ describe('/src/properties.ts', () => {
         const actual = instance.createGetter(
           'not-my-value',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         assert.isFunction(actual)
       })
@@ -1232,7 +1273,7 @@ describe('/src/properties.ts', () => {
         const actual = await instance.createGetter(
           'not-my-value',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
@@ -1242,7 +1283,7 @@ describe('/src/properties.ts', () => {
         const actual = await instance.createGetter(
           'my-value',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
@@ -1252,7 +1293,7 @@ describe('/src/properties.ts', () => {
         const actual = await instance.createGetter(
           () => 'my-value',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
@@ -1262,7 +1303,7 @@ describe('/src/properties.ts', () => {
   describe('#UniqueId()', () => {
     describe('#createGetter()', () => {
       it('should call createUuid only once even if called twice', async () => {
-        const uniqueProperty = UniqueId({})
+        const uniqueProperty = UniqueIdProperty({})
         // @ts-ignore
         const getter = uniqueProperty.createGetter(undefined)
         const first = await getter()
@@ -1270,11 +1311,11 @@ describe('/src/properties.ts', () => {
         assert.deepEqual(first, second)
       })
       it('should use the uuid passed in', async () => {
-        const uniqueProperty = UniqueId({})
+        const uniqueProperty = UniqueIdProperty({})
         const getter = uniqueProperty.createGetter(
           'my-uuid',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )
         const actual = await getter()
         const expected = 'my-uuid'
@@ -1283,39 +1324,159 @@ describe('/src/properties.ts', () => {
     })
   })
   describe('#DateProperty()', () => {
+    it('should return an existing string value when provided', async () => {
+      const proto = DateProperty({
+        autoNow: true,
+        formatFunction: () => 'January',
+        format: 'MMMM',
+      })
+      const instance = proto.createGetter(
+        '2020-01-01',
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = await instance()
+      const expected = '2020-01-01'
+      assert.equal(actual, expected)
+    })
+    it('should call formatFunction when autoNow is used', async () => {
+      const proto = DateProperty({
+        autoNow: true,
+        formatFunction: () => 'January',
+        format: 'MMMM',
+      })
+      const instance = proto.createGetter(
+        undefined,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = await instance()
+      const expected = 'January'
+      assert.equal(actual, expected)
+    })
+    it('should return the expected string when the date function is passed in', async () => {
+      const proto = DateProperty({
+        formatFunction: () => 'January',
+        format: 'MMMM',
+      })
+      const date = new Date('2020-01-01T00:00:01.000Z')
+      const instance = proto.createGetter(
+        date,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = await instance()
+      const expected = 'January'
+      assert.equal(actual, expected)
+    })
+    it('should return pass the format into the date format function', async () => {
+      const formatFunction = sinon.stub().returns('nothing')
+      const proto = DateProperty({
+        formatFunction,
+        format: 'MMMM',
+      })
+      const date = new Date('2020-01-01T00:00:01.000Z')
+      const instance = proto.createGetter(
+        date,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      await instance()
+      const actual = formatFunction.getCall(0).args[1]
+      const expected = 'MMMM'
+      assert.equal(actual, expected)
+    })
+    it('should return the expected date only string when a date object is passed in', async () => {
+      const proto = DateProperty({})
+      const date = new Date('2020-01-01T00:00:01.000Z')
+      const instance = proto.createGetter(
+        date,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = await instance()
+      const expected = '2020-01-01'
+      assert.equal(actual, expected)
+    })
+    it('should a date string when autoNow, isDateOnly=true and no value is provided', async () => {
+      const proto = DateProperty({
+        autoNow: true,
+      })
+      const instance = proto.createGetter(
+        null,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = (await instance()) as string
+      const re = /[0-9]{4}-[0-9]{2}-[0-9]{2}/g
+      const found = actual.match(re)
+      assert.isOk(found)
+    })
+    it('should formatted string when autoNow, format=yyyy and no value is provided', async () => {
+      const proto = DatetimeProperty({
+        format: 'yyyy',
+        autoNow: true,
+      })
+      const instance = proto.createGetter(
+        null,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = (await instance()) as string
+      const re = /[0-9]{4}/g
+      const found = actual.match(re)
+      assert.isOk(found)
+    })
+  })
+  describe('#DatetimeProperty()', () => {
+    it('should call formatFunction when autoNow is used for Date', async () => {
+      const proto = DatetimeProperty({
+        autoNow: true,
+        formatFunction: () => 'January',
+        format: 'MMMM',
+      })
+      const instance = proto.createGetter(
+        undefined,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = await instance()
+      const expected = 'January'
+      assert.equal(actual, expected)
+    })
     it('should enforce ValueRequired for Date', async () => {
-      const proto = DateProperty<ValueRequired<Date | string>>()
+      const proto = DatetimeProperty<ValueRequired<Date | string>>()
       const instance = proto.createGetter(
         new Date(),
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       assert.isOk(await instance())
     })
     it('should allow null if ValueOptional for Date', async () => {
-      const proto = DateProperty<ValueOptional<Date | string>>()
+      const proto = DatetimeProperty<ValueOptional<Date | string>>()
       const instance = proto.createGetter(
         undefined,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       assert.isUndefined(await instance())
     })
     it('should allow creation without a config', async () => {
-      const proto = DateProperty()
+      const proto = DatetimeProperty()
       const instance = proto.createGetter(
         new Date(),
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       assert.isOk(await instance())
     })
     it('should create a new date once when config.autoNow=true and called multiple times', async () => {
-      const proto = DateProperty({ autoNow: true })
+      const proto = DatetimeProperty({ autoNow: true })
       const instance = proto.createGetter(
         undefined,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       const first = await instance()
       const second = await instance()
@@ -1324,12 +1485,12 @@ describe('/src/properties.ts', () => {
       assert.deepEqual(first, third)
     })
     it('should use the date passed in', async () => {
-      const proto = DateProperty({ autoNow: true })
+      const proto = DatetimeProperty({ autoNow: true })
       const date = new Date()
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       const actual = await instance()
       const expected = date.toISOString()
@@ -1337,137 +1498,103 @@ describe('/src/properties.ts', () => {
     })
     it('should return null, if null config is passed and no value created.', async () => {
       // @ts-ignore
-      const proto = DateProperty(null)
+      const proto = DatetimeProperty(null)
       const date = null
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       const actual = await instance()
       const expected = null
       assert.deepEqual(actual, expected)
     })
     it('should return a string when a string date is passed in', async () => {
-      const proto = DateProperty({})
+      const proto = DatetimeProperty({})
       const date = '2020-01-01T00:00:01.000Z'
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       const actual = await instance()
       const expected = new Date(date).toISOString()
       assert.equal(actual, expected)
     })
     it('should return a string when a date object is passed in', async () => {
-      const proto = DateProperty({})
+      const proto = DatetimeProperty({})
       const date = new Date('2020-01-01T00:00:01.000Z')
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       const actual = typeof (await instance())
       const expected = 'string'
       assert.equal(actual, expected)
     })
     it('should return a string when a date object is passed in', async () => {
-      const proto = DateProperty({})
+      const proto = DatetimeProperty({})
       const date = new Date('2020-01-01T00:00:01.000Z')
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       const actual = typeof (await instance())
       const expected = 'string'
       assert.equal(actual, expected)
     })
-    it('should return the expected string when a date object is passed in and format is provided', async () => {
-      const proto = DateProperty({
+    it('should return the expected string when a date function is passed in', async () => {
+      const proto = DatetimeProperty({
+        formatFunction: () => 'January',
         format: 'MMMM',
       })
-      const date = new UTCDate('2020-01-01T00:00:01.000Z')
+      const date = new Date('2020-01-01T00:00:01.000Z')
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
       const actual = await instance()
       const expected = 'January'
       assert.equal(actual, expected)
     })
-    it('should return the expected date only string when a date object is passed in and isDateOnly:true', async () => {
-      const proto = DateProperty({
-        isDateOnly: true,
+    it('should return pass the format into the format function', async () => {
+      const formatFunction = sinon.stub().returns('nothing')
+      const proto = DatetimeProperty({
+        formatFunction,
+        format: 'MMMM',
       })
-      const date = new UTCDate('2020-01-01T00:00:01.000Z')
+      const date = new Date('2020-01-01T00:00:01.000Z')
       const instance = proto.createGetter(
         date,
         {},
-        {} as unknown as ModelInstance<FunctionalModel>
+        {} as unknown as ModelInstance<DataDescription>
       )
-      const actual = await instance()
-      const expected = '2020-01-01'
+      await instance()
+      const actual = formatFunction.getCall(0).args[1]
+      const expected = 'MMMM'
       assert.equal(actual, expected)
-    })
-    it('should a date string when autoNow, isDateOnly=true and no value is provided', async () => {
-      const proto = DateProperty({
-        isDateOnly: true,
-        autoNow: true,
-      })
-      const instance = proto.createGetter(
-        null,
-        {},
-        {} as unknown as ModelInstance<FunctionalModel>
-      )
-      const actual = (await instance()) as string
-      const re = /[0-9]{4}-[0-9]{2}-[0-9]{2}/g
-      const found = actual.match(re)
-      assert.isOk(found)
-    })
-    it('should formatted string when autoNow, format=yyyy and no value is provided', async () => {
-      const proto = DateProperty({
-        format: 'yyyy',
-        autoNow: true,
-      })
-      const instance = proto.createGetter(
-        null,
-        {},
-        {} as unknown as ModelInstance<FunctionalModel>
-      )
-      const actual = (await instance()) as string
-      const re = /[0-9]{4}/g
-      const found = actual.match(re)
-      assert.isOk(found)
     })
   })
   describe('#AdvancedModelReferenceProperty()', () => {
     it('should not throw an exception when a custom Model is passed in', () => {
-      type MyType = { name: string }
-      type MyModel<T extends FunctionalModel> = Model<T> & {
-        extended: () => {}
-      }
-      type MyModelInstance<
-        T extends FunctionalModel,
-        TModel extends Model<T>,
-      > = ModelInstance<T, TModel> & {
-        extended2: () => {}
-      }
-      type CustomReferenceType<T extends FunctionalModel> = ModelReference<T>
-      const model = BaseModel<
-        MyType,
-        MyModel<MyType>,
-        MyModelInstance<MyType, MyModel<MyType>>
-      >('Test', {
-        properties: { name: TextProperty() },
+      type MyType = { id: string; name: string }
+      type CustomReferenceType<T extends DataDescription> = ModelReference<T>
+      const model = Model<MyType>({
+        pluralName: 'Test',
+        namespace: 'functional-models',
+        properties: {
+          id: UniqueIdProperty(),
+          name: TextProperty(),
+        },
       })
       assert.doesNotThrow(async () => {
         AdvancedModelReferenceProperty<
           MyType,
-          MyModel<MyType>,
-          MyModelInstance<MyType, MyModel<MyType>>,
+          {},
+          {},
           CustomReferenceType<MyType>
         >(model)
       })
@@ -1503,7 +1630,7 @@ describe('/src/properties.ts', () => {
         ).createGetter(
           'obj-id',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         const expected = 'obj-id'
         assert.equal(actual, expected)
@@ -1515,7 +1642,7 @@ describe('/src/properties.ts', () => {
         >(TestModel1, {}).createGetter(
           null,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         const expected = null
         assert.equal(actual, expected)
@@ -1528,7 +1655,7 @@ describe('/src/properties.ts', () => {
           // @ts-ignore
           { id: 'obj-id' },
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         assert.isTrue(isModelInstance(actual))
       })
@@ -1539,7 +1666,7 @@ describe('/src/properties.ts', () => {
         ).createGetter(
           123,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         const expected = 123
         assert.equal(actual, expected)
@@ -1556,7 +1683,7 @@ describe('/src/properties.ts', () => {
           // @ts-ignore
           fakeModel,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         // @ts-ignore
         const actual = await modelInstance?.toObj()
@@ -1568,11 +1695,13 @@ describe('/src/properties.ts', () => {
           id: number
           name: string
         }
-        const typedJson: TypedJsonObj<MyType> = {
+        const typedJson: JsonifiedData<MyType> = {
           id: 5,
           name: 'My data',
         }
-        const MyTypesModel = BaseModel<MyType>('MyTypes', {
+        const MyTypesModel = Model<MyType>({
+          pluralName: 'MyTypes',
+          namespace: 'functional-models',
           properties: {
             id: NumberProperty(),
             name: TextProperty(),
@@ -1585,7 +1714,7 @@ describe('/src/properties.ts', () => {
           typedJson,
           // @ts-ignore
           typedJson,
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         // @ts-ignore
         const actual = await modelInstance?.toObj()
@@ -1593,14 +1722,17 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
       it('should return name:"switch-a-roo" when switch-a-roo fetcher is used', async () => {
-        const model = BaseModel<TestModelType>('Test', {
+        const model = Model<TestModelType>({
+          pluralName: 'Test',
+          namespace: 'functional-models',
           properties: {
+            id: UniqueIdProperty(),
             name: TextProperty(),
           },
         })
 
-        const modelFetcher: ModelFetcher = (theirModel: any, key) => {
-          const m = model.create({ id: 123, name: 'switch-a-roo' })
+        const modelFetcher: ModelInstanceFetcher = (theirModel: any, key) => {
+          const m = model.create({ id: '123', name: 'switch-a-roo' })
           return Promise.resolve(m as any)
         }
 
@@ -1610,9 +1742,9 @@ describe('/src/properties.ts', () => {
             fetcher: modelFetcher,
           }
         ).createGetter(
-          123,
+          '123',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()) as ModelInstance<TestModelType>
 
         const expected = 'switch-a-roo'
@@ -1628,25 +1760,27 @@ describe('/src/properties.ts', () => {
         ).createGetter(
           'obj-id',
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()) as string
         const expected = 'obj-id'
         assert.deepEqual(actual, expected)
       })
       it('should return null when fetcher is used, but the instance value passed in is empty', async () => {
-        const model = BaseModel<TestModelType>('Test', {
+        const model = Model<TestModelType>({
+          pluralName: 'Test',
+          namespace: 'functional-models',
           properties: {
+            id: UniqueIdProperty(),
             name: TextProperty(),
           },
         })
-        const modelFetcher: ModelFetcher = <
-          T extends FunctionalModel,
-          TModel extends Model<T>,
+        const modelFetcher: ModelInstanceFetcher = <
+          T extends DataDescription,
         >() => {
           return Promise.resolve({
             id: 123,
             name: 'switch-a-roo',
-          } as unknown as TypedJsonObj<T>)
+          } as unknown as JsonifiedData<T>)
         }
         const actual = await ModelReferenceProperty<
           TestModelType,
@@ -1656,7 +1790,7 @@ describe('/src/properties.ts', () => {
         }).createGetter(
           null,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         const expected = null
         assert.deepEqual(actual, expected)
@@ -1669,7 +1803,7 @@ describe('/src/properties.ts', () => {
         }).createGetter(
           input,
           {},
-          {} as unknown as ModelInstance<FunctionalModel>
+          {} as unknown as ModelInstance<DataDescription>
         )()
         const actual = fetcher.getCall(0).args[0]
         const expected = TestModel1
