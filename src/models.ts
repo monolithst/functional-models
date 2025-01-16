@@ -19,6 +19,7 @@ import {
   CreateParams,
   ToObjectFunction,
   RestInfo,
+  ModelErrors,
 } from './types'
 import {
   getModelName,
@@ -71,6 +72,12 @@ const _validateModelDefinition = <T extends DataDescription>(
   }
 }
 
+/**
+ * An out of the box ModelFactory that can create Models.
+ * @param minimalModelDefinitions - The minimal modelDefinitions needed to make a model.
+ * @param options - Any additional model options
+ * @returns A simple Model function ready for creating models. See {@link ModelType}
+ */
 const Model: ModelFactory = <T extends DataDescription>(
   minimalModelDefinitions: MinimalModelDefinition<T>,
   options?: ModelOptions<T>
@@ -179,12 +186,13 @@ const Model: ModelFactory = <T extends DataDescription>(
           loadedInternals.validators,
           modelDefinition.modelValidators
         )(instance as ModelInstance<T>, options)
-      })
+      }) as Promise<ModelErrors<T> | undefined>
     })
 
     const getReferences = () => loadedInternals.references
     const getValidators = () => loadedInternals.validators
 
+    // @ts-ignore
     instance = {
       get: loadedInternals.get,
       getReferences,
@@ -214,6 +222,9 @@ const Model: ModelFactory = <T extends DataDescription>(
 
   // This sets the model that is used by the instances later.
   model = {
+    /**
+     * Creates a model instance.
+     */
     create,
     getName: () =>
       getModelName(modelDefinition.namespace, modelDefinition.pluralName),

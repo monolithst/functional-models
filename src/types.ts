@@ -169,6 +169,7 @@ type ModelErrors<TData extends DataDescription> = {
 
 /**
  * The most flexible representation of a Property Validator.
+ * @interface
  */
 type PropertyValidatorComponentTypeAdvanced<
   TValue,
@@ -196,6 +197,7 @@ type PropertyValidatorComponentTypeAdvanced<
 
 /**
  * A Property Validator that does not use Promises
+ * @interface
  */
 type PropertyValidatorComponentSync<
   TData extends DataDescription,
@@ -210,6 +212,7 @@ type PropertyValidatorComponentSync<
 
 /**
  * A simple property validator that just looks at the value.
+ * @interface
  */
 type ValuePropertyValidatorComponent<TValue extends Arrayable<DataValue>> = (
   value: TValue
@@ -217,6 +220,7 @@ type ValuePropertyValidatorComponent<TValue extends Arrayable<DataValue>> = (
 
 /**
  * A property validator that returns a promise.
+ * @interface
  */
 type PropertyValidatorComponentAsync<
   TData extends DataDescription,
@@ -250,6 +254,7 @@ type PropertyValidatorComponent<
 
 /**
  * The validator for an entire property. This is composed of multiple underlying validators that all get executed and then assembled together.
+ * @interface
  */
 type PropertyValidator<TData extends DataDescription> = (
   /**
@@ -264,6 +269,7 @@ type PropertyValidator<TData extends DataDescription> = (
 
 /**
  * The component of a Model Validator. These are combined together to create a single model validator.
+ * @interface
  */
 type ModelValidatorComponent<
   TData extends DataDescription,
@@ -312,6 +318,7 @@ type ValueGetter<
 
 /**
  * An instance of a property. This is used to describe a property in depth as well as provide functionality like validating values.
+ * @interface
  */
 type PropertyInstance<
   /**
@@ -448,6 +455,7 @@ type CommonValidators = Readonly<{
 
 /**
  * Standard configuration options for properties.
+ * @interface
  */
 type PropertyConfigOptions<TValue extends Arrayable<DataValue>> = Readonly<
   Partial<{
@@ -564,6 +572,8 @@ type PrimaryKeyType = string | number
 /**
  * A function that has the ability to build models. (not instances of models)
  * This is actually a "factory of model factories" but we're just calling it a ModelFactory.
+ * @param modelDefinition - The minimal model definitions needed.
+ * @param options - Additional model options.
  */
 type ModelFactory<
   TModelExtensions extends object = object,
@@ -591,6 +601,7 @@ enum ApiMethod {
 
 /**
  * Basic REST information for a model.
+ * @interface
  */
 type RestInfo = {
   /**
@@ -627,6 +638,7 @@ type RestInfo = {
  * Functional API documentation for a given model. This allows the automatic creation of tools and documentation such as OpenApi specs.
  * This uses the standard "CRUDS" api methods that you might see on any API involving a model.
  * Create, Retrieve, Update, Delete, Search
+ * @interface
  */
 type ApiInfo = {
   /**
@@ -652,6 +664,7 @@ type ApiInfo = {
 
 /**
  * Expressively defines metadata for a given model.
+ * @interface
  */
 type ModelDefinition<TData extends DataDescription> = Readonly<{
   /**
@@ -695,6 +708,7 @@ type ModelDefinition<TData extends DataDescription> = Readonly<{
 
 /**
  * The most minimum information needed to create a model.
+ * @interface
  */
 type MinimalModelDefinition<TData extends DataDescription> = Partial<
   ModelDefinition<TData>
@@ -718,6 +732,7 @@ type MinimalModelDefinition<TData extends DataDescription> = Partial<
  * @typeParam TData - The type of data
  * @typeParam TModelExtensions - Extensions on the model.
  * @typeParam TModelInstanceExtensions - Extensions on the instances produced by this model.
+ * @interface
  */
 type ModelType<
   TData extends DataDescription,
@@ -786,6 +801,7 @@ type PropertyValidators<TData extends DataDescription> = Readonly<
  * @typeParam TData - The type of data
  * @typeParam TModelExtensions - Extensions on the overall model.
  * @typeParam TModelInstanceExtensions - Extensions on all instances of a model.
+ * @interface
  */
 type ModelInstance<
   TData extends DataDescription,
@@ -817,6 +833,7 @@ type ModelInstance<
 
 /**
  * Options to pass into model generation.
+ * @interface
  */
 type ModelOptions<
   TData extends DataDescription,

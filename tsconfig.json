@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "es6",
     "lib": ["es2021", "dom", "es2017"],
-    "module": "es6",
-    "moduleResolution":"bundler",
+    "module": "nodenext",
+    "moduleResolution":"nodenext",
     "declaration": true,
     "sourceMap": true,
     "esModuleInterop": true,

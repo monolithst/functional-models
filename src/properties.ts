@@ -512,6 +512,7 @@ const AdvancedModelReferenceProperty = <
       const theModel = _getModel()
       const primaryKey = theModel.getModelDefinition().primaryKeyName
 
+      // @ts-ignore
       return (instanceValues as JsonifiedData<T>)[primaryKey] as PrimaryKeyType
     }
 
