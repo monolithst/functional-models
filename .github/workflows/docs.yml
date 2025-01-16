@@ -31,16 +31,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      #- name: Setup Pages
-      #  uses: actions/configure-pages@v5
-      #- name: Upload artifact
-      #  uses: actions/upload-pages-artifact@v3
-      #  with:
-      #    # Upload entire repository
-      #    path: '.'
-      #- name: Deploy to GitHub Pages
-      #  id: deployment
-      #  uses: actions/deploy-pages@v4
-      - uses: TypeStrong/typedoc-action@v1
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Install
+        run: npm install
+      - name: Build Code
+        run: npm run build
+      - name: Build Docs
+        run: npx typedoc ./src/index.ts
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # Upload entire repository
+          path: './docs'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      #- uses: TypeStrong/typedoc-action@v1
+      #  with:
+      #    repo-token: ${{ secrets.GITHUB_TOKEN }}
