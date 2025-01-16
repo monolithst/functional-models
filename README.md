@@ -1,16 +1,43 @@
 # Functional Models
+<img src="./docs/images/chocolate.png" alt="drawing" width="200"/>
+
+>The ooey gooey framework for building and using awesome models EVERYWHERE.
 
 ![Unit Tests](https://github.com/monolithst/functional-models/actions/workflows/ut.yml/badge.svg?branch=master)
 ![Feature Tests](https://github.com/monolithst/functional-models/actions/workflows/feature.yml/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/monolithst/functional-models/badge.svg?branch=master)](https://coveralls.io/github/monolithst/functional-models?branch=master)
 
-Love functional javascript/typescript but still like composing objects/models? This is the library for you.
+## Functional Modeling Fun 
+Does this sound like you?
+"I want to code once, use it everywhere, and auto-generate my entire system"
+
+If so this is the library for you.
 
 This library empowers the creation of pure TypeScript/JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused everywhere. Write validation code, metadata, property descriptions, and more! Functional Models is fully supportive of both Typescript and Javascript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete!
 
 Functional Models was born out of the enjoyment and power of working with Django models, but, restricting their "god-like abilities" which can cause developers to make a system nearly impossible to optimize or improve.
 
-### Version 3 Updates 
+# Primary Features
+- Define models that have robust properties and are scoped to a namespace or app
+- Robust typing system for TypeScript goodness.
+- Same modeling code can be used on front end and backends.
+- Validate model data
+- ORM ready via the [functional-models-orm](https://github.com/monolithst/functional-models-orm) package. Available Datastores: DynamoDb, Mongo, in-memory, elastic/opensearch, Sqlite, Postgres, Mysql
+- Most common properties out of the box.
+- Supports "foreign keys", 1 to 1 as well as 1 to many (via an Array).
+- Models support custom primary key name. (id is used by default)
+- Supports different model namings, (plural, singular, display), and the ability to customize them.
+- Add Api Information that can be used for auto-generating frontend and backend code as well as documentation.
+
+# Table Of Contents
+- [Version 3.0 Updates](#the-big-30-updates)
+- [Simple JavasScript Example](#simple-javascript-example-usage)
+- [Simple TypeScript Example](#simple-typescript-example-usage)
+- [Validation](#validation)
+- [Properties](#properties)
+- [List of Properties](#list-of-properties-out-of-the-box)
+
+## The Big 3.0 Updates
 Version 3 is a major update that changes most of the primary interfaces from Version 2. This version should be simpler to extend (see the companion library [Functional Models Orm](https://github.com/monolithst/functional-models-orm)) making models much easier to reuse across front and back ends. Here is a non-exhaustive list.
 - Model/ModelInstance/ModelFactory types have been reworked, so that they are simpler and much easier to extend
 - Some "automagical" stuff has been removed, because experience has shown them to be more of a hassle than they were worth.
@@ -18,21 +45,8 @@ Version 3 is a major update that changes most of the primary interfaces from Ver
 - API Endpoint information can be added to a ModelDefinition
 - Additional Value Types added for better differentiation downstream. (Date/Datetime, Text/BigText, etc)
 - Removes dependency on date-fns to lighten the install, and prevent duplicate dependencies.
-- Memoized computations to reduce expensive recalculations. 
+- Memoized computations to reduce expensive recalculations.
 - Promise types allowed in model type. (Perfect for asynchronous loaded properties)
-
-# Primary Features
-
-- Define models that have robust properties and are scoped to a namespace or app
-- Create instances of models
-- Validate model instances
-- ORM ready via the functional-models-orm package, with DynamoDb, Mongo, in-memory, elastic/opensearch, sql datastores supported.
-- Most common properties out of the box.
-- Supports foreign keys, 1 to 1 as well as 1 to many (via an Array).
-- Supports custom primary key name. (id is used by default)
-- Supports different model namings, (plural, singular, display), and the ability to customize them.
-- Add endpoint information
-- Robust typing system making seamless data transitions in and out of model format.
 
 ## Simple JavaScript Example Usage
 ```javascript
@@ -41,7 +55,7 @@ const {
   DatetimeProperty,
   NumberProperty,
   TextProperty,
-  UniqueIdProperty,
+  PrimaryKeyUuidProperty
 } = require('functional-models')
 
 // Create your model. Our recommended standard is to use a plural uppercase name for your variable. (You are creating a Model factory)
@@ -49,7 +63,7 @@ const Trucks = Model({
   pluralName: 'Trucks',
   namespace: '@my-package/cars',
   properties: {
-    id: UniqueIdProperty({ required: true }), 
+    id: PrimaryKeyUuidProperty(), 
     make: TextProperty({ maxLength: 20, minLength: 3, required: true}),
     model: TextProperty({ maxLength: 20, minLength: 3, required: true}),
     color: TextProperty({
@@ -120,7 +134,7 @@ import {
   DatetimeProperty,
   NumberProperty,
   TextProperty,
-  UniqueIdProperty,
+  PrimaryKeyUuidProperty,
 } from 'functional-models'
 
 // Create an object type. NOTE: Singular Uppercase
@@ -145,7 +159,7 @@ const VehicleMakes = Model<VehicleMake>({
   pluralName: 'VehicleMakes',
   namespace: '@my-package/cars',
   properties: {
-    id: UniqueIdProperty({ required: true }),
+    id: PrimaryKeyUuidProperty(),
     name: TextProperty({ required: true }),
   },
 })
@@ -155,7 +169,7 @@ const Vehicles = Model<Vehicle>({
   pluralName: 'Vehicles',
   namespace: '@my-package/cars',
   properties: {
-    id: UniqueIdProperty({ required: true }),
+    id: PrimaryKeyUuidProperty(),
     model: TextProperty({
       maxLength: 20,
       minLength: 3,
@@ -333,7 +347,7 @@ const checkForDuplicateValues = (
   return undefined
 }
 ```
-## Properties and Custom Properties
+## Properties
 
 There are numerous properties that are supported out of the box that cover most data modeling needs. It is also very easy to create custom properties that encapsulate unique choices
 validation requirements, etc.

@@ -186,7 +186,6 @@ const isDate = (value: any): value is Date => {
  * A Property for Dates. Both strings and Date objects.
  * @param config
  * @param additionalMetadata
- * @constructor
  */
 const DateProperty = (
   config: DatePropertyConfig<DateValueType> = {},
@@ -278,7 +277,6 @@ const ObjectProperty = <TModifier extends Readonly<Record<string, JsonAble>>>(
  * A simple text property. If its possible to put ALOT of text in this field consider using the {@link BigTextProperty}
  * @param config - Additional Configurations
  * @param additionalMetadata - Additional Metadata
- * @constructor
  */
 const TextProperty = (
   config: PropertyConfig<string> = {},
@@ -297,7 +295,6 @@ const TextProperty = (
  * A property for large blocks of strings.
  * @param config - Additional configurations
  * @param additionalMetadata - Additional metadata
- * @constructor
  */
 const BigTextProperty = (
   config: PropertyConfig<string> = {},
@@ -330,7 +327,6 @@ const IntegerProperty = (
  * Validates from 0 to 3000
  * @param config
  * @param additionalMetadata
- * @constructor
  */
 const YearProperty = (
   config: PropertyConfig<number> = {},
@@ -405,7 +401,6 @@ const BooleanProperty = (
  * A property that creates and represents uuids. Equipped with a validator and automatically generates if not provided.
  * @param config - Additional configurations. If you want to use this for primary keys look at {@link PrimaryKeyUuidProperty}
  * @param additionalMetadata - Any additional metadata.
- * @constructor
  */
 const UniqueIdProperty = (
   config: PropertyConfig<string> = {},
@@ -430,10 +425,9 @@ const UniqueIdProperty = (
   )
 
 /**
- * A UniqueIdProperty that is used for Primary Keys. This adds the { required: true } that is so common.
+ * A UniqueIdProperty that is used for Primary Keys. This adds the required: true that is so common.
  * @param config - Additional configurations. NOTE: required is ALWAYS true.
  * @param additionalMetadata - Any additional metadata.
- * @constructor
  */
 const PrimaryKeyUuidProperty = (
   config: PropertyConfig<string> = {},
@@ -595,7 +589,6 @@ const AdvancedModelReferenceProperty = <
  * @param calculate - A function for calculating the denormalized value.
  * @param config - A Config
  * @param additionalMetadata _ Any additional metadata.
- * @constructor
  */
 const DenormalizedProperty = <
   TValue extends DataValue,
@@ -633,7 +626,6 @@ const DenormalizedProperty = <
  * @param calculate - A function that can get a string
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
- * @constructor
  */
 const DenormalizedTextProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<string, T>,
@@ -655,7 +647,6 @@ const DenormalizedTextProperty = <T extends DataDescription>(
  * @param calculate - A function that can get a string
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
- * @constructor
  */
 const DenormalizedNumberProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<number, T>,
@@ -677,7 +668,6 @@ const DenormalizedNumberProperty = <T extends DataDescription>(
  * @param calculate - A function that can get a string
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
- * @constructor
  */
 const DenormalizedIntegerProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<number, T>,
@@ -708,7 +698,6 @@ const DenormalizedIntegerProperty = <T extends DataDescription>(
  * @param joiner A string that will be passed to ".join()" for creating a single string.
  * @param config
  * @param additionalMetadata
- * @constructor
  */
 const NaturalIdProperty = (
   propertyKeys: readonly string[],

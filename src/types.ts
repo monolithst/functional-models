@@ -268,7 +268,7 @@ type PropertyValidator<TData extends DataDescription> = (
 ) => Promise<ValidationErrors>
 
 /**
- * The component of a Model Validator. These are combined together to create a single model validator.
+ * The component of a Model Validator. These are combined to create a single model validator.
  * @interface
  */
 type ModelValidatorComponent<
@@ -586,7 +586,10 @@ type ModelFactory<
 /**
  * Input parameters to a model's create function.
  */
-type CreateParams<TData extends DataDescription> = TData | RemovePromises<TData>
+type CreateParams<
+  IgnoreProperties extends string,
+  TData extends DataDescription,
+> = Omit<TData | RemovePromises<TData>, IgnoreProperties>
 
 /**
  * Higher Level Methods associated with a model based API. CRUDS
@@ -608,13 +611,11 @@ type RestInfo = {
    * The endpoint (not including the base domain). This format can include ":id" to describe a specific instance id.
    * Example: /api/v2/whatever-i-want/model/:id
    * The following are the defaults by API method:
-   * {
    *   create: '/namespace/app',
    *   retrieve: '/namespace/app/id',
    *   update: '/namespace/app/id',
    *   delete: '/namespace/app/id',
    *   search: '/namespace/app/search',
-   *   }
    */
   endpoint: string
   /**
@@ -623,13 +624,11 @@ type RestInfo = {
   security: readonly OpenAPIV3_1.SecurityRequirementObject[]
   /**
    * The HTTP Method. The following are the defaults used:
-   * {
    *   create: post,
    *   retrieve: get,
    *   update: put,
    *   delete: delete,
    *   search: post,
-   * }
    */
   method: OpenAPIV3_1.HttpMethods
 }
@@ -713,17 +712,8 @@ type ModelDefinition<TData extends DataDescription> = Readonly<{
 type MinimalModelDefinition<TData extends DataDescription> = Partial<
   ModelDefinition<TData>
 > & {
-  /**
-   * The namespace (or app) that this model is under.
-   */
   namespace: string
-  /**
-   * The plural name of this model. (Recommended to be TitleCase)
-   */
   pluralName: string
-  /**
-   * The properties that represent each of the values of the data.
-   */
   properties: PropertiesList<Required<TData>>
 }
 
@@ -756,7 +746,7 @@ type ModelType<
   /**
    * Gets the primary key of instance data. This helpful method shortcuts having to figure out the primaryKey's name
    * and then reaching inside the instance data to get the primary key.
-   * @param t The underlying instance data that has the primary key.
+   * @param instanceData The underlying instance data that has the primary key.
    */
   getPrimaryKey: (instanceData: TData | ToObjectResult<TData>) => PrimaryKeyType
   /**
@@ -779,7 +769,7 @@ type ModelType<
    * In order to support executing create() while passing in data that comes from ".toObj()" we recommend using that case feature of toObj().
    */
   create: <IgnoreProperties extends string = ''>(
-    data: CreateParams<Omit<TData, IgnoreProperties>>
+    data: CreateParams<IgnoreProperties, TData>
   ) => ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>
 }> &
   TModelExtensions
@@ -957,4 +947,7 @@ export {
   ApiInfo,
   RestInfo,
   ApiMethod,
+  RemovePromises,
+  FlattenModelReferences,
+  Unpromise,
 }

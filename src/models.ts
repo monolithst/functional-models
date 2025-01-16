@@ -74,7 +74,6 @@ const _validateModelDefinition = <T extends DataDescription>(
 
 /**
  * An out of the box ModelFactory that can create Models.
- * @param minimalModelDefinitions - The minimal modelDefinitions needed to make a model.
  * @param options - Any additional model options
  * @returns A simple Model function ready for creating models. See {@link ModelType}
  */
@@ -102,7 +101,7 @@ const Model: ModelFactory = <T extends DataDescription>(
   }
 
   const create = <IgnorePrimaryKeyName extends string = ''>(
-    instanceValues: CreateParams<Omit<T, IgnorePrimaryKeyName>>
+    instanceValues: CreateParams<IgnorePrimaryKeyName, T>
   ) => {
     // eslint-disable-next-line functional/no-let
     let instance: Nullable<ModelInstance<T>> = null

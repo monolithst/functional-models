@@ -1,5 +1,5 @@
 dist/
-docs/
+buildDocs/
 .coverage/
 coverage/
 node_modules/
