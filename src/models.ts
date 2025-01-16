@@ -235,6 +235,11 @@ const Model: ModelFactory = <T extends DataDescription>(
   return model as ModelType<T>
 }
 
+/**
+ * A useful function for determining if a RestInfo found in an ApiInfo is "null" or not.
+ * That is, whether it should be used and considered.
+ * @param restInfo
+ */
 const isNullRestInfo = (restInfo: RestInfo): boolean => {
   return restInfo.method === NULL_METHOD && restInfo.endpoint === NULL_ENDPOINT
 }

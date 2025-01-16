@@ -166,7 +166,7 @@ const populateApiInformation = (
     const finishedRestInfo: Record<ApiMethod, RestInfo> = Object.entries(
       ApiMethod
     ).reduce(
-      (acc, [_, method]) => {
+      (acc, [, method]) => {
         const restInfo = _apiMethodToRestInfoGenerator[method](
           pluralName,
           namespace
@@ -238,7 +238,7 @@ const populateApiInformation = (
   const finishedRestInfo: Record<ApiMethod, RestInfo> = Object.entries(
     ApiMethod
   ).reduce(
-    (acc, [_, method]) => {
+    (acc, [, method]) => {
       const restInfo = _apiMethodToRestInfoGenerator[method](
         pluralName,
         namespace

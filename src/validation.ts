@@ -22,7 +22,6 @@ import {
   PropertyValidatorComponentTypeAdvanced,
   PrimitiveValueType,
   ToObjectResult,
-  ValidationErrorResponse,
 } from './types'
 import { flowFindFirst } from './utils'
 

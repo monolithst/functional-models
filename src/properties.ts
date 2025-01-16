@@ -50,21 +50,36 @@ const MAX_YEAR = 3000
 const EMAIL_REGEX =
   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/u
 
+/**
+ * The base function that creates a fully loaded instance of a property. All standard issue properties use this function.
+ * @param propertyType - The property's value type.
+ * @param config - Configurations
+ * @param additionalMetadata - Additional metadata that you want to add to a given property.
+ * @typeParam TValue - The typescript value that the property produces.
+ * @typeParam TData - The DataDescription that this property instance belongs to.
+ * @typeParam TModelExtensions - Any additional model extensions
+ * @typeParam TModelInstanceExtensions - Any additional model instance extensions
+ */
 const Property = <
   TValue extends Arrayable<DataValue>,
-  T extends DataDescription = DataDescription,
+  TData extends DataDescription = DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 >(
-  type: string,
+  propertyType: ValueType | string,
   config: PropertyConfig<TValue> = {},
   additionalMetadata = {}
-): PropertyInstance<TValue, T, TModelExtensions, TModelInstanceExtensions> => {
-  if (!type && !config?.type) {
+): PropertyInstance<
+  TValue,
+  TData,
+  TModelExtensions,
+  TModelInstanceExtensions
+> => {
+  if (!propertyType && !config?.type) {
     throw new Error(`Property type must be provided.`)
   }
   if (config?.type) {
-    type = config.type
+    propertyType = config.type
   }
   const getConstantValue = () =>
     (config?.value !== undefined ? config.value : undefined) as TValue
@@ -81,7 +96,7 @@ const Property = <
 
   const propertyInstance: PropertyInstance<
     TValue,
-    T,
+    TData,
     TModelExtensions,
     TModelInstanceExtensions
   > = {
@@ -90,12 +105,17 @@ const Property = <
     getChoices,
     getDefaultValue,
     getConstantValue,
-    getPropertyType: () => type,
+    getPropertyType: () => propertyType,
     createGetter: (
       instanceValue: TValue,
-      modelData: T,
-      instance: ModelInstance<T, TModelExtensions, TModelInstanceExtensions>
-    ): ValueGetter<TValue, T, TModelExtensions, TModelInstanceExtensions> => {
+      modelData: TData,
+      instance: ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>
+    ): ValueGetter<
+      TValue,
+      TData,
+      TModelExtensions,
+      TModelInstanceExtensions
+    > => {
       const constantValue = getConstantValue()
       if (constantValue !== undefined) {
         return () => constantValue
@@ -117,7 +137,7 @@ const Property = <
             : () => instanceValue
       const valueGetter: ValueGetter<
         TValue,
-        T,
+        TData,
         TModelExtensions,
         TModelInstanceExtensions
       > = memoizeSync(() => {
@@ -135,14 +155,14 @@ const Property = <
     getValidator: (
       valueGetter: ValueGetter<
         TValue,
-        T,
+        TData,
         TModelExtensions,
         TModelInstanceExtensions
       >
     ) => {
       const validator = createPropertyValidator(valueGetter, config)
       const _propertyValidatorWrapper: PropertyValidator<
-        T
+        TData
         // eslint-disable-next-line functional/prefer-tacit
       > = async (instanceData, propertyConfiguration) => {
         return validator(instanceData, propertyConfiguration)
@@ -156,7 +176,7 @@ const Property = <
 /**
  * Config object for a date property
  */
-type DatePropertyConfig<T extends Arrayable<DataValue>> = PropertyConfig<T> & {
+type DatePropertyConfig<T extends Arrayable<DataValue>> = {
   /**
    * A function that can format the date into a string.
    * Can use date-fns, moment, or any other function.
@@ -169,7 +189,7 @@ type DatePropertyConfig<T extends Arrayable<DataValue>> = PropertyConfig<T> & {
    * NOTE: If a formatFunction is not provided, this is completely ignored. For dates YYYY/MM/DD is the default and for Datetimes it is ISOString()
    */
   format?: string
-}
+} & PropertyConfig<T>
 
 /**
  * Determines if the value is a Date object.
@@ -183,8 +203,9 @@ const isDate = (value: any): value is Date => {
 }
 
 /**
- * A Property for Dates. Both strings and Date objects.
- * @param config
+ * A Property for Dates. Supports both strings and Date objects.
+ * This does NOT include time information.
+ * @param config - A configuration that enables overriding of date formatting
  * @param additionalMetadata
  */
 const DateProperty = (
@@ -217,6 +238,12 @@ const DateProperty = (
     additionalMetadata
   )
 
+/**
+ * A property for Date AND Times. Supports both strings and Date Objects.
+ * @param config - A configuration that enables overriding of date and time formatting
+ * @param additionalMetadata
+ * @constructor
+ */
 const DatetimeProperty = (
   config: DatePropertyConfig<DateValueType> = {},
   additionalMetadata = {}
@@ -247,6 +274,12 @@ const DatetimeProperty = (
     additionalMetadata
   )
 
+/**
+ * A property that has an array of sub values.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const ArrayProperty = <T extends DataValue>(
   config = {},
   additionalMetadata = {}
@@ -261,6 +294,12 @@ const ArrayProperty = <T extends DataValue>(
     additionalMetadata
   )
 
+/**
+ * A property that has an object. It is generally recommended that you use only JSON compliant objects.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const ObjectProperty = <TModifier extends Readonly<Record<string, JsonAble>>>(
   config = {},
   additionalMetadata = {}
@@ -274,7 +313,7 @@ const ObjectProperty = <TModifier extends Readonly<Record<string, JsonAble>>>(
   )
 
 /**
- * A simple text property. If its possible to put ALOT of text in this field consider using the {@link BigTextProperty}
+ * A simple text property. If it's possible to put ALOT of text in this field consider using the {@link BigTextProperty}
  * @param config - Additional Configurations
  * @param additionalMetadata - Additional Metadata
  */
@@ -309,6 +348,12 @@ const BigTextProperty = (
     additionalMetadata
   )
 
+/**
+ * A property that houses integers. No floats allowed.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const IntegerProperty = (
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
@@ -341,6 +386,12 @@ const YearProperty = (
     additionalMetadata
   )
 
+/**
+ * A property for numbers. This could be integers or float values.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const NumberProperty = (
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
@@ -359,8 +410,16 @@ const NumberProperty = (
     additionalMetadata
   )
 
+/**
+ * A property that has a fixed value that can never be changed. Can be useful for things like embedding the name of a model into JSONified objects.
+ * @param valueType - The value type for this property.
+ * @param value - The value to fix.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const ConstantValueProperty = <TDataValue extends Arrayable<DataValue>>(
-  valueType: ValueType,
+  valueType: ValueType | string,
   value: TDataValue,
   config: PropertyConfig<TDataValue> = {},
   additionalMetadata = {}
@@ -373,6 +432,12 @@ const ConstantValueProperty = <TDataValue extends Arrayable<DataValue>>(
     additionalMetadata
   )
 
+/**
+ * A property that encapsulates email addresses. Provides validation for making sure an email is valid.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const EmailProperty = (
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
@@ -385,6 +450,12 @@ const EmailProperty = (
     additionalMetadata
   )
 
+/**
+ * A property that has a true or false value.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const BooleanProperty = (
   config: PropertyConfig<boolean> = {},
   additionalMetadata = {}
@@ -434,12 +505,38 @@ const PrimaryKeyUuidProperty = (
   additionalMetadata = {}
 ) => UniqueIdProperty(merge(config, { required: true }, additionalMetadata))
 
+/**
+ * A property that has a reference to another model instance. A "Foreign Key" if you will.
+ * For full functionality a {@link ModelInstanceFetcher} must be provided in the config.
+ * This property has complex functionalities.
+ *
+ * When a model calls "instance.get.whatever()" to get the value of a ModelReferenceProperty, it uses the model fetcher
+ * to retrieve the model. (Could be saved elsewhere, or a database). When the promise is awaited, the value returned
+ * is a ModelInstance object.
+ *
+ * However, when `toObj()` is called on that same instance, only the primary key value is returned. This is so that
+ * when you call `toObj()` on the main instance, the "foreign key" gets filled in.
+ *
+ * This is useful for a save function with an ORM.
+ * @param model - Either the model itself or a function that creates the model when needed (lazy).
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const ModelReferenceProperty = <T extends DataDescription>(
   model: MaybeFunction<ModelType<T>>,
   config: PropertyConfig<ModelReference<T>> = {},
   additionalMetadata = {}
 ) => AdvancedModelReferenceProperty<T>(model, config, additionalMetadata)
 
+/**
+ * The full implementation of a ModelReference, useful for typing certain extended functionalities.
+ * For a full description see {@link ModelReferenceProperty}
+ * @param model - A model or a function that returns the model.
+ * @param config
+ * @param additionalMetadata
+ * @constructor
+ */
 const AdvancedModelReferenceProperty = <
   T extends DataDescription,
   TModelExtensions extends object = object,
@@ -584,7 +681,11 @@ const AdvancedModelReferenceProperty = <
 }
 
 /**
- * A property for denormalizing values.
+ * A property for Denormalizing. This represents a complex value that has been simplified for ease of use.
+ * One common use is for creating "Display Values" in a GUI. This process can be extremely expensive, such as having to
+ * get selected values 2 or 3 Foreign Keys deep.
+ *
+ * This property allows passing in a calculate function that will only be executed once, and only if there is no value, and then only when asked.
  * @param propertyType - A property type.
  * @param calculate - A function for calculating the denormalized value.
  * @param config - A Config
@@ -685,9 +786,8 @@ const DenormalizedIntegerProperty = <T extends DataDescription>(
   )
 
 /**
- * An Id that is naturally formed by the other properties within a model.
- * Instead of having a "globally unique" id the model is unique because
- * the composition of values of properties.
+ * An id that is naturally formed by other properties within a model.
+ * Instead of having a "globally unique" id the model is unique because the composition of values of properties.
  * @param propertyKeys A list (in order) of property keys needed to make the id. These keys can take nested paths
  * if a property is an object, array, or even a model instance object. Example: 'nested.path.here'.
  * Note: If ANY of the properties are undefined, the key becomes undefined. This is to ensure key structure integrity.
