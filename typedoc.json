@@ -1,7 +1,6 @@
 {
   "projectDocuments": [
-    "./docs/pages/Creating Your First Model.md",
-    "./docs/pages/How To Build Models with References.md",
+    "./docs/pages/How To Create Custom Properties.md",
     "./docs/pages/Advanced: How to Extend Models.md",
     "./docs/pages/Advanced: How To Extend Model Instances.md"
   ]
