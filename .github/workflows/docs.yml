@@ -38,7 +38,7 @@ jobs:
       - name: Build Code
         run: npm run build
       - name: Build Docs
-        run: npx typedoc -o ./buildDocs ./src/index.ts
+        run: npx typedoc --out ./buildDocs ./src/index.ts
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
