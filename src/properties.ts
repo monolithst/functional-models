@@ -495,41 +495,30 @@ const BooleanProperty = (
   )
 
 /**
- * A property that creates and represents uuids. Equipped with a validator and automatically generates if not provided.
- * @param config - Additional configurations. If you want to use this for primary keys look at {@link PrimaryKeyUuidProperty}
- * @param additionalMetadata - Any additional metadata.
- */
-const UniqueIdProperty = (
-  config: PropertyConfig<string> = {},
-  additionalMetadata = {}
-) =>
-  Property<string>(
-    PropertyType.UniqueId,
-    merge(
-      {
-        isString: true,
-        validators: mergeValidators(config, isValidUuid),
-        lazyLoadMethod: (value: Arrayable<DataValue>) => {
-          if (!value) {
-            return createUuid()
-          }
-          return value
-        },
-      },
-      config
-    ),
-    additionalMetadata
-  )
-
-/**
- * A UniqueIdProperty that is used for Primary Keys. This adds the required: true that is so common.
+ * A property that is used for Primary Keys. If no value is provided a UUID is automatically created.
+ * This property has required on it.
  * @param config - Additional configurations. NOTE: required is ALWAYS true.
  * @param additionalMetadata - Any additional metadata.
  */
 const PrimaryKeyUuidProperty = (
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
-) => UniqueIdProperty(merge(config, { required: true }, additionalMetadata))
+) =>
+  Property<string>(
+    PropertyType.UniqueId,
+    merge(config, {
+      required: true,
+      isString: true,
+      validators: mergeValidators(config, isValidUuid),
+      lazyLoadMethod: (value: Arrayable<DataValue>) => {
+        if (!value) {
+          return createUuid()
+        }
+        return value
+      },
+    }),
+    additionalMetadata
+  )
 
 /**
  * A property that has a reference to another model instance. A "Foreign Key" if you will.
@@ -710,6 +699,8 @@ const AdvancedModelReferenceProperty = <
  * get selected values 2 or 3 Foreign Keys deep.
  *
  * This property allows passing in a calculate function that will only be executed once, and only if there is no value, and then only when asked.
+ *
+ * To recalculate the value, you need to run the calculate function on the property itself, passing in new model data.
  * @param propertyType - A property type.
  * @param calculate - A function for calculating the denormalized value.
  * @param config - A Config
@@ -860,7 +851,6 @@ const NaturalIdProperty = (
 export {
   Property,
   NaturalIdProperty,
-  UniqueIdProperty,
   DateProperty,
   DatetimeProperty,
   ArrayProperty,

@@ -365,138 +365,209 @@ const checkForDuplicateValues = (
 There are numerous properties that are supported out of the box that cover most data modeling needs. It is also very easy to create custom properties that encapsulate unique choices
 validation requirements, etc.
 
-### List of Properties Out-Of-The-Box
+## List of Properties Out-Of-The-Box
 
-#### UniqueIdProperty
+### Dates
 
-A UUID Property that is automatically generated if not provided.
+#### DateProperty
+
+A property for handling dates. (Without time)
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.DateProperty.html)
+
+#### DatetimeProperty
+
+A property for handling dates with times.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.DatetimeProperty.html)
+
+### Arrays
+
+#### ArrayProperty
+
+A property that can handle multiple values. If you want it to only have a single type, look below at the [SingleTypeArrayProperty](#singletypearrayproperty).
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.ArrayProperty.html)
+
+#### SingleTypeArrayProperty
+
+A property that can handle multiple values of the same type. This is enforced via validation and by typing.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.SingleTypeArrayProperty.html)
+
+### Objects
+
+#### ObjectProperty
+
+A property that can handle "JSON compliant" objects. Simple objects.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.ObjectProperty.html)
+
+### Text
+
+#### TextProperty
+
+A property for simple text values. If you want to hold large values look at [BigTextProperty](#bigtextproperty).
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.TextProperty.html)
+
+#### BigTextProperty
+
+A property for holding large text values.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.BigTextProperty.html)
+
+#### EmailProperty
+
+A property that holds Emails.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.EmailProperty.html)
+
+### Numbers
+
+#### IntegerProperty
+
+A property that holds integer values. (No floating point).
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.IntegerProperty.html)
+
+#### YearProperty
+
+An integer property that holds year values.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.YearProperty.html)
+
+#### NumberProperty
+
+A property that holds floating point numbers.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.NumberProperty.html)
+
+### Misc
+
+#### ConstantValueProperty
+
+A property that has a single value that is hardcoded and can never be changed. Good for encoding values like the model name in the data.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.ConstantValueProperty.html)
+
+#### BooleanProperty
+
+A property that can hold a true or a false.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.BooleanProperty.html)
+
+### Keys / Primary / Foreign
+
+#### PrimaryKeyUuidProperty
+
+A property that holds a uuid as a primary key. It is automatically created if not provided.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.PrimaryKeyUuidProperty.html)
+
+#### ModelReferenceProperty
+
+A property that holds a reference to another model instance. (In database-speak a foreign key). When code requests the value for this property, it is fetched and returns an object. However, when `.toObj()` is called on the model, this reference turns into a id. (number or string)
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.ModelReferenceProperty.html)
+
+#### AdvancedModelReferenceProperty
+
+The underlying implementation for {@link ModelReferenceProperty} that allows Model and ModelInstance expansions. This should only be used if there are certain expanded features that a referenced model needs to have.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.AdvancedModelReferenceProperty.html)
+
+### Calculated At RunTime
+
+#### DenormalizedProperty
+
+A property that provides a denormalized value. This is the underlying property for other (simpler) denormalized values, and allows you to build your own customized denormalization.
+
+All denormalized properties are calculated once and then never again unless requested.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.DenormalizedProperty.html)
+
+#### DenormalizedTextProperty
+
+A text property that is denormalized.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.DenormalizedTextProperty.html)
+
+#### DenormalizedNumberProperty
+
+A number property that is denormalized and calculated when it doesn't exist.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.DenormalizedNumberProperty.html)
+
+#### DenormalizedIntegerProperty
+
+An integer property that is denormalized and calculated when it doesn't exist.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.DenormalizedIntegerProperty.html)
 
 #### NaturalIdProperty
 
-An id that is composed of other properties on an object. It is "natural" in the sense that it is
-not an arbitrary id, but rather a mixture of properties that make up a unique instance. This is often
-useful for when creating a "key" property.
+A property that represents an id that is composed of other properties on an object. It is "natural" in the sense that it is not an arbitrary id, but rather a mixture of properties that make up a unique instance. This is often useful as a Primary Key where the data is uniquely represented by the combination of multiple values.
+
+This can be useful to optimize a situation where you have a "unique together" requirement for model in a database, where there can only be one model that has the same of multiple properties.
 
 NOTE: This property is never automatically updated if the properties changed. It is recommended that
 any model that has a NaturalIdProperty should be deleted and then re-created rather than "updated" if
 any property changes that make up the key composition.
 
-#### DateProperty
-
-A property for dates (NOT time). Includes the ability to "autoNow".
-
-#### DatetimeProperty
-
-A property for dates with times.
-
-#### ArrayProperty
-
-An array property which can be used to limit types within it.
-
-#### IntegerProperty
-
-A property for integers.
-
-#### TextProperty
-
-A text or string property.
-
-#### ConstantValueProperty
-
-A property that contains a single, unchanging, static value.
-
-#### NumberProperty
-
-A property for float/number types.
-
-#### ObjectProperty
-
-A property that has a JavaScript object. (Not a foreign key references)
-
-#### EmailProperty
-
-An email property.
-
-#### BooleanProperty
-
-A true or false value property.
-
-#### ModelReferenceProperty
-
-A property that references another property. (Think Foreign Key)
-
-#### AdvancedModelReferenceProperty
-
-A fuller more advanced property for referencing other properties. Useful for typescripting.
-
-#### DenormalizedProperty
-
-A value that is calculated and save if it doesn't exist, using other values for a model instance. This property adds a `isDenormalized:true` to the property's config, as well as a `calculate()` function to the property itself.
-
-NOTE: If the value is provided as part of the instance, it is not re-calculated. If you want to re-calculate it, you must use either the property's method `calculate()` method to get the value and replace the existing OR pass in undefined for the property.
-
-<strong>Incremental data creation such as GUI forms:</strong>
-
-If you are incrementally creating and validating model data, such as a GUI form, you should make your denormalization callback understand that there may be properties that are required, but are not present (yet). What this means, is if you need a particular property's value to be part of the denormalization value, but it isn't there, you should check for the value, and if not there, return undefined. This will allow it to be recalculated later.
-
-<strong>A Strong Word of Caution</strong>
-
-Generally, we would recommend not using this as a primary key in a database. However, if you want to use a DenormalizedProperty as primary key in a database and you want to make changes to an instance, you need to delete the previous entry and then recreate it for every update. A dynamic primary key is not tracked between changes.
-
-<strong>Example</strong>
+For example if you are making a model for a `Species` and `Genera`, where we want to dynamically create the latinName for Species which a combination of the Genera's latin name with a latin name ending in this format: `GeneraLatinName speciesLatinName`
 
 ```typescript
-import { DenormalizedProperty } from 'functional-models/src/properties'
-import { TypedJsonObj } from 'functional-models/interfaces'
-
-// Your base data
-type Greeting = {
-  name: 'Dolly',
-  greeting: 'Hello',
-  displayName?: string
+type Genus = {
+  latinName: string // our key. Only one Genus can have a latinName.
+  commonName: string
 }
 
-// Create your model
-const Greetings = Model<Greeting>('Greetings', {
+const Genera = Model<Genus>({
+  pluralName: 'Genera',
+  singularName: 'Genus',
+  primaryKeyName: 'latinName',
   properties: {
-    name: TextProperty(),
-    greeting: TextProperty(),
-    displayName: DenormalizedProperty<string>("TextProperty", (modelData: Greeting) => {
-      return `${modelData.greeting} ${modelData.name}`
+    latinName: TextProperty({ required: true }),
+    commonName: TextProperty({ required: true }),
+  },
+})
+
+type SpeciesType = {
+  latinName: Promise<string>
+  genusLatinName: string // We are using a string here, but a ModelReference would probably be better.
+  speciesName: string // We are going to combine this with the genusLatinName
+  commonName: string
+}
+
+const Species = Model<SpeciesType>({
+  pluralName: 'Species',
+  singularName: 'Species',
+  primaryKeyName: 'latinName',
+  properties: {
+    // We want to combine genusLatinName with speciesName with a space between.
+    latinName: NaturalIdProperty({
+      propertyKeys: ['genusLatinName', 'speciesName'],
+      joiner: ' ',
     }),
-  }
+    genusLatinName: TextProperty({ required: true }),
+    speciesName: TextProperty({ required: true }),
+    commonName: TextProperty({ required: true }),
+  },
 })
 
-// Create Your Instance
-const instance = Model<Greeting>.create({
-  name: 'Dolly',
-  greeting: 'Hello',
+const apples = Genus.create({ latinName: 'Malus', commonName: 'Apples' })
+const domesticApples = Species.create<'latinName'>({
+  commonName: 'Apples',
+  genusLatinName: apples.latinName,
+  speciesName: 'domestica',
 })
 
-// Let's look at the displayName property
-const value = await instance.get.displayName()
-console.info(value) // Hello Dolly
-
-// Here is the object as a whole
-const data = await instance.toObj()
-console.info(data) // { name: 'Dolly', greeting: 'Hello', displayName: 'Hello Dolly' }
-
-// DON"T TRY TO CHANGE THE MODEL THIS WAY. It doesn't work.
-const newData = {
-  ...data,
-  name: 'Fred',
-}
-const instanceBad = Model<Greeting>.create(newData)
-const badValue = await instance.get.displayName()
-console.info(badValue) // Hello Dolly   - this does not change!!!
-
-// "A better way"
-const newDataGood = {
-  ...data,
-  name: 'Fred',
-  displayName: undefined
-}
-const instanceGood = Model<Greeting>.create(newDataGood)
-const goodValue = await instance.get.displayName()
-console.info(goodValue) // Hello Fred    - Expected
+const id = await domesticApples.get.latinName()
+console.info(id)
+// Malus domestica
 ```
+
+In this situation, the latinName for species is not passed in, but calculated from the two other properties. This becomes the primary key for this object, which is unique.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.DenormalizedIntegerProperty.html)
