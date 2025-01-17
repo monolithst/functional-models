@@ -570,4 +570,4 @@ console.info(id)
 
 In this situation, the latinName for species is not passed in, but calculated from the two other properties. This becomes the primary key for this object, which is unique.
 
-[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.DenormalizedIntegerProperty.html)
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.NaturalIdProperty.html)
