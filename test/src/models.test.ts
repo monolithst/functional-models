@@ -1,20 +1,21 @@
 import { randomUUID } from 'crypto'
 import {
+  ApiInfo,
   MinimalModelDefinition,
   ModelReference,
-  ValueRequired,
 } from '../../src/types'
 import { isPromise } from '../../src/utils'
 
 import sinon from 'sinon'
 import { assert } from 'chai'
-import { Model } from '../../src/models'
+import { Model, isNullRestInfo } from '../../src/models'
 import {
   Property,
   TextProperty,
   IntegerProperty,
   ModelReferenceProperty,
   UniqueIdProperty,
+  PrimaryKeyUuidProperty,
 } from '../../src/properties'
 
 type TEST_MODEL_TYPE = {
@@ -32,6 +33,32 @@ const TEST_MODEL_1 = Model<TEST_MODEL_TYPE>({
 })
 
 describe('/src/models.ts', () => {
+  describe('#isNullRestInfo()', () => {
+    it('should return true, if the values are the null values', () => {
+      const actual = isNullRestInfo({
+        method: 'head',
+        endpoint: 'NULL',
+        security: {},
+      })
+      assert.isTrue(actual)
+    })
+    it('should return false, if the values are HEAD and no endpoint', () => {
+      const actual = isNullRestInfo({
+        method: 'head',
+        endpoint: '',
+        security: {},
+      })
+      assert.isFalse(actual)
+    })
+    it('should return false, if the values are normal values', () => {
+      const actual = isNullRestInfo({
+        method: 'get',
+        endpoint: '/my/endpoint',
+        security: {},
+      })
+      assert.isFalse(actual)
+    })
+  })
   describe('#Model()', () => {
     it('should throw an exception if an pluralName is not provided', () => {
       type ModelType1 = { id: string; simple: number }
@@ -716,6 +743,65 @@ describe('/src/models.ts', () => {
         const instance = model.create({ primaryKey: expected })
         const actual = await instance.getPrimaryKey()
         assert.equal(actual, expected)
+      })
+    })
+    describe('#getApiInfo()', () => {
+      it('should create a full ApiInfo from a partial ApiInfo', () => {
+        const model = Model<{ id: string; name: string }>({
+          pluralName: 'Models',
+          namespace: 'functional-models',
+          properties: {
+            id: PrimaryKeyUuidProperty(),
+            name: TextProperty(),
+          },
+          api: {
+            rest: {
+              create: {
+                endpoint: '/different',
+                method: 'patch',
+                security: {
+                  whatever: ['you', 'want'],
+                },
+              },
+            },
+          },
+        })
+        const actual = model.getApiInfo()
+        const expected: ApiInfo = {
+          onlyPublish: [],
+          noPublish: false,
+          createOnlyOne: false,
+          rest: {
+            create: {
+              endpoint: '/different',
+              method: 'patch',
+              security: {
+                whatever: ['you', 'want'],
+              },
+            },
+            retrieve: {
+              endpoint: '/functional-models/models/:id',
+              method: 'get',
+              security: {},
+            },
+            update: {
+              endpoint: '/functional-models/models/:id',
+              method: 'put',
+              security: {},
+            },
+            delete: {
+              endpoint: '/functional-models/models/:id',
+              method: 'delete',
+              security: {},
+            },
+            search: {
+              endpoint: '/functional-models/models/search',
+              method: 'post',
+              security: {},
+            },
+          },
+        }
+        assert.deepEqual(actual, expected)
       })
     })
   })

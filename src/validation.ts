@@ -98,11 +98,10 @@ const PRIMITIVE_TO_SPECIAL_TYPE_VALIDATOR: Record<
 }
 
 const arrayType =
-  <T extends DataValue>(
+  <TValue extends DataValue>(
     type: PrimitiveValueType
-  ): ValuePropertyValidatorComponent<readonly T[]> =>
-  (value: readonly T[]) => {
-    // @ts-ignore
+  ): ValuePropertyValidatorComponent<readonly TValue[]> =>
+  (value: readonly TValue[]) => {
     const arrayError = isArray(value)
     if (arrayError) {
       return arrayError
@@ -113,7 +112,7 @@ const arrayType =
         if (acc) {
           return acc
         }
-        // @ts-ignore
+
         return validator(v)
       },
       undefined
@@ -121,12 +120,12 @@ const arrayType =
   }
 
 const meetsRegex =
-  <T extends DataValue>(
+  <TValue extends DataValue>(
     regex: string | RegExp,
     flags?: string,
     errorMessage = 'Format was invalid'
-  ): ValuePropertyValidatorComponent<T> =>
-  (value: T) => {
+  ): ValuePropertyValidatorComponent<TValue> =>
+  (value: TValue) => {
     const reg = new RegExp(regex, flags)
     // @ts-ignore
     return _trueOrError((v: string) => reg.test(v), errorMessage)(value)

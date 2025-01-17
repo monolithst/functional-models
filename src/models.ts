@@ -2,24 +2,24 @@ import merge from 'lodash/merge'
 import { toJsonAble } from './serialization'
 import { createModelValidator } from './validation'
 import {
-  ModelType,
-  Nullable,
+  CreateParams,
+  DataDescription,
+  MinimalModelDefinition,
   ModelDefinition,
+  ModelErrors,
+  ModelFactory,
   ModelInstance,
   ModelOptions,
-  ModelFactory,
-  ModelReferenceFunctions,
-  PropertyGetters,
-  ModelReferencePropertyInstance,
   ModelReference,
-  PropertyValidators,
-  DataDescription,
+  ModelReferenceFunctions,
+  ModelReferencePropertyInstance,
+  ModelType,
+  Nullable,
+  PropertyGetters,
   PropertyInstance,
-  MinimalModelDefinition,
-  CreateParams,
-  ToObjectFunction,
+  PropertyValidators,
   RestInfo,
-  ModelErrors,
+  ToObjectFunction,
 } from './types'
 import {
   getModelName,
@@ -27,7 +27,7 @@ import {
   NULL_METHOD,
   populateApiInformation,
 } from './lib'
-import { singularize, toTitleCase, memoizeSync, memoizeAsync } from './utils'
+import { memoizeAsync, memoizeSync, singularize, toTitleCase } from './utils'
 
 const _defaultOptions = <T extends DataDescription>(): ModelOptions<T> => ({
   instanceCreatedCallback: undefined,
@@ -101,7 +101,7 @@ const Model: ModelFactory = <T extends DataDescription>(
   }
 
   const create = <IgnorePrimaryKeyName extends string = ''>(
-    instanceValues: CreateParams<IgnorePrimaryKeyName, T>
+    instanceValues: CreateParams<T, IgnorePrimaryKeyName>
   ) => {
     // eslint-disable-next-line functional/no-let
     let instance: Nullable<ModelInstance<T>> = null
@@ -114,6 +114,7 @@ const Model: ModelFactory = <T extends DataDescription>(
       validators: {},
       references: {},
     }
+
     const prop: [string, PropertyInstance<any>][] = Object.entries(
       modelDefinition.properties
     )
@@ -215,7 +216,7 @@ const Model: ModelFactory = <T extends DataDescription>(
     return populateApiInformation(
       modelDefinition.pluralName,
       modelDefinition.namespace,
-      modelDefinition.apiInformation
+      modelDefinition.api
     )
   })
 

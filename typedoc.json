@@ -1,8 +1,10 @@
 {
   "projectDocuments": [
-    "./docs/pages/How To Create Custom Properties.md",
+    "./docs/pages/Easy: How To Build a Model From Scratch.md",
+    "./docs/pages/How to Create Custom Properties.md",
+    "./docs/pages/How to Create a REST Interface.md",
     "./docs/pages/Advanced: How to Extend Models.md",
-    "./docs/pages/Advanced: How To Extend Model Instances.md",
+    "./docs/pages/Advanced: How to Extend Model Instances.md",
     "./docs/pages/Advanced: Denormalized Values.md"
   ]
 }

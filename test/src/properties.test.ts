@@ -23,6 +23,8 @@ import {
   TextProperty,
   UniqueIdProperty,
   BigTextProperty,
+  SingleTypeArrayProperty,
+  YearProperty,
 } from '../../src/properties'
 import { arrayType } from '../../src/validation'
 import { Model } from '../../src/models'
@@ -35,10 +37,7 @@ import {
   ModelType,
   PrimaryKeyType,
   JsonifiedData,
-  ValueOptional,
-  ValueOptionalR,
-  ValueRequired,
-  ValueType,
+  PropertyType,
   PrimitiveValueType,
 } from '../../src/types'
 
@@ -56,6 +55,82 @@ const TestModel1 = Model<TestModelType>({
 })
 
 describe('/src/properties.ts', () => {
+  describe('#SingleTypeArrayProperty()', () => {
+    it('should fail validation if they should all be strings but one is a number', async () => {
+      const instance = SingleTypeArrayProperty('string')
+      const getter = instance.createGetter(['a', 1], {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = ['Must be a string']
+      assert.deepEqual(actual, expected)
+    })
+    it('should fail validation if the values should be numbers but a string is found', async () => {
+      const instance = SingleTypeArrayProperty('number')
+      const getter = instance.createGetter(['a', 1], {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = ['Must be a number']
+      assert.deepEqual(actual, expected)
+    })
+    it('should pass validation if the values are all strings', async () => {
+      const instance = SingleTypeArrayProperty('string')
+      const getter = instance.createGetter(['a', 'b'], {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = []
+      assert.deepEqual(actual, expected)
+    })
+    it('should pass validation if there are no values', async () => {
+      const instance = SingleTypeArrayProperty('string')
+      const getter = instance.createGetter([], {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = []
+      assert.deepEqual(actual, expected)
+    })
+    it('should pass validation if the value is undefined (auto array)', async () => {
+      const instance = SingleTypeArrayProperty('string')
+      const getter = instance.createGetter(undefined, {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = []
+      assert.deepEqual(actual, expected)
+    })
+  })
+  describe('#YearProperty()', () => {
+    it('should fail validation if the value is -1', async () => {
+      const instance = YearProperty()
+      const getter = instance.createGetter(-1, {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = ['The minimum is 0']
+      assert.deepEqual(actual, expected)
+    })
+    it('should fail validation if the value is 3001', async () => {
+      const instance = YearProperty()
+      const getter = instance.createGetter(3001, {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = ['The maximum is 3000']
+      assert.deepEqual(actual, expected)
+    })
+    it('should pass validation if the value is 0', async () => {
+      const instance = YearProperty()
+      const getter = instance.createGetter(0, {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = []
+      assert.deepEqual(actual, expected)
+    })
+    it('should pass validation if the value is 2000', async () => {
+      const instance = YearProperty()
+      const getter = instance.createGetter(2000, {}, {})
+      const validator = instance.getValidator(getter)
+      const actual = await validator({}, {})
+      const expected = []
+      assert.deepEqual(actual, expected)
+    })
+  })
   describe('#DenormalizedTextProperty()', () => {
     it('should return "Hello Dolly"', async () => {
       type Greeting = {
@@ -673,7 +748,7 @@ describe('/src/properties.ts', () => {
     describe('#createGetter()', () => {
       it('should always have the value passed in', async () => {
         const PropertyInstance = ConstantValueProperty<ValueRequired<string>>(
-          ValueType.Text,
+          PropertyType.Text,
           'constant'
         )
         const getter = PropertyInstance.createGetter(
@@ -689,7 +764,7 @@ describe('/src/properties.ts', () => {
     describe('#getValidator()', () => {
       it('should return and validate successful with basic input', async () => {
         const PropertyInstance = ConstantValueProperty<ValueRequired<string>>(
-          ValueType.Text,
+          PropertyType.Text,
           'constant'
         )
         const getter = PropertyInstance.createGetter(
@@ -1204,7 +1279,9 @@ describe('/src/properties.ts', () => {
     })
     describe('#getPropertyType()', () => {
       it('should use the type that is passed in via config', () => {
-        const instance = Property('OverrideMe', { type: 'ExtendedType' })
+        const instance = Property('OverrideMe', {
+          typeOverride: 'ExtendedType',
+        })
         const actual = instance.getPropertyType()
         const expected = 'ExtendedType'
         assert.equal(actual, expected)

@@ -21,8 +21,8 @@ const compat = new FlatCompat({
 export default [
   {
     ignores: [
-      "buildDocs",
-      "eslint.config.mjs",
+      'buildDocs',
+      'eslint.config.mjs',
       'dist/',
       'node_modules/',
       'test/',

@@ -4,6 +4,7 @@ import merge from 'lodash/merge'
 import get from 'lodash/get'
 import {
   ApiInfo,
+  ApiInfoPartialRest,
   ApiMethod,
   Arrayable,
   DataDescription,
@@ -14,6 +15,7 @@ import {
   PropertyValidatorComponent,
   PropertyValidatorComponentTypeAdvanced,
   RestInfo,
+  RestInfoMinimum,
 } from './types'
 import { createHeadAndTail } from './utils'
 import {
@@ -25,14 +27,9 @@ import {
 } from './validation'
 import HttpMethods = OpenAPIV3.HttpMethods
 
-const NULL_ENDPOINT = ''
+const NULL_ENDPOINT = 'NULL'
 const NULL_METHOD = HttpMethods.HEAD
-
-const _nullRestInfo: RestInfo = {
-  endpoint: NULL_ENDPOINT,
-  method: NULL_METHOD,
-  security: [],
-}
+const ID_KEY = ':id'
 
 const getValueForReferencedModel = async (
   modelInstance: ModelInstance<any>,
@@ -125,7 +122,12 @@ const getModelName = (namespace: string, pluralName: string) => {
 
 const buildValidEndpoint = (...components: readonly string[]) => {
   const suffix = components
-    .map(kebabCase)
+    .map(x => {
+      if (x === ID_KEY) {
+        return x
+      }
+      return kebabCase(x)
+    })
     .map(s => s.toLowerCase())
     .join('/')
   return `/${suffix}`
@@ -134,17 +136,22 @@ const buildValidEndpoint = (...components: readonly string[]) => {
 const _generateRestInfo =
   (method: HttpMethods, withId: boolean, ...additional: readonly string[]) =>
   (pluralName: string, namespace: string) =>
-  (existing?: RestInfo): RestInfo => {
+  (existing?: RestInfoMinimum): RestInfo => {
     if (existing) {
-      return existing
+      return {
+        // Default add security, then override it.
+        security: {},
+        ...existing,
+      }
     }
     const endpoint = withId
-      ? buildValidEndpoint(pluralName, namespace, ':id')
-      : buildValidEndpoint(pluralName, namespace, ...additional)
+      ? buildValidEndpoint(namespace, pluralName, ID_KEY)
+      : buildValidEndpoint(namespace, pluralName, ...additional)
     return {
       method,
       endpoint,
-      security: [],
+      // We cannot auto create security.
+      security: {},
     }
   }
 
@@ -156,73 +163,84 @@ const _apiMethodToRestInfoGenerator = {
   [ApiMethod.search]: _generateRestInfo(HttpMethods.POST, false, 'search'),
 }
 
+const getNullRestInfo = () => {
+  return {
+    endpoint: NULL_ENDPOINT,
+    method: NULL_METHOD,
+    security: {},
+  }
+}
+
+const _fillOutRestInfo = (
+  pluralName: string,
+  namespace: string,
+  partial: Partial<ApiInfoPartialRest> | undefined,
+  nullRest: Record<ApiMethod, RestInfo>
+) => {
+  const finishedRestInfo: Record<ApiMethod, RestInfo> = Object.entries(
+    ApiMethod
+  ).reduce(
+    (acc, [, method]) => {
+      const existing =
+        partial && partial.rest && partial.rest[method]
+          ? partial.rest[method]
+          : undefined
+      const restInfo = _apiMethodToRestInfoGenerator[method](
+        pluralName,
+        namespace
+      )(existing)
+      return merge(acc, {
+        [method]: restInfo,
+      })
+    },
+    nullRest as Record<ApiMethod, RestInfo>
+  )
+  return {
+    noPublish: false,
+    onlyPublish: [],
+    rest: finishedRestInfo,
+    createOnlyOne: partial?.createOnlyOne || false,
+  }
+}
+
 const populateApiInformation = (
   pluralName: string,
   namespace: string,
-  partial: Partial<ApiInfo> | undefined
+  partial: Partial<ApiInfoPartialRest> | undefined
 ): Readonly<Required<ApiInfo>> => {
-  // Do we have any information at all? If not, create all defaults
-  if (!partial) {
-    const finishedRestInfo: Record<ApiMethod, RestInfo> = Object.entries(
-      ApiMethod
-    ).reduce(
-      (acc, [, method]) => {
-        const restInfo = _apiMethodToRestInfoGenerator[method](
-          pluralName,
-          namespace
-        )(undefined)
-        return merge(acc, {
-          [method]: restInfo,
-        })
-      },
-      {} as Record<ApiMethod, RestInfo>
-    )
-    return {
-      noPublish: false,
-      onlyPublish: [],
-      apiToRestInfo: finishedRestInfo,
-      createOnlyOne: false,
-    }
+  const nullRest = {
+    delete: getNullRestInfo(),
+    search: getNullRestInfo(),
+    update: getNullRestInfo(),
+    retrieve: getNullRestInfo(),
+    create: getNullRestInfo(),
   }
 
+  if (!partial) {
+    return _fillOutRestInfo(pluralName, namespace, partial, nullRest)
+  }
   // Are we not going to publish at all? All "nulled" out.
   if (partial.noPublish) {
     return {
       onlyPublish: [],
       noPublish: true,
-      apiToRestInfo: {
-        delete: _nullRestInfo,
-        search: _nullRestInfo,
-        update: _nullRestInfo,
-        retrieve: _nullRestInfo,
-        create: _nullRestInfo,
-      },
+      rest: nullRest,
       createOnlyOne: false,
     }
   }
 
-  const apiToRestInfo: Partial<Record<ApiMethod, RestInfo>> =
-    partial.apiToRestInfo || {}
+  const rest: Partial<Record<ApiMethod, RestInfoMinimum>> = partial.rest || {}
   // Should we only publish some but not all?
   if (partial.onlyPublish && partial.onlyPublish.length > 0) {
     return partial.onlyPublish.reduce(
       (acc, method) => {
-        // If we have it, then we should use it, otherwise, we'll null it out.
-        if (apiToRestInfo[method]) {
-          const restInfo = _apiMethodToRestInfoGenerator[method](
-            pluralName,
-            namespace
-          )(apiToRestInfo[method])
-          return merge(acc, {
-            apiToRestInfo: {
-              [method]: restInfo,
-            },
-          })
-        }
-
+        const restInfo = _apiMethodToRestInfoGenerator[method](
+          pluralName,
+          namespace
+        )(rest[method])
         return merge(acc, {
-          apiToRestInfo: {
-            [method]: _nullRestInfo,
+          rest: {
+            [method]: restInfo,
           },
         })
       },
@@ -230,32 +248,11 @@ const populateApiInformation = (
         noPublish: false,
         onlyPublish: partial.onlyPublish,
         createOnlyOne: Boolean(partial.createOnlyOne),
-        apiToRestInfo: {},
+        rest: nullRest,
       } as ApiInfo
     )
   }
-
-  const finishedRestInfo: Record<ApiMethod, RestInfo> = Object.entries(
-    ApiMethod
-  ).reduce(
-    (acc, [, method]) => {
-      const restInfo = _apiMethodToRestInfoGenerator[method](
-        pluralName,
-        namespace
-      )(apiToRestInfo[method])
-      return merge(acc, {
-        [method]: restInfo,
-      })
-    },
-    {} as Record<ApiMethod, RestInfo>
-  )
-
-  return {
-    noPublish: false,
-    onlyPublish: [],
-    apiToRestInfo: finishedRestInfo,
-    createOnlyOne: partial.createOnlyOne || false,
-  }
+  return _fillOutRestInfo(pluralName, namespace, partial, nullRest)
 }
 
 export {

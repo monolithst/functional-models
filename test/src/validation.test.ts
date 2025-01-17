@@ -30,6 +30,7 @@ import {
   isObject,
   objectValidator,
   optionalValidator,
+  isValidUuid,
 } from '../../src/validation'
 import { ModelValidatorComponent, PrimitiveValueType } from '../../src/types'
 
@@ -76,6 +77,42 @@ const EMPTY_MODEL = Model<EMPTY_MODEL_TYPE>({
 const EMPTY_MODEL_INSTANCE = EMPTY_MODEL.create({})
 
 describe('/src/validation.ts', () => {
+  describe('#isValidUuid()', () => {
+    it('should return no error with a valid uuid', () => {
+      const input = 'f66effdb-a3f0-45d7-8dbd-06a0bcabff7f'
+      const actual = isValidUuid(input)
+      assert.isUndefined(actual)
+    })
+    it('should return no error with the "NULL" uuid', () => {
+      const input = '00000000-0000-0000-0000-000000000000'
+      const actual = isValidUuid(input)
+      assert.isUndefined(actual)
+    })
+    it('should return error if the uuid is a number', () => {
+      const input = 123508123715091234
+      const actual = isValidUuid(input)
+      const expected = 'Must be a string'
+      assert.deepEqual(actual, expected)
+    })
+    it('should return error if the uuid is missing one digit', () => {
+      const input = 'f66effdb-a3f0-45d7-8dbd-06a0bcabff7'
+      const actual = isValidUuid(input)
+      const expected = 'Invalid UUID format'
+      assert.deepEqual(actual, expected)
+    })
+    it('should return error if value is a string', () => {
+      const input = 'random-input-here'
+      const actual = isValidUuid(input)
+      const expected = 'Invalid UUID format'
+      assert.deepEqual(actual, expected)
+    })
+    it('should return error if the value is formatted like a uuid but isnt 0-9a-f', () => {
+      const input = 'abcdefgh-ijkl-mnoP-QRST-UTVWXZabcdef'
+      const actual = isValidUuid(input)
+      const expected = 'Invalid UUID format'
+      assert.deepEqual(actual, expected)
+    })
+  })
   describe('#optionalValidator()', () => {
     it('should return undefined if object is undefined', () => {
       const instance = optionalValidator((v: any) =>

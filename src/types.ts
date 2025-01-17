@@ -59,12 +59,8 @@ type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never
  * Removes promises from every property of an object.
  */
 type RemovePromises<T extends object> = {
-  [K in keyof T as T[K] extends Promise<any> ? K : never]: Unpromise<
-    // TODO: Remove
-    // @ts-ignore
-    //ReturnType<T[K]>
-    T[K]
-  >
+  // @ts-ignore
+  [K in keyof T as T[K] extends Promise<any> ? K : never]: Unpromise<T[K]>
 } & {
   [K in keyof T as T[K] extends Promise<any> ? never : K]: T[K]
 }
@@ -146,11 +142,6 @@ type DataValue = MaybePromise<
 type ValidatorContext = Readonly<Record<string, any>>
 
 /**
- * The response to a validation attempt at the lowest level. Something is bad (a string), or its good (undefined)
- */
-type ValidationErrorResponse = string | undefined
-
-/**
  * A collection of errors for a property or model.
  */
 type ValidationErrors = readonly string[]
@@ -158,18 +149,21 @@ type ValidationErrors = readonly string[]
 /**
  * The response to a validation attempt of a model at the lowest level. Something is bad (a string), or its good (undefined)
  */
-type ModelError = string | undefined
+type ComponentValidationErrorResponse = string | undefined
 
 /**
  * The errors across an entire model. Contains both overall errors, as well as individualized property errors.
  */
 type ModelErrors<TData extends DataDescription> = {
-  readonly [Property in keyof TData]: readonly string[] | undefined
-} & Readonly<{ overall?: readonly string[] | undefined }>
+  readonly [Property in keyof Partial<TData>]: ValidationErrors
+} & Readonly<{ overall?: ValidationErrors }>
 
 /**
  * The most flexible representation of a Property Validator.
- * @interface
+ * @param value - The raw value being evaluated
+ * @param instance - The model instance for context.
+ * @param instanceData - An already JSONified version of the model. This is a convenience so toObj() does not need to be called so frequently.
+ * @param context - Additional outside context to help with validation. (Most cases this is unused)
  */
 type PropertyValidatorComponentTypeAdvanced<
   TValue,
@@ -177,27 +171,14 @@ type PropertyValidatorComponentTypeAdvanced<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = (
-  /**
-   * The raw value being evaluated.
-   */
   value: TValue,
-  /**
-   * The model instance for context.
-   */
   instance: ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>,
-  /**
-   * An already JSONified version of the model. This is a convenience so toObj() does not need to be called so frequently.
-   */
   instanceData: ToObjectResult<TData>,
-  /**
-   * Additional outside context to help with validation. (In most cases this is never used).
-   */
   context: ValidatorContext
-) => ValidationErrorResponse
+) => ComponentValidationErrorResponse
 
 /**
  * A Property Validator that does not use Promises
- * @interface
  */
 type PropertyValidatorComponentSync<
   TData extends DataDescription,
@@ -212,15 +193,18 @@ type PropertyValidatorComponentSync<
 
 /**
  * A simple property validator that just looks at the value.
- * @interface
+ * @param value - A single value to validate
  */
 type ValuePropertyValidatorComponent<TValue extends Arrayable<DataValue>> = (
   value: TValue
-) => ValidationErrorResponse
+) => ComponentValidationErrorResponse
 
 /**
  * A property validator that returns a promise.
- * @interface
+ * @param value - The value to validate
+ * @param instance - The instance the value comes from
+ * @param instanceData - The jsonified version of the data
+ * @param context - Additional context to validate against.
  */
 type PropertyValidatorComponentAsync<
   TData extends DataDescription,
@@ -231,7 +215,7 @@ type PropertyValidatorComponentAsync<
   instance: ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>,
   instanceData: ToObjectResult<TData>,
   context: ValidatorContext
-) => Promise<ValidationErrorResponse>
+) => Promise<ComponentValidationErrorResponse>
 
 /**
  * A property validator that is either Sync or Async.
@@ -254,41 +238,29 @@ type PropertyValidatorComponent<
 
 /**
  * The validator for an entire property. This is composed of multiple underlying validators that all get executed and then assembled together.
- * @interface
+ * @param instanceData - The instance data to compare
+ * @param context - Additional context for validating.
  */
 type PropertyValidator<TData extends DataDescription> = (
-  /**
-   * The instance data to compare
-   */
   instanceData: ToObjectResult<TData>,
-  /**
-   * Additional context for validating.
-   */
   context: ValidatorContext
 ) => Promise<ValidationErrors>
 
 /**
  * The component of a Model Validator. These are combined to create a single model validator.
- * @interface
+ * @param instance - The instance of the model.
+ * @param instanceData - The JSONified version of the model.
+ * @param context - Additional context to assist with validating.
  */
 type ModelValidatorComponent<
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = (
-  /**
-   * An instance of the model.
-   */
   instance: ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>,
-  /**
-   * The JSONified version of the model.
-   */
   instanceData: ToObjectResult<TData>,
-  /**
-   * Additional context that may assist with validating. (Not normally used).
-   */
   context: ValidatorContext
-) => Promise<ModelError>
+) => Promise<ComponentValidationErrorResponse>
 
 /**
  * A function that will get the value of a property.
@@ -349,16 +321,16 @@ type PropertyInstance<
   /**
    * If there is a default value
    */
-  getDefaultValue: () => TValue
+  getDefaultValue: () => TValue | undefined
   /**
    * If there is a constant value that never changes. (This is used above all else).
    */
-  getConstantValue: () => TValue
+  getConstantValue: () => TValue | undefined
   /**
-   * Gets the ValueType of the property. Unless custom properties are used, the value is a {@link ValueType}.
+   * Gets the ValueType of the property. Unless custom properties are used, the value is a {@link PropertyType}.
    * Otherwise the value could be string for custom types.
    */
-  getPropertyType: () => ValueType | string
+  getPropertyType: () => PropertyType | string
   /**
    * Creates a value getter.
    * @param value - The type of value
@@ -395,10 +367,7 @@ type PropertyInstance<
 type PropertiesList<TData extends DataDescription> = {
   readonly [P in keyof TData as TData[P] extends Arrayable<DataValue>
     ? P
-    : // TODO: Remove
-      //: never]: PropertyInstance<T[P]>
-      //readonly [P in keyof T as T[P]]: PropertyInstance<any>
-      never]: PropertyInstance<any>
+    : never]: PropertyInstance<any>
 }
 
 /**
@@ -411,6 +380,10 @@ interface ModelReferencePropertyInstance<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > extends PropertyInstance<TProperty> {
+  /**
+   * Gets the id (foreign key) of the referenced model.
+   * @param instanceValues - The ModelReference. (key, data, or instance)
+   */
   readonly getReferencedId: (
     instanceValues: ModelReference<
       TData,
@@ -418,6 +391,10 @@ interface ModelReferencePropertyInstance<
       TModelInstanceExtensions
     >
   ) => Maybe<PrimaryKeyType>
+
+  /**
+   * Gets reference's model
+   */
   readonly getReferencedModel: () => ModelType<
     TData,
     TModelExtensions,
@@ -443,13 +420,32 @@ type ModelReference<
 
 /**
  * Common property validator choices.
+ * @interface
  */
 type CommonValidators = Readonly<{
+  /**
+   * Is this property required?
+   */
   required?: boolean
+  /**
+   * Can the property only be an integer?
+   */
   isInteger?: boolean
+  /**
+   * Can the property only be a number?
+   */
   isNumber?: boolean
+  /**
+   * Can the property only be a string?
+   */
   isString?: boolean
+  /**
+   * Is the property an array of values?
+   */
   isArray?: boolean
+  /**
+   * Is the property only true or false?
+   */
   isBoolean?: boolean
 }>
 
@@ -460,9 +456,9 @@ type CommonValidators = Readonly<{
 type PropertyConfigOptions<TValue extends Arrayable<DataValue>> = Readonly<
   Partial<{
     /**
-     * The value type of the property.
+     * A type override to override the property type of a property.
      */
-    type: ValueType | string
+    typeOverride: PropertyType | string
     /**
      * A default value if one is never given.
      */
@@ -487,7 +483,7 @@ type PropertyConfigOptions<TValue extends Arrayable<DataValue>> = Readonly<
      */
     lazyLoadMethod: <TData extends DataDescription>(
       value: TValue,
-      modelData: TData
+      modelData: CreateParams<TData>
     ) => TValue
     /**
      * A thread safe (Atomic) version of lazyLoadMethod. Use this for all lazy loadings that requires Promises.
@@ -496,7 +492,7 @@ type PropertyConfigOptions<TValue extends Arrayable<DataValue>> = Readonly<
      */
     lazyLoadMethodAtomic: <TData extends DataDescription>(
       value: TValue,
-      modelData: TData
+      modelData: CreateParams<TData>
     ) => Promise<TValue>
     /**
      * An optional function that can select a "part" of the value to return.
@@ -528,6 +524,7 @@ type PropertyConfigOptions<TValue extends Arrayable<DataValue>> = Readonly<
      */
     autoNow: boolean
     /**
+     * If you are using ModelReferences, this is required.
      * A fetcher used for getting model references.
      * This configuration item is used within the {@link AdvancedModelReferenceProperty} and any other property
      * that is lazy loading (atomically) models.
@@ -541,6 +538,8 @@ type PropertyConfigOptions<TValue extends Arrayable<DataValue>> = Readonly<
  * This is the backbone that provides the "ModelReference" functionality.
  * This is useful downstream for building ORMs and other systems that require
  * hydrating "foreign key" models.
+ * @param model - The model type that is being fetched.
+ * @param primaryKey - The primary key of the desired data.
  */
 type ModelInstanceFetcher<
   TModelExtensions extends object = object,
@@ -570,8 +569,16 @@ type PropertyConfig<TValue extends Arrayable<DataValue>> =
 type PrimaryKeyType = string | number
 
 /**
- * A function that has the ability to build models. (not instances of models)
+ * A function that has the ability to build models. (The models themselves, not instances of models)
  * This is actually a "factory of model factories" but we're just calling it a ModelFactory.
+ *
+ * IMPORTANT:
+ * If you want to override and create extended Models/ModelInstances this is the place to do it.
+ * Create your own ModelFactory that adds additional functionality.
+ * For expanding a Model, you can just add it to the overall object. that {@link ModelFactory} produces.
+ *
+ * For expanding a ModelInstance, you will want to wrap the "create()" function of {@link ModelType}
+ *
  * @param modelDefinition - The minimal model definitions needed.
  * @param options - Additional model options.
  */
@@ -587,8 +594,8 @@ type ModelFactory<
  * Input parameters to a model's create function.
  */
 type CreateParams<
-  IgnoreProperties extends string,
   TData extends DataDescription,
+  IgnoreProperties extends string = '',
 > = Omit<TData | RemovePromises<TData>, IgnoreProperties>
 
 /**
@@ -621,7 +628,7 @@ type RestInfo = {
   /**
    * Security descriptions
    */
-  security: readonly OpenAPIV3_1.SecurityRequirementObject[]
+  security: OpenAPIV3_1.SecurityRequirementObject
   /**
    * The HTTP Method. The following are the defaults used:
    *   create: post,
@@ -632,6 +639,13 @@ type RestInfo = {
    */
   method: OpenAPIV3_1.HttpMethods
 }
+
+/**
+ * A minimum input for a RestInfo.
+ */
+type RestInfoMinimum = {
+  security?: OpenAPIV3_1.SecurityRequirementObject
+} & Omit<RestInfo, 'security'>
 
 /**
  * Functional API documentation for a given model. This allows the automatic creation of tools and documentation such as OpenApi specs.
@@ -654,12 +668,21 @@ type ApiInfo = {
    * A description of each Api method to its rest info.
    * If this is not manually overrided then defaults are used for each.
    */
-  apiToRestInfo: Record<ApiMethod, RestInfo>
+  rest: Record<ApiMethod, RestInfo>
   /**
    * Create normally can support bulk inserts (more than one). If this property is true, create will only handle "one" model at a time.
    */
   createOnlyOne: boolean
 }
+
+/**
+ * An {@link ApiInfo} that has only part of RestInfo completed. (useful for overriding defaults)
+ * @interface
+ */
+type ApiInfoPartialRest = Readonly<{
+  rest: Partial<Record<ApiMethod, RestInfoMinimum>>
+}> &
+  Omit<ApiInfo, 'rest'>
 
 /**
  * Expressively defines metadata for a given model.
@@ -671,7 +694,17 @@ type ModelDefinition<TData extends DataDescription> = Readonly<{
    */
   pluralName: string
   /**
-   * The name that this model exists within, such as an app.
+   * The name that this model exists within, such as an app. This is used to combine with the pluralName to create
+   * a unique name across a system that it is used in.
+   *
+   * Recommended:
+   * If you are creating reusable libraries/packages for people, we recommend using the name of the package itself.
+   * Example: "@my-scoped-package/name"
+   *
+   * If you are creating this model to be used locally, just use the "app" name that the model corresponds to.
+   * Example: "auth"
+   *
+   * The namespace is also used in the auto-generation of {@link RestInfo.endpoint}. If you want to design the endpoint so that it looks/reads/flows better then consider overriding the endpoint yourself.
    */
   namespace: string
   /**
@@ -702,7 +735,7 @@ type ModelDefinition<TData extends DataDescription> = Readonly<{
    * The raw api information provided in. When looking for a fleshed out version of this data
    * look at {@link ModelType.getApiInfo}
    */
-  apiInformation?: Partial<ApiInfo>
+  api?: Partial<ApiInfoPartialRest>
 }>
 
 /**
@@ -769,7 +802,7 @@ type ModelType<
    * In order to support executing create() while passing in data that comes from ".toObj()" we recommend using that case feature of toObj().
    */
   create: <IgnoreProperties extends string = ''>(
-    data: CreateParams<IgnoreProperties, TData>
+    data: CreateParams<TData, IgnoreProperties>
   ) => ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>
 }> &
   TModelExtensions
@@ -803,13 +836,23 @@ type ModelInstance<
    * These are memoized.
    */
   get: PropertyGetters<TData>
+  /**
+   * Gets all model references that this instance may have as record of property name to function getter.
+   *
+   */
   getReferences: () => ModelReferenceFunctions
   /**
    * Gets a basic representation of the data.
    * This function is memoized.
    */
   toObj: ToObjectFunction<TData>
+  /**
+   * Gets the primary key of the instance (without having to know the primary key name).
+   */
   getPrimaryKey: () => PrimaryKeyType
+  /**
+   * Gets the validators for this model instance.
+   */
   getValidators: () => PropertyValidators<TData>
   /**
    * Runs validation against this instance.
@@ -817,9 +860,24 @@ type ModelInstance<
    * @param options
    */
   validate: (options?: object) => Promise<ModelErrors<TData> | undefined>
+  /**
+   * Gets the model that backs this instance.
+   */
   getModel: () => ModelType<TData, TModelExtensions, TModelInstanceExtensions>
 }> &
   TModelInstanceExtensions
+
+/**
+ * A callback function for receiving when a new model has been created.
+ * @param instance - A newly created model instance.
+ */
+type ModelCreatedCallback<
+  TData extends DataDescription,
+  TModelExtensions extends object = object,
+  TModelInstanceExtensions extends object = object,
+> = (
+  instance: ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>
+) => void
 
 /**
  * Options to pass into model generation.
@@ -831,19 +889,19 @@ type ModelOptions<
   TModelInstanceExtensions extends object = object,
 > = Record<string, any> &
   Readonly<{
+    /**
+     * 1 or more (array) of callback functions for when models get created.
+     */
     instanceCreatedCallback?: Arrayable<
-      (
-        instance: ModelInstance<
-          TData,
-          TModelExtensions,
-          TModelInstanceExtensions
-        >
-      ) => void
+      ModelCreatedCallback<TData, TModelExtensions, TModelInstanceExtensions>
     >
   }>
 
 /**
  * A function that can calculate a denormalized value. This is very useful for property values that have very complicated and often expensive calculations (but should be calculated once).
+ * NOTE: The data that comes in (to be normalized) via the modelData, is the raw data passed into create(). If other functions must fire to create values, they will not be present. Example: Foreign keys.
+ * @param modelData - The model's data as it was passed into the create() function.
+ * @param modelInstance - The instance that the model corresponds with
  */
 type CalculateDenormalization<
   TValue extends DataValue,
@@ -851,7 +909,7 @@ type CalculateDenormalization<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = (
-  modelData: TData,
+  modelData: CreateParams<TData>,
   modelInstance: ModelInstance<
     TData,
     TModelExtensions,
@@ -863,12 +921,12 @@ type CalculateDenormalization<
  * Higher level value types that describe what the value of a property is.
  * These values can be used to generate expressive APIs as well as GUI elements.
  */
-enum ValueType {
+enum PropertyType {
   UniqueId = 'UniqueId',
   Date = 'Date',
   Datetime = 'Datetime',
   Array = 'Array',
-  Reference = 'Reference',
+  ModelReference = 'ModelReference',
   Integer = 'Integer',
   Text = 'Text',
   BigText = 'BigText',
@@ -896,7 +954,7 @@ type DateValueType = Date | string
 
 export {
   PrimitiveValueType,
-  ValueType,
+  PropertyType,
   MaybeFunction,
   Maybe,
   MaybePromise,
@@ -933,7 +991,7 @@ export {
   ValidatorContext,
   ValuePropertyValidatorComponent,
   ValidationErrors,
-  ModelError,
+  ComponentValidationErrorResponse,
   JsonifiedData,
   JsonObj,
   CalculateDenormalization,
@@ -941,7 +999,6 @@ export {
   MinimalModelDefinition,
   ChoiceTypes,
   PropertyConfigOptions,
-  ValidationErrorResponse,
   CommonValidators,
   DateValueType,
   ApiInfo,
@@ -950,4 +1007,6 @@ export {
   RemovePromises,
   FlattenModelReferences,
   Unpromise,
+  ApiInfoPartialRest,
+  RestInfoMinimum,
 }
