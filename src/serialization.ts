@@ -2,11 +2,12 @@ import merge from 'lodash/merge'
 import {
   PropertyGetters,
   JsonAble,
-  toObj,
-  FunctionalModel,
-  TypedJsonObj,
+  ToObjectFunction,
+  DataDescription,
+  JsonifiedData,
   ModelInstance,
-} from './interfaces'
+  ToObjectResult,
+} from './types'
 
 const isModelInstance = (obj: any): obj is ModelInstance<any> => {
   return Boolean(obj.toObj)
@@ -37,13 +38,17 @@ const _getValue = async (value: any): Promise<JsonAble | null> => {
 }
 
 const toJsonAble =
-  <T extends FunctionalModel>(keyToFunc: PropertyGetters<T>): toObj<T> =>
-  () => {
+  <T extends DataDescription>(
+    keyToFunc: PropertyGetters<T>
+  ): ToObjectFunction<T> =>
+  <R extends T | JsonifiedData<T> = JsonifiedData<T>>(): Promise<
+    ToObjectResult<R>
+  > => {
     return Object.entries(keyToFunc).reduce(async (acc, [key, value]) => {
       const realAcc = await acc
       const trueValue = await _getValue(await value)
       return merge(realAcc, { [key]: trueValue })
-    }, Promise.resolve({})) as Promise<TypedJsonObj<T>>
+    }, Promise.resolve({})) as Promise<ToObjectResult<R>>
   }
 
 export { toJsonAble }

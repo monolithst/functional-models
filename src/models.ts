@@ -1,76 +1,87 @@
 import merge from 'lodash/merge'
 import { toJsonAble } from './serialization'
 import { createModelValidator } from './validation'
-import { UniqueId } from './properties'
-import { lazyValueSync } from './lazy'
 import {
-  Model,
-  Nullable,
+  CreateParams,
+  DataDescription,
+  MinimalModelDefinition,
   ModelDefinition,
+  ModelErrors,
+  ModelFactory,
   ModelInstance,
   ModelOptions,
-  ModelFactory,
-  ModelReferenceFunctions,
-  PropertyGetters,
-  OptionalModelOptions,
-  ModelReferencePropertyInstance,
   ModelReference,
+  ModelReferenceFunctions,
+  ModelReferencePropertyInstance,
+  ModelType,
+  Nullable,
+  PropertyGetters,
+  PropertyInstance,
   PropertyValidators,
-  FunctionalModel,
-  TypedJsonObj,
-} from './interfaces'
-import { singularize, toTitleCase } from './utils'
+  RestInfo,
+  ToObjectFunction,
+} from './types'
+import {
+  getModelName,
+  NULL_ENDPOINT,
+  NULL_METHOD,
+  populateApiInformation,
+} from './lib'
+import { memoizeAsync, memoizeSync, singularize, toTitleCase } from './utils'
 
-const _defaultOptions = <
-  T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>,
->(): ModelOptions<T, TModel> => ({
-  instanceCreatedCallback: null,
+const _defaultOptions = <T extends DataDescription>(): ModelOptions<T> => ({
+  instanceCreatedCallback: undefined,
 })
 
-const _convertOptions = <
-  T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
->(
-  options?: OptionalModelOptions<T, TModel, TModelInstance>
+const _convertOptions = <T extends DataDescription>(
+  options?: ModelOptions<T>
 ) => {
-  const r: ModelOptions<T, TModel, TModelInstance> = merge(
-    {},
-    _defaultOptions(),
-    options
-  )
+  const r: ModelOptions<T> = merge({}, _defaultOptions(), options)
   return r
 }
 
-const _createModelDefWithPrimaryKey = <
-  T extends FunctionalModel,
-  TModel extends Model<T>,
->(
-  modelDefinition: ModelDefinition<T, TModel>
-): ModelDefinition<T, TModel> => {
-  const properties = merge(
-    {
-      id: UniqueId({ required: true }),
-    },
-    modelDefinition.properties
-  )
+const _toModelDefinition = <T extends DataDescription>(
+  minimal: MinimalModelDefinition<T>
+): ModelDefinition<T> => {
   return {
-    ...modelDefinition,
-    getPrimaryKeyName: () => 'id',
-    properties,
+    singularName: singularize(minimal.pluralName),
+    displayName: toTitleCase(minimal.pluralName),
+    description: '',
+    primaryKeyName: 'id',
+    modelValidators: [],
+    ...minimal,
   }
 }
 
-const BaseModel: ModelFactory = <
-  T extends FunctionalModel,
-  TModel extends Model<T> = Model<T>,
-  TModelInstance extends ModelInstance<T, TModel> = ModelInstance<T, TModel>,
->(
-  pluralName: string,
-  modelDefinition: ModelDefinition<T, TModel>,
-  options?: OptionalModelOptions<T, TModel, TModelInstance>
-): TModel => {
+const _validateModelDefinition = <T extends DataDescription>(
+  modelDefinition: MinimalModelDefinition<T>
+) => {
+  const primaryKeyProperty =
+    // @ts-ignore
+    modelDefinition.properties[modelDefinition.primaryKeyName || 'id']
+  if (!primaryKeyProperty) {
+    throw new Error(
+      `Property missing for primaryKey named ${modelDefinition.primaryKeyName}`
+    )
+  }
+  if (!modelDefinition.pluralName) {
+    throw new Error(`Must include pluralName for model.`)
+  }
+  if (!modelDefinition.namespace) {
+    throw new Error(`Must include namespace for model.`)
+  }
+}
+
+/**
+ * An out of the box ModelFactory that can create Models.
+ * @param options - Any additional model options
+ * @returns A simple Model function ready for creating models. See {@link ModelType}
+ */
+const Model: ModelFactory = <T extends DataDescription>(
+  minimalModelDefinitions: MinimalModelDefinition<T>,
+  options?: ModelOptions<T>
+): ModelType<T> => {
+  _validateModelDefinition(minimalModelDefinitions)
   /*
    * This non-functional approach is specifically used to
    * allow instances to be able to refer back to its parent without
@@ -79,42 +90,45 @@ const BaseModel: ModelFactory = <
    * throughout instance methods.
    */
   // eslint-disable-next-line functional/no-let
-  let model: Nullable<TModel> = null
+  let model: Nullable<ModelType<T>> = null
   const theOptions = _convertOptions(options)
-  modelDefinition = !modelDefinition.getPrimaryKeyName
-    ? _createModelDefWithPrimaryKey<T, TModel>(modelDefinition)
-    : modelDefinition
+  const modelDefinition = _toModelDefinition(minimalModelDefinitions)
 
-  // @ts-ignore
-  const getPrimaryKeyName = () => modelDefinition.getPrimaryKeyName()
+  const getPrimaryKeyName = () => modelDefinition.primaryKeyName
   const getPrimaryKey = (loadedInternals: any) => {
     const property = loadedInternals.get[getPrimaryKeyName()]
     return property()
   }
 
-  const create = (instanceValues: TypedJsonObj<T>) => {
+  const create = <IgnorePrimaryKeyName extends string = ''>(
+    instanceValues: CreateParams<T, IgnorePrimaryKeyName>
+  ) => {
     // eslint-disable-next-line functional/no-let
-    let instance: Nullable<TModelInstance> = null
+    let instance: Nullable<ModelInstance<T>> = null
     const startingInternals: Readonly<{
-      get: PropertyGetters<T> & { id: () => string }
-      validators: PropertyValidators<T, TModel>
+      get: PropertyGetters<T>
+      validators: PropertyValidators<T>
       references: ModelReferenceFunctions
     }> = {
       get: {} as PropertyGetters<T> & Readonly<{ id: () => string }>,
       validators: {},
       references: {},
     }
-    const loadedInternals = Object.entries(modelDefinition.properties).reduce(
+
+    const prop: [string, PropertyInstance<any>][] = Object.entries(
+      modelDefinition.properties
+    )
+    const loadedInternals = prop.reduce(
       (acc, [key, property]) => {
-        const propertyGetter = lazyValueSync(() =>
+        const propertyGetter = memoizeSync(() =>
           property.createGetter(
-            // @ts-ignore
+            //@ts-ignore
             instanceValues[key],
             instanceValues,
-            instance
+            // NOTE: By the time it gets here, it has already been implemented.
+            instance as ModelInstance<any>
           )()
         )
-        // @ts-ignore
         const propertyValidator = property.getValidator(propertyGetter)
         const fleshedOutInstanceProperties = {
           get: {
@@ -140,59 +154,95 @@ const BaseModel: ModelFactory = <
             }
           : {}
 
-        return merge(acc, fleshedOutInstanceProperties, referencedProperty)
+        return merge(
+          acc,
+          fleshedOutInstanceProperties,
+          referencedProperty
+        ) as Readonly<{
+          get: PropertyGetters<T>
+          validators: PropertyValidators<T>
+          references: ModelReferenceFunctions
+        }>
       },
-      startingInternals
+      startingInternals as Readonly<{
+        get: PropertyGetters<T>
+        validators: PropertyValidators<T>
+        references: ModelReferenceFunctions
+      }>
     )
 
-    const getModel = () => model as TModel
-    const toObj = toJsonAble(loadedInternals.get)
-    const validate = (options = {}) => {
-      return Promise.resolve().then(() => {
-        return createModelValidator<T, TModel>(
-          loadedInternals.validators,
-          modelDefinition.modelValidators || []
-        )(instance as TModelInstance, options)
-      })
-    }
+    const getModel = () => model as ModelType<T>
 
-    instance = merge(loadedInternals, {
+    // We are casting this, because the output type is really complicated.
+    // and memoizing this is very important.
+    // @ts-ignore
+    const toObj = memoizeAsync(() => {
+      return toJsonAble(loadedInternals.get)()
+    }) as ToObjectFunction<T>
+
+    const validate = memoizeAsync((options = {}) => {
+      return Promise.resolve().then(() => {
+        return createModelValidator<T, ModelType<T>>(
+          loadedInternals.validators,
+          modelDefinition.modelValidators
+        )(instance as ModelInstance<T>, options)
+      }) as Promise<ModelErrors<T> | undefined>
+    })
+
+    const getReferences = () => loadedInternals.references
+    const getValidators = () => loadedInternals.validators
+
+    // @ts-ignore
+    instance = {
+      get: loadedInternals.get,
+      getReferences,
+      getValidators,
       getModel,
       toObj,
       getPrimaryKey: () => getPrimaryKey(loadedInternals),
-      getPrimaryKeyName,
       validate,
-    }) as TModelInstance
+    } as ModelInstance<T>
 
     if (theOptions.instanceCreatedCallback) {
       const toCall = Array.isArray(theOptions.instanceCreatedCallback)
         ? theOptions.instanceCreatedCallback
         : [theOptions.instanceCreatedCallback]
-      toCall.map(func => func(instance as TModelInstance))
+      toCall.map(func => func(instance as ModelInstance<T>))
     }
     return instance
   }
 
+  const getApiInfo = memoizeSync(() => {
+    return populateApiInformation(
+      modelDefinition.pluralName,
+      modelDefinition.namespace,
+      modelDefinition.api
+    )
+  })
+
   // This sets the model that is used by the instances later.
-  // @ts-ignore
-  model = merge(
-    {},
-    {
-      create,
-      getName: () => pluralName,
-      getSingularName: () =>
-        modelDefinition.singularName || singularize(pluralName),
-      getDisplayName: () =>
-        modelDefinition.displayName || toTitleCase(pluralName),
-      getModelDefinition: () => modelDefinition,
-      getPrimaryKeyName,
-      getPrimaryKey,
-      getOptions: () => theOptions,
-    }
-  )
-  return model as TModel
+  model = {
+    /**
+     * Creates a model instance.
+     */
+    create,
+    getName: () =>
+      getModelName(modelDefinition.namespace, modelDefinition.pluralName),
+    getModelDefinition: memoizeSync(() => modelDefinition),
+    getPrimaryKey,
+    getOptions: () => ({ ...theOptions }),
+    getApiInfo,
+  }
+  return model as ModelType<T>
 }
 
-const Model = BaseModel
+/**
+ * A useful function for determining if a RestInfo found in an ApiInfo is "null" or not.
+ * That is, whether it should be used and considered.
+ * @param restInfo
+ */
+const isNullRestInfo = (restInfo: RestInfo): boolean => {
+  return restInfo.method === NULL_METHOD && restInfo.endpoint === NULL_ENDPOINT
+}
 
-export { BaseModel, Model }
+export { Model, isNullRestInfo }

@@ -1,5 +1,6 @@
 // @ts-ignore
 import getRandomValuesFunc from 'get-random-values'
+import AsyncLock from 'async-lock'
 
 const HEX = 16
 const FOUR = 4
@@ -22,7 +23,6 @@ const getRandomValues = (): Uint8Array => {
 }
 
 const createUuid = (): string => {
-  // eslint-disable-next-line no-magic-numbers,require-unicode-regexp
   // @ts-ignore
   // eslint-disable-next-line no-magic-numbers,require-unicode-regexp
   return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c: any) => {
@@ -82,6 +82,40 @@ const flowFindFirst =
     }, undefined) as string | TResult
   }
 
+const memoizeSync = <T, A extends Array<any>>(method: (...args: A) => T) => {
+  /* eslint-disable functional/no-let */
+  let value: any = undefined
+  let called = false
+  return (...args: A): T => {
+    if (!called) {
+      called = true
+      value = method(...args)
+    }
+
+    return value
+  }
+  /* eslint-enable functional/no-let */
+}
+
+const memoizeAsync = <T, A extends Array<any>>(method: (...args: A) => T) => {
+  const key = createUuid()
+  const lock = new AsyncLock()
+  /* eslint-disable functional/no-let */
+  let value: any = undefined
+  let called = false
+  return async (...args: A): Promise<T> => {
+    return lock.acquire(key, async () => {
+      if (!called) {
+        called = true
+        value = await method(...args)
+      }
+
+      return value
+    })
+  }
+  /* eslint-enable functional/no-let */
+}
+
 export {
   loweredTitleCase,
   toTitleCase,
@@ -90,4 +124,6 @@ export {
   createHeadAndTail,
   singularize,
   flowFindFirst,
+  memoizeSync,
+  memoizeAsync,
 }
