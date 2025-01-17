@@ -585,9 +585,11 @@ type PrimaryKeyType = string | number
 type ModelFactory<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
+  TModelOptionsExtensions extends object = object,
 > = <TData extends DataDescription>(
   modelDefinition: MinimalModelDefinition<TData>,
-  options?: ModelOptions<TData, TModelExtensions, TModelInstanceExtensions>
+  options?: ModelOptions<TData, TModelExtensions, TModelInstanceExtensions> &
+    TModelOptionsExtensions
 ) => ModelType<TData, TModelExtensions, TModelInstanceExtensions>
 
 /**
@@ -755,12 +757,14 @@ type MinimalModelDefinition<TData extends DataDescription> = Partial<
  * @typeParam TData - The type of data
  * @typeParam TModelExtensions - Extensions on the model.
  * @typeParam TModelInstanceExtensions - Extensions on the instances produced by this model.
+ * @typeParam TModelOptionsExtensions - Extensions to the options of a model.
  * @interface
  */
 type ModelType<
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
+  TModelOptionsExtensions extends object = object,
 > = Readonly<{
   /**
    * This is a unique name combining namespace + pluralName. This can be used as a key to uniquely identify
@@ -785,7 +789,7 @@ type ModelType<
   /**
    * Gets the options that were passed into the model.
    */
-  getOptions: () => object & ModelOptions<TData>
+  getOptions: () => object & ModelOptions<TData> & TModelOptionsExtensions
   /**
    * Gets the Api Information on the model.
    *
