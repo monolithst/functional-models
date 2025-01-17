@@ -4,7 +4,7 @@ import chaiAsPromised from 'chai-as-promised'
 chai.use(chaiAsPromised)
 import sinon from 'sinon'
 import { Model } from '../../src/models'
-import { TextProperty, UniqueIdProperty } from '../../src/properties'
+import { TextProperty, PrimaryKeyUuidProperty } from '../../src/properties'
 import {
   isValid,
   isNumber,
@@ -38,7 +38,7 @@ const TestModel1 = Model({
   pluralName: 'TestModel1',
   namespace: 'functional-models',
   properties: {
-    id: UniqueIdProperty(),
+    id: PrimaryKeyUuidProperty(),
   },
 })
 
@@ -46,7 +46,7 @@ const TestModel2 = Model({
   pluralName: 'TestModel2',
   namespace: 'functional-models',
   properties: {
-    id: UniqueIdProperty(),
+    id: PrimaryKeyUuidProperty(),
   },
 })
 
@@ -60,7 +60,7 @@ const createTestModel3 = (
     pluralName: 'TestModel3',
     namespace: 'functional-models',
     properties: {
-      id: UniqueIdProperty(),
+      id: PrimaryKeyUuidProperty(),
       name: TextProperty(),
     },
     modelValidators,
@@ -71,7 +71,7 @@ const EMPTY_MODEL = Model<EMPTY_MODEL_TYPE>({
   pluralName: 'EmptyModel',
   namespace: 'functional-models',
   properties: {
-    id: UniqueIdProperty(),
+    id: PrimaryKeyUuidProperty(),
   },
 })
 const EMPTY_MODEL_INSTANCE = EMPTY_MODEL.create({})
@@ -678,7 +678,7 @@ describe('/src/validation.ts', () => {
         pluralName: 'Model',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           name: TextProperty(),
         },
       })
@@ -703,7 +703,7 @@ describe('/src/validation.ts', () => {
         pluralName: 'Model',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           name: TextProperty(),
         },
       })
@@ -726,7 +726,7 @@ describe('/src/validation.ts', () => {
         pluralName: 'Model',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           type: TextProperty(),
         },
       })
@@ -753,7 +753,7 @@ describe('/src/validation.ts', () => {
         pluralName: 'Model',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           type: TextProperty(),
         },
       })

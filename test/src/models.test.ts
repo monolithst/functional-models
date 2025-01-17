@@ -14,7 +14,6 @@ import {
   TextProperty,
   IntegerProperty,
   ModelReferenceProperty,
-  UniqueIdProperty,
   PrimaryKeyUuidProperty,
 } from '../../src/properties'
 
@@ -27,7 +26,7 @@ const TEST_MODEL_1 = Model<TEST_MODEL_TYPE>({
   pluralName: 'MyModels',
   namespace: 'functional-models',
   properties: {
-    id: UniqueIdProperty(),
+    id: PrimaryKeyUuidProperty(),
     name: TextProperty(),
   },
 })
@@ -69,7 +68,7 @@ describe('/src/models.ts', () => {
           namespace: 'functional-models',
           // @ts-ignore
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             simple: IntegerProperty(),
           },
         })
@@ -84,7 +83,7 @@ describe('/src/models.ts', () => {
           //namespace: 'functional-models',
           // @ts-ignore
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             simple: IntegerProperty(),
           },
         })
@@ -98,7 +97,7 @@ describe('/src/models.ts', () => {
           namespace: 'functional-models',
           // @ts-ignore
           properties: {
-            //id: UniqueIdProperty(),
+            //id: PrimaryKeyUuidProperty(),
             simple: IntegerProperty(),
           },
         })
@@ -112,7 +111,7 @@ describe('/src/models.ts', () => {
           namespace: 'functional-models',
           primaryKeyName: 'customPrimaryKey',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             simple: IntegerProperty(),
             // missing customPrimaryKey'
           },
@@ -127,7 +126,7 @@ describe('/src/models.ts', () => {
           namespace: 'functional-models',
           primaryKeyName: 'customPrimaryKey',
           properties: {
-            customPrimaryKey: UniqueIdProperty(),
+            customPrimaryKey: PrimaryKeyUuidProperty(),
             simple: IntegerProperty(),
           },
         })
@@ -139,7 +138,7 @@ describe('/src/models.ts', () => {
         pluralName: 'TestModel1',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           simple: IntegerProperty(),
         },
       })
@@ -152,7 +151,7 @@ describe('/src/models.ts', () => {
         pluralName: 'TestModel2',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           value: IntegerProperty(),
           value2: ModelReferenceProperty<ModelType1, ValueRequired<ModelType1>>(
             model1
@@ -177,7 +176,7 @@ describe('/src/models.ts', () => {
         pluralName: 'TestModel',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           value: IntegerProperty(),
           value2: IntegerProperty<ValueRequired<number>>(),
         },
@@ -220,7 +219,7 @@ describe('/src/models.ts', () => {
         pluralName: 'TestModel',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           value: IntegerProperty({ lazyLoadMethod: input => input + 5 }),
           value2: IntegerProperty<ValueRequired<number>>(),
         },
@@ -239,7 +238,7 @@ describe('/src/models.ts', () => {
           pluralName: 'ModelName',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty({
+            id: PrimaryKeyUuidProperty({
               validators: [myValidator],
             }),
           },
@@ -259,7 +258,7 @@ describe('/src/models.ts', () => {
             pluralName: 'ModelName',
             namespace: 'functional-models',
             properties: {
-              id: UniqueIdProperty(),
+              id: PrimaryKeyUuidProperty(),
             },
           },
           {
@@ -281,7 +280,7 @@ describe('/src/models.ts', () => {
           namespace: 'functional-models',
           primaryKeyName: 'primaryKey',
           properties: {
-            primaryKey: UniqueIdProperty(),
+            primaryKey: PrimaryKeyUuidProperty(),
           },
         })
         const actual = model.getModelDefinition().primaryKeyName
@@ -293,7 +292,7 @@ describe('/src/models.ts', () => {
             pluralName: 'Models',
             namespace: 'functional-models',
             properties: {
-              id: UniqueIdProperty(),
+              id: PrimaryKeyUuidProperty(),
               myString: TextProperty(),
             },
           })
@@ -306,7 +305,7 @@ describe('/src/models.ts', () => {
             pluralName: 'ModelName',
             namespace: 'functional-models',
             properties: {
-              id: UniqueIdProperty(),
+              id: PrimaryKeyUuidProperty(),
               myString: TextProperty(),
             },
             singularName: 'CustomSingularName',
@@ -322,7 +321,7 @@ describe('/src/models.ts', () => {
             pluralName: 'Models',
             namespace: 'functional-models',
             properties: {
-              id: UniqueIdProperty(),
+              id: PrimaryKeyUuidProperty(),
               myString: TextProperty(),
             },
           })
@@ -335,7 +334,7 @@ describe('/src/models.ts', () => {
             pluralName: 'Models',
             namespace: 'functional-models',
             properties: {
-              id: UniqueIdProperty(),
+              id: PrimaryKeyUuidProperty(),
               myString: TextProperty(),
             },
             displayName: 'Custom Display Name',
@@ -367,7 +366,7 @@ describe('/src/models.ts', () => {
           namespace: 'functional-models',
           primaryKeyName: 'myPrimaryKeyId',
           properties: {
-            myPrimaryKeyId: UniqueIdProperty(),
+            myPrimaryKeyId: PrimaryKeyUuidProperty(),
           },
         })
         const instance = model.create({ myPrimaryKeyId: 'blah' })
@@ -378,7 +377,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: TextProperty({ required: true }),
           },
         }
@@ -396,7 +395,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: TextProperty({ required: true }),
           },
         }
@@ -412,7 +411,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: TextProperty({ required: true }),
           },
         }
@@ -427,7 +426,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: TextProperty({ required: true }),
           },
         }
@@ -443,7 +442,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: TextProperty({ required: true }),
           },
         }
@@ -459,7 +458,7 @@ describe('/src/models.ts', () => {
           pluralName: 'test-the-name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: TextProperty({ required: true }),
           },
         }
@@ -474,7 +473,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: TextProperty({ required: true }),
           },
         }
@@ -489,7 +488,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: Property('MyProperty', {
               value: 'value',
               defaultValue: 'default-value',
@@ -507,7 +506,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: Property('MyProperty', { value: 'value' }),
           },
         }
@@ -522,7 +521,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: Property('MyProperty', {
               defaultValue: 'defaultValue',
             }),
@@ -540,7 +539,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myProperty: Property('MyProperty', {
               defaultValue: 'defaultValue',
             }),
@@ -557,7 +556,7 @@ describe('/src/models.ts', () => {
           pluralName: 'name',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             type: Property('MyProperty', {}),
           },
         }
@@ -638,7 +637,7 @@ describe('/src/models.ts', () => {
         pluralName: 'name',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
         },
       })
       assert.isFunction(actual.create)
@@ -652,7 +651,7 @@ describe('/src/models.ts', () => {
           pluralName: 'modelName',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             myReference: ModelReferenceProperty(TEST_MODEL_1),
           },
         })
@@ -668,7 +667,7 @@ describe('/src/models.ts', () => {
           pluralName: 'ModelName',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             simple: TextProperty(),
           },
         })
@@ -722,7 +721,7 @@ describe('/src/models.ts', () => {
           pluralName: 'ModelName',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
           },
         })
         const expected = 'my-primary-key'

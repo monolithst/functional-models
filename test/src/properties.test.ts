@@ -21,10 +21,10 @@ import {
   ObjectProperty,
   Property,
   TextProperty,
-  UniqueIdProperty,
   BigTextProperty,
   SingleTypeArrayProperty,
   YearProperty,
+  PrimaryKeyUuidProperty,
 } from '../../src/properties'
 import { arrayType } from '../../src/validation'
 import { Model } from '../../src/models'
@@ -49,7 +49,7 @@ const TestModel1 = Model<TestModelType>({
   pluralName: 'TestModel1',
   namespace: 'functional-models',
   properties: {
-    id: UniqueIdProperty(),
+    id: PrimaryKeyUuidProperty(),
     name: TextProperty(),
   },
 })
@@ -1377,10 +1377,10 @@ describe('/src/properties.ts', () => {
       })
     })
   })
-  describe('#UniqueId()', () => {
+  describe('#PrimaryKeyUuidProperty()', () => {
     describe('#createGetter()', () => {
       it('should call createUuid only once even if called twice', async () => {
-        const uniqueProperty = UniqueIdProperty({})
+        const uniqueProperty = PrimaryKeyUuidProperty({})
         // @ts-ignore
         const getter = uniqueProperty.createGetter(undefined)
         const first = await getter()
@@ -1388,7 +1388,7 @@ describe('/src/properties.ts', () => {
         assert.deepEqual(first, second)
       })
       it('should use the uuid passed in', async () => {
-        const uniqueProperty = UniqueIdProperty({})
+        const uniqueProperty = PrimaryKeyUuidProperty({})
         const getter = uniqueProperty.createGetter(
           'my-uuid',
           {},
@@ -1663,7 +1663,7 @@ describe('/src/properties.ts', () => {
         pluralName: 'Test',
         namespace: 'functional-models',
         properties: {
-          id: UniqueIdProperty(),
+          id: PrimaryKeyUuidProperty(),
           name: TextProperty(),
         },
       })
@@ -1803,7 +1803,7 @@ describe('/src/properties.ts', () => {
           pluralName: 'Test',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             name: TextProperty(),
           },
         })
@@ -1847,7 +1847,7 @@ describe('/src/properties.ts', () => {
           pluralName: 'Test',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             name: TextProperty(),
           },
         })

@@ -1,6 +1,6 @@
 import merge from 'lodash/merge'
 import { ModelType, DataDescription, ModelInstance } from '../../src/types'
-import { TextProperty, UniqueIdProperty } from '../../src/properties'
+import { TextProperty, PrimaryKeyUuidProperty } from '../../src/properties'
 import { Model } from '../../src/models'
 
 describe('/src/types.ts', () => {
@@ -15,7 +15,7 @@ describe('/src/types.ts', () => {
           pluralName: 'MyTypes',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             name: TextProperty(),
           },
         }),
@@ -37,7 +37,7 @@ describe('/src/types.ts', () => {
           pluralName: 'MyTypes',
           namespace: 'functional-models',
           properties: {
-            id: UniqueIdProperty(),
+            id: PrimaryKeyUuidProperty(),
             name: TextProperty(),
           },
         }),

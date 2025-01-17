@@ -1,4 +1,5 @@
 # Functional Models
+
 ![Unit Tests](https://github.com/monolithst/functional-models/actions/workflows/ut.yml/badge.svg?branch=master)
 ![Feature Tests](https://github.com/monolithst/functional-models/actions/workflows/feature.yml/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/monolithst/functional-models/badge.svg?branch=master)](https://coveralls.io/github/monolithst/functional-models?branch=master)
@@ -8,13 +9,14 @@
 </br>
 
 ## Making System Building Fun
+
 Does this sound like you?
 
 > I want to code once, use it everywhere, and auto-generate my entire system
 
 If so this is the framework for you.
 
-Functional Models empowers the creation of pure TypeScript/JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused <b>EVERYWHERE</b>. 
+Functional Models empowers the creation of pure TypeScript/JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused <b>EVERYWHERE</b>.
 
 Write validation code, metadata, property descriptions, and more! Functional Models is fully supportive of both TypeScript and JavaScript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete!
 
