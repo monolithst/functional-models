@@ -1,23 +1,26 @@
 # Functional Models
-
-<img src="./docs/images/chocolate.png" alt="drawing" width="200"/>
-
-> The ooey gooey framework for building and using awesome models EVERYWHERE.
-
 ![Unit Tests](https://github.com/monolithst/functional-models/actions/workflows/ut.yml/badge.svg?branch=master)
 ![Feature Tests](https://github.com/monolithst/functional-models/actions/workflows/feature.yml/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/monolithst/functional-models/badge.svg?branch=master)](https://coveralls.io/github/monolithst/functional-models?branch=master)
 
-## Functional Modeling Fun
+<br>
+<img src="./docs/images/chocolate.png" alt="drawing" width="200"/>
+</br>
 
+## Making System Building Fun
 Does this sound like you?
-"I want to code once, use it everywhere, and auto-generate my entire system"
 
-If so this is the library for you.
+> I want to code once, use it everywhere, and auto-generate my entire system
 
-This library empowers the creation of pure TypeScript/JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused everywhere. Write validation code, metadata, property descriptions, and more! Functional Models is fully supportive of both Typescript and Javascript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete!
+If so this is the framework for you.
 
-Functional Models was born out of the enjoyment and power of working with Django models, but, restricting their "god-like abilities" which can cause developers to make a system nearly impossible to optimize or improve.
+Functional Models empowers the creation of pure TypeScript/JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused <b>EVERYWHERE</b>. 
+
+Write validation code, metadata, property descriptions, and more! Functional Models is fully supportive of both TypeScript and JavaScript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete!
+
+This framework was born out of the enjoyment and power of working with Django models, but, restricting their "god-like abilities" which can cause developers to make a spaghetti system that is nearly impossible to optimize or improve without starting from scratch.
+
+<b>Functional models is ooey gooey framework for building and using awesome models EVERYWHERE.</b>
 
 # Primary Features
 

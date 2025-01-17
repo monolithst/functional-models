@@ -1,4 +1,4 @@
-import { OpenAPIV3_1 } from 'openapi-types'
+import * as openapi from 'openapi-types'
 
 /**
  * A function that returns the value, or just the value
@@ -628,7 +628,7 @@ type RestInfo = {
   /**
    * Security descriptions
    */
-  security: OpenAPIV3_1.SecurityRequirementObject
+  security: openapi.OpenAPIV3_1.SecurityRequirementObject
   /**
    * The HTTP Method. The following are the defaults used:
    *   create: post,
@@ -637,14 +637,14 @@ type RestInfo = {
    *   delete: delete,
    *   search: post,
    */
-  method: OpenAPIV3_1.HttpMethods
+  method: openapi.OpenAPIV3_1.HttpMethods
 }
 
 /**
  * A minimum input for a RestInfo.
  */
 type RestInfoMinimum = {
-  security?: OpenAPIV3_1.SecurityRequirementObject
+  security?: openapi.OpenAPIV3_1.SecurityRequirementObject
 } & Omit<RestInfo, 'security'>
 
 /**

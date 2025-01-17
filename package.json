@@ -1,7 +1,7 @@
 {
   "name": "functional-models",
   "version": "3.0.0",
-  "description": "A fantastic library for creating JavaScript function based models for use on both backends and frontends.",
+  "description": "Functional models is ooey gooey framework for building and using awesome models EVERYWHERE.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -23,6 +23,8 @@
     "url": "git+https://github.com/monolithst/functional-models.git"
   },
   "keywords": [
+    "framework",
+    "models",
     "orm",
     "modeling",
     "functional"
@@ -103,7 +105,7 @@
     "sinon": "^18.0.1",
     "ts-node": "^9.1.1",
     "tsx": "^4.19.2",
-    "typescript": "5.0"
+    "typescript": "^5.7.3"
   },
   "dependencies": {
     "async-lock": "^1.3.0",
