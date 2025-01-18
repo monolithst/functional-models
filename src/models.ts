@@ -9,7 +9,7 @@ import {
   ModelErrors,
   ModelFactory,
   ModelInstance,
-  ModelOptions,
+  ModelFactoryOptions,
   ModelReference,
   ModelReferenceFunctions,
   ModelReferencePropertyInstance,
@@ -29,14 +29,16 @@ import {
 } from './lib'
 import { memoizeAsync, memoizeSync, singularize, toTitleCase } from './utils'
 
-const _defaultOptions = <T extends DataDescription>(): ModelOptions<T> => ({
+const _defaultOptions = <
+  T extends DataDescription,
+>(): ModelFactoryOptions<T> => ({
   instanceCreatedCallback: undefined,
 })
 
 const _convertOptions = <T extends DataDescription>(
-  options?: ModelOptions<T>
+  options?: ModelFactoryOptions<T>
 ) => {
-  const r: ModelOptions<T> = merge({}, _defaultOptions(), options)
+  const r: ModelFactoryOptions<T> = merge({}, _defaultOptions(), options)
   return r
 }
 
@@ -79,7 +81,7 @@ const _validateModelDefinition = <T extends DataDescription>(
  */
 const Model: ModelFactory = <T extends DataDescription>(
   minimalModelDefinitions: MinimalModelDefinition<T>,
-  options?: ModelOptions<T>
+  options?: ModelFactoryOptions<T>
 ): ModelType<T> => {
   _validateModelDefinition(minimalModelDefinitions)
   /*
@@ -230,7 +232,6 @@ const Model: ModelFactory = <T extends DataDescription>(
       getModelName(modelDefinition.namespace, modelDefinition.pluralName),
     getModelDefinition: memoizeSync(() => modelDefinition),
     getPrimaryKey,
-    getOptions: () => ({ ...theOptions }),
     getApiInfo,
   }
   return model as ModelType<T>

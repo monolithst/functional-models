@@ -585,9 +585,10 @@ type PrimaryKeyType = string | number
 type ModelFactory<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
+  TModelFactoryOptionsExtensions extends object = object,
 > = <TData extends DataDescription>(
   modelDefinition: MinimalModelDefinition<TData>,
-  options?: ModelOptions<TData, TModelExtensions, TModelInstanceExtensions>
+  options?: ModelFactoryOptions<TData, TModelFactoryOptionsExtensions>
 ) => ModelType<TData, TModelExtensions, TModelInstanceExtensions>
 
 /**
@@ -783,10 +784,6 @@ type ModelType<
    */
   getPrimaryKey: (instanceData: TData | ToObjectResult<TData>) => PrimaryKeyType
   /**
-   * Gets the options that were passed into the model.
-   */
-  getOptions: () => object & ModelOptions<TData>
-  /**
    * Gets the Api Information on the model.
    *
    * This will take what is manually provided via the ModelDefinition and autopopulate everything that is possible
@@ -883,19 +880,17 @@ type ModelCreatedCallback<
  * Options to pass into model generation.
  * @interface
  */
-type ModelOptions<
+type ModelFactoryOptions<
   TData extends DataDescription,
-  TModelExtensions extends object = object,
-  TModelInstanceExtensions extends object = object,
+  TModelFactoryOptionsExtensions extends object = object,
 > = Record<string, any> &
   Readonly<{
     /**
      * 1 or more (array) of callback functions for when models get created.
      */
-    instanceCreatedCallback?: Arrayable<
-      ModelCreatedCallback<TData, TModelExtensions, TModelInstanceExtensions>
-    >
-  }>
+    instanceCreatedCallback?: Arrayable<ModelCreatedCallback<TData>>
+  }> &
+  TModelFactoryOptionsExtensions
 
 /**
  * A function that can calculate a denormalized value. This is very useful for property values that have very complicated and often expensive calculations (but should be calculated once).
@@ -976,7 +971,7 @@ export {
   ValueGetter,
   ModelReference,
   ModelDefinition,
-  ModelOptions,
+  ModelFactoryOptions,
   ModelReferencePropertyInstance,
   PropertyGetters,
   PropertyValidators,
