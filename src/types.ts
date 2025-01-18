@@ -585,11 +585,17 @@ type PrimaryKeyType = string | number
 type ModelFactory<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
-  TModelOptionsExtensions extends object = object,
-> = <TData extends DataDescription>(
+> = <
+  TData extends DataDescription,
+  TModelFactoryOptionsExtensions extends object = object,
+>(
   modelDefinition: MinimalModelDefinition<TData>,
-  options?: ModelOptions<TData, TModelExtensions, TModelInstanceExtensions> &
-    TModelOptionsExtensions
+  options?: ModelFactoryOptions<
+    TData,
+    TModelExtensions,
+    TModelInstanceExtensions,
+    TModelFactoryOptionsExtensions
+  >
 ) => ModelType<TData, TModelExtensions, TModelInstanceExtensions>
 
 /**
@@ -757,14 +763,12 @@ type MinimalModelDefinition<TData extends DataDescription> = Partial<
  * @typeParam TData - The type of data
  * @typeParam TModelExtensions - Extensions on the model.
  * @typeParam TModelInstanceExtensions - Extensions on the instances produced by this model.
- * @typeParam TModelOptionsExtensions - Extensions to the options of a model.
  * @interface
  */
 type ModelType<
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
-  TModelOptionsExtensions extends object = object,
 > = Readonly<{
   /**
    * This is a unique name combining namespace + pluralName. This can be used as a key to uniquely identify
@@ -786,10 +790,6 @@ type ModelType<
    * @param instanceData The underlying instance data that has the primary key.
    */
   getPrimaryKey: (instanceData: TData | ToObjectResult<TData>) => PrimaryKeyType
-  /**
-   * Gets the options that were passed into the model.
-   */
-  getOptions: () => object & ModelOptions<TData> & TModelOptionsExtensions
   /**
    * Gets the Api Information on the model.
    *
@@ -887,10 +887,11 @@ type ModelCreatedCallback<
  * Options to pass into model generation.
  * @interface
  */
-type ModelOptions<
+type ModelFactoryOptions<
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
+  TModelFactoryOptionsExtensions extends object = object,
 > = Record<string, any> &
   Readonly<{
     /**
@@ -899,7 +900,8 @@ type ModelOptions<
     instanceCreatedCallback?: Arrayable<
       ModelCreatedCallback<TData, TModelExtensions, TModelInstanceExtensions>
     >
-  }>
+  }> &
+  TModelFactoryOptionsExtensions
 
 /**
  * A function that can calculate a denormalized value. This is very useful for property values that have very complicated and often expensive calculations (but should be calculated once).
@@ -980,7 +982,7 @@ export {
   ValueGetter,
   ModelReference,
   ModelDefinition,
-  ModelOptions,
+  ModelFactoryOptions,
   ModelReferencePropertyInstance,
   PropertyGetters,
   PropertyValidators,

@@ -251,27 +251,6 @@ describe('/src/models.ts', () => {
         assert.deepEqual(actual, expected)
       })
     })
-    describe('#getOptions()', () => {
-      it('should pass arbitrary options from the Model() call through to the model', () => {
-        const model = Model(
-          {
-            pluralName: 'ModelName',
-            namespace: 'functional-models',
-            properties: {
-              id: PrimaryKeyUuidProperty(),
-            },
-          },
-          {
-            instanceCreatedCallback: undefined,
-            arbitrary: { nested: 'arg' },
-          }
-        )
-        const options = model.getOptions()
-        const actual = options.arbitrary
-        const expected = { nested: 'arg' }
-        assert.deepEqual(actual, expected)
-      })
-    })
     describe('#getModelDefinition()', () => {
       it('should return "primaryKey" when this value is passed in as the primaryKey', () => {
         const expected = 'primaryKey'
