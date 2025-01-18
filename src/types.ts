@@ -585,17 +585,10 @@ type PrimaryKeyType = string | number
 type ModelFactory<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
-> = <
-  TData extends DataDescription,
   TModelFactoryOptionsExtensions extends object = object,
->(
+> = <TData extends DataDescription>(
   modelDefinition: MinimalModelDefinition<TData>,
-  options?: ModelFactoryOptions<
-    TData,
-    TModelExtensions,
-    TModelInstanceExtensions,
-    TModelFactoryOptionsExtensions
-  >
+  options?: ModelFactoryOptions<TData, TModelFactoryOptionsExtensions>
 ) => ModelType<TData, TModelExtensions, TModelInstanceExtensions>
 
 /**
@@ -889,17 +882,13 @@ type ModelCreatedCallback<
  */
 type ModelFactoryOptions<
   TData extends DataDescription,
-  TModelExtensions extends object = object,
-  TModelInstanceExtensions extends object = object,
   TModelFactoryOptionsExtensions extends object = object,
 > = Record<string, any> &
   Readonly<{
     /**
      * 1 or more (array) of callback functions for when models get created.
      */
-    instanceCreatedCallback?: Arrayable<
-      ModelCreatedCallback<TData, TModelExtensions, TModelInstanceExtensions>
-    >
+    instanceCreatedCallback?: Arrayable<ModelCreatedCallback<TData>>
   }> &
   TModelFactoryOptionsExtensions
 

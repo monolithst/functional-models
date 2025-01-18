@@ -35,23 +35,10 @@ const _defaultOptions = <
   instanceCreatedCallback: undefined,
 })
 
-const _convertOptions = <
-  T extends DataDescription,
-  TModelFactoryOptionsExtensions extends object = object,
->(
-  options?: ModelFactoryOptions<
-    T,
-    object,
-    object,
-    TModelFactoryOptionsExtensions
-  >
+const _convertOptions = <T extends DataDescription>(
+  options?: ModelFactoryOptions<T>
 ) => {
-  const r: ModelFactoryOptions<
-    T,
-    object,
-    object,
-    TModelFactoryOptionsExtensions
-  > = merge({}, _defaultOptions(), options)
+  const r: ModelFactoryOptions<T> = merge({}, _defaultOptions(), options)
   return r
 }
 
@@ -92,17 +79,9 @@ const _validateModelDefinition = <T extends DataDescription>(
  * @param options - Any additional model options
  * @returns A simple Model function ready for creating models. See {@link ModelType}
  */
-const Model: ModelFactory = <
-  T extends DataDescription,
-  TModelFactoryOptionsExtensions extends object = object,
->(
+const Model: ModelFactory = <T extends DataDescription>(
   minimalModelDefinitions: MinimalModelDefinition<T>,
-  options?: ModelFactoryOptions<
-    T,
-    object,
-    object,
-    TModelFactoryOptionsExtensions
-  >
+  options?: ModelFactoryOptions<T>
 ): ModelType<T> => {
   _validateModelDefinition(minimalModelDefinitions)
   /*
