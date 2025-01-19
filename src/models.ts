@@ -63,7 +63,7 @@ const _validateModelDefinition = <T extends DataDescription>(
     modelDefinition.properties[modelDefinition.primaryKeyName || 'id']
   if (!primaryKeyProperty) {
     throw new Error(
-      `Property missing for primaryKey named ${modelDefinition.primaryKeyName}`
+      `Property missing for primaryKey named ${primaryKeyProperty}`
     )
   }
   if (!modelDefinition.pluralName) {

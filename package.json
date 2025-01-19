@@ -1,12 +1,12 @@
 {
   "name": "functional-models",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Functional models is ooey gooey framework for building and using awesome models EVERYWHERE.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "mocha -r tsx --extensions ts,tsx 'test/**/*.{ts,tsx}'",
     "mocha": "mocha -r tsx",
+    "test": "mocha -r tsx --extensions ts,tsx 'test/**/*.{ts,tsx}'",
     "test:coverage": "TS_NODE_PROJECT=tsconfig.test.json nyc npm run test",
     "test:watch": "nodemon -e '*' --watch test --watch src --exec npm run test:coverage",
     "commit": "cz",
