@@ -17,7 +17,7 @@ import {
   memoizeSync,
 } from './utils'
 import {
-  ModelReference,
+  ModelReferenceType,
   ModelInstance,
   Maybe,
   PrimaryKeyType,
@@ -539,7 +539,7 @@ const PrimaryKeyUuidProperty = (
  */
 const ModelReferenceProperty = <T extends DataDescription>(
   model: MaybeFunction<ModelType<T>>,
-  config: PropertyConfig<ModelReference<T>> = {},
+  config: PropertyConfig<ModelReferenceType<T>> = {},
   additionalMetadata = {}
 ) => AdvancedModelReferenceProperty<T>(model, config, additionalMetadata)
 
@@ -559,7 +559,7 @@ const AdvancedModelReferenceProperty = <
     ModelType<T, TModelExtensions, TModelInstanceExtensions>
   >,
   config: PropertyConfig<
-    ModelReference<T, TModelExtensions, TModelInstanceExtensions>
+    ModelReferenceType<T, TModelExtensions, TModelInstanceExtensions>
   > = {},
   additionalMetadata = {}
 ) => {
@@ -580,7 +580,7 @@ const AdvancedModelReferenceProperty = <
 
   const _getId =
     (
-      instanceValues: ModelReference<
+      instanceValues: ModelReferenceType<
         T,
         ModelType<T, TModelExtensions, TModelInstanceExtensions>
       >
@@ -621,7 +621,7 @@ const AdvancedModelReferenceProperty = <
     }
 
   const lazyLoadMethodAtomic = async (
-    instanceValues: ModelReference<
+    instanceValues: ModelReferenceType<
       T,
       TModelExtensions,
       TModelInstanceExtensions
@@ -629,7 +629,7 @@ const AdvancedModelReferenceProperty = <
   ) => {
     const valueIsModelInstance = isModelInstance(instanceValues)
 
-    const _getInstanceReturn = (objToUse: ModelReference<T>) => {
+    const _getInstanceReturn = (objToUse: ModelReferenceType<T>) => {
       // We need to determine if the object we just got is an actual model instance to determine if we need to make one.
       const objIsModelInstance = isModelInstance(objToUse)
       const instance = objIsModelInstance
@@ -659,7 +659,7 @@ const AdvancedModelReferenceProperty = <
       const model = _getModel()
       if (id !== null && id !== undefined) {
         const obj = await config.fetcher(model, id)
-        return _getInstanceReturn(obj as ModelReference<T>)
+        return _getInstanceReturn(obj as ModelReferenceType<T>)
       }
       return null
     }
@@ -668,11 +668,11 @@ const AdvancedModelReferenceProperty = <
 
   const p: ModelReferencePropertyInstance<
     T,
-    ModelReference<T, TModelExtensions, TModelInstanceExtensions>,
+    ModelReferenceType<T, TModelExtensions, TModelInstanceExtensions>,
     TModelExtensions,
     TModelInstanceExtensions
   > = merge(
-    Property<ModelReference<T, TModelExtensions, TModelInstanceExtensions>>(
+    Property<ModelReferenceType<T, TModelExtensions, TModelInstanceExtensions>>(
       PropertyType.ModelReference,
       merge({}, config, {
         validators,
@@ -682,7 +682,7 @@ const AdvancedModelReferenceProperty = <
     ),
     {
       getReferencedId: (
-        instanceValues: ModelReference<
+        instanceValues: ModelReferenceType<
           T,
           ModelType<T, TModelExtensions, TModelInstanceExtensions>
         >
