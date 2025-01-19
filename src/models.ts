@@ -58,13 +58,12 @@ const _toModelDefinition = <T extends DataDescription>(
 const _validateModelDefinition = <T extends DataDescription>(
   modelDefinition: MinimalModelDefinition<T>
 ) => {
+  const primaryKeyName = modelDefinition.primaryKeyName || 'id'
   const primaryKeyProperty =
     // @ts-ignore
-    modelDefinition.properties[modelDefinition.primaryKeyName || 'id']
+    modelDefinition.properties[primaryKeyName]
   if (!primaryKeyProperty) {
-    throw new Error(
-      `Property missing for primaryKey named ${primaryKeyProperty}`
-    )
+    throw new Error(`Property missing for primaryKey named ${primaryKeyName}`)
   }
   if (!modelDefinition.pluralName) {
     throw new Error(`Must include pluralName for model.`)
