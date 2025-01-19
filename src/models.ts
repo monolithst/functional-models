@@ -10,7 +10,7 @@ import {
   ModelFactory,
   ModelInstance,
   ModelFactoryOptions,
-  ModelReference,
+  ModelReferenceType,
   ModelReferenceFunctions,
   ModelReferencePropertyInstance,
   ModelType,
@@ -150,7 +150,7 @@ const Model: ModelFactory = <T extends DataDescription>(
                 [key]: () =>
                   asReferenced.getReferencedId(
                     // @ts-ignore
-                    instanceValues[key] as ModelReference<any>
+                    instanceValues[key] as ModelReferenceType<any>
                   ),
               },
             }

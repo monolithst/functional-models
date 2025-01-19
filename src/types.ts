@@ -120,7 +120,7 @@ type DataDescription = Readonly<{
     | Arrayable<DataDescription>
     | Arrayable<Date>
     | Arrayable<undefined>
-    | ModelReference<any>
+    | ModelReferenceType<any>
     | Arrayable<JsonAble>
 }>
 
@@ -385,7 +385,7 @@ interface ModelReferencePropertyInstance<
    * @param instanceValues - The ModelReference. (key, data, or instance)
    */
   readonly getReferencedId: (
-    instanceValues: ModelReference<
+    instanceValues: ModelReferenceType<
       TData,
       TModelExtensions,
       TModelInstanceExtensions
@@ -407,7 +407,7 @@ interface ModelReferencePropertyInstance<
  * This is a basic implementation of a "foreign key".
  * The value of this property can be either a key type (string|number), or a model instance, or the model data itself. It depends on the ModelInstanceFetcher.
  */
-type ModelReference<
+type ModelReferenceType<
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
@@ -969,7 +969,7 @@ export {
   PropertyConfig,
   DataValue,
   ValueGetter,
-  ModelReference,
+  ModelReferenceType,
   ModelDefinition,
   ModelFactoryOptions,
   ModelReferencePropertyInstance,
