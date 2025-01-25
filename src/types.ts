@@ -51,16 +51,11 @@ type JsonifiedData<T extends DataDescription> = {
 }
 
 /**
- * Removes the promise over a value
- */
-type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never
-
-/**
  * Removes promises from every property of an object.
  */
 type RemovePromises<T extends object> = {
   // @ts-ignore
-  [K in keyof T as T[K] extends Promise<any> ? K : never]: Unpromise<T[K]>
+  [K in keyof T as T[K] extends Promise<any> ? K : never]: Awaited<T[K]>
 } & {
   [K in keyof T as T[K] extends Promise<any> ? never : K]: T[K]
 }
@@ -1001,7 +996,6 @@ export {
   ApiMethod,
   RemovePromises,
   FlattenModelReferences,
-  Unpromise,
   ApiInfoPartialRest,
   RestInfoMinimum,
 }
