@@ -10,6 +10,7 @@ import {
   DataDescription,
   DataValue,
   ModelInstance,
+  ModelInstanceFetcher,
   PrimaryKeyType,
   PropertyConfig,
   PropertyValidatorComponent,
@@ -255,6 +256,13 @@ const populateApiInformation = (
   return _fillOutRestInfo(pluralName, namespace, partial, nullRest)
 }
 
+/**
+ * A ModelInstanceFetcher that does not do anything. It always returns undefined.
+ */
+const noFetch: ModelInstanceFetcher = () => {
+  return Promise.resolve(undefined)
+}
+
 export {
   isReferencedProperty,
   getValueForModelInstance,
@@ -269,4 +277,5 @@ export {
   populateApiInformation,
   NULL_ENDPOINT,
   NULL_METHOD,
+  noFetch,
 }

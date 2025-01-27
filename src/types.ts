@@ -942,6 +942,21 @@ enum PrimitiveValueType {
  */
 type DateValueType = Date | string
 
+/**
+ * A useful type for setting the props object of a Model constructor.
+ */
+type ModelConstructorProps = Readonly<{
+  Model: ModelFactory
+}>
+
+/**
+ * A useful type for setting the props object of a Model constructor that has model references that need a fetcher
+ */
+type ModelWithReferencesConstructorProps = ModelConstructorProps &
+  Readonly<{
+    fetcher: ModelInstanceFetcher
+  }>
+
 export {
   PrimitiveValueType,
   PropertyType,
@@ -998,4 +1013,6 @@ export {
   FlattenModelReferences,
   ApiInfoPartialRest,
   RestInfoMinimum,
+  ModelConstructorProps,
+  ModelWithReferencesConstructorProps,
 }

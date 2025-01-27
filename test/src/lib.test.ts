@@ -3,10 +3,18 @@ import {
   buildValidEndpoint,
   isModelInstance,
   populateApiInformation,
+  noFetch,
 } from '../../src/lib'
 import { ApiInfo, ApiMethod } from '../../src/index'
 
 describe('/src/lib.ts', () => {
+  describe('#noFetch()', () => {
+    it('should return Promise<undefined> when called', async () => {
+      // @ts-ignore
+      const actual = await noFetch()
+      assert.isUndefined(actual)
+    })
+  })
   describe('#populateApiInformation', () => {
     it('should create the expected fully filled out ApiInfo with Null Rest Infos when noPublish=true', () => {
       const actual = populateApiInformation(
