@@ -2,6 +2,7 @@ import merge from 'lodash/merge'
 import omit from 'lodash/omit'
 import {
   AllowableEqualitySymbols,
+  BooleanQuery,
   BuilderV2Link,
   DatastoreValueType,
   DatesAfterQuery,
@@ -13,6 +14,7 @@ import {
   PaginationQuery,
   PropertyOptions,
   PropertyQuery,
+  Query,
   QueryBuilder,
   QueryTokens,
   SortOrder,
@@ -293,15 +295,17 @@ const queryBuilder = (): QueryBuilder => {
 }
 
 /**
- * Determines if the value is an Orm Property based statement
+ * Determines if the token is an Orm Property based statement
  * @param value
  */
-const isPropertyBasedQuery = (value: string | undefined) => {
-  if (!value) {
+const isPropertyBasedQuery = (value: any): value is Query => {
+  if (!value || !value.type) {
     return false
   }
   return (
-    value === 'property' || value === 'datesBefore' || value === 'datesAfter'
+    value.type === 'property' ||
+    value.type === 'datesBefore' ||
+    value.type === 'datesAfter'
   )
 }
 
@@ -309,7 +313,7 @@ const isPropertyBasedQuery = (value: string | undefined) => {
  * Determines if the value is a boolean
  * @param value - The value to examine.
  */
-const isALinkToken = (value: string) => {
+const isALinkToken = (value: any): value is BooleanQuery => {
   if (!value) {
     return false
   }
