@@ -90,15 +90,15 @@ describe('/src/orm/query.ts', () => {
   })
   describe('#isOrmValueStatement()', () => {
     it('should return true if it is a property', () => {
-      const actual = isPropertyBasedQuery('property')
+      const actual = isPropertyBasedQuery({ type: 'property' })
       assert.isTrue(actual)
     })
     it('should return true if it is a datesBefore', () => {
-      const actual = isPropertyBasedQuery('datesBefore')
+      const actual = isPropertyBasedQuery({ type: 'datesBefore' })
       assert.isTrue(actual)
     })
     it('should return true if it is a datesAfter', () => {
-      const actual = isPropertyBasedQuery('datesAfter')
+      const actual = isPropertyBasedQuery({ type: 'datesAfter' })
       assert.isTrue(actual)
     })
     it('should return false if it is a anything', () => {
