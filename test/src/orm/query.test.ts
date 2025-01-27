@@ -17,9 +17,45 @@ import {
   take,
   textQuery,
   booleanQuery,
+  threeitize,
 } from '../../../src'
 
 describe('/src/orm/query.ts', () => {
+  describe('#threeitize()', () => {
+    it('should throw an exception if there are 4 values', () => {
+      assert.throws(() => {
+        threeitize(['a', 'b', 'c', 'd'])
+      }, 'Must be an odd number of 3 or greater')
+    })
+    it('should allow 5 values', () => {
+      const actual = threeitize(['a', 'b', 'c', 'd', 'e'])
+      const expected = [
+        ['a', 'b', 'c'],
+        ['c', 'd', 'e'],
+      ]
+      assert.deepEqual(actual, expected)
+    })
+    it('should throw an exception if there are 6 values', () => {
+      assert.throws(() => {
+        threeitize(['a', 'b', 'c', 'd', 'e', 'f'])
+      }, 'Must be an odd number of 3 or greater')
+    })
+    it('should throw an exception if there are 8 values', () => {
+      assert.throws(() => {
+        threeitize(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+      }, 'Must be an odd number of 3 or greater')
+    })
+    it('should create the expected structure by walking down and grouping', () => {
+      const actual = threeitize(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'])
+      const expected = [
+        ['a', 'b', 'c'],
+        ['c', 'd', 'e'],
+        ['e', 'f', 'g'],
+        ['g', 'h', 'i'],
+      ]
+      assert.deepEqual(actual, expected)
+    })
+  })
   describe('#booleanQuery()', () => {
     it('should create an expected boolean property query', () => {
       const actual = booleanQuery('my-key', false)

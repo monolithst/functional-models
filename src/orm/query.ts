@@ -22,6 +22,8 @@ import {
   SubBuilderFunction,
 } from './types'
 
+const THREE = 3
+
 const _objectize = <T>(key: string, value: T) => {
   return value
     ? {
@@ -378,6 +380,24 @@ const booleanQuery = (key: string, value: boolean | undefined | null) =>
     equalitySymbol: EqualitySymbol.eq,
   })
 
+/**
+ * A useful utility for processing {@link QueryTokens} with a {@link DatastoreAdapter}
+ * Takes the first 3 values (property, LINK, property) and then shifts the list left by 2, so that it can create another property, LINK, property
+ * @param data - The list of values
+ */
+const threeitize = <T>(data: T[]): T[][] => {
+  if (data.length === 0 || data.length === 1) {
+    return []
+  }
+  if (data.length % 2 === 0) {
+    throw new Error('Must be an odd number of 3 or greater.')
+  }
+  const three = data.slice(0, THREE)
+  const rest = data.slice(2)
+  const moreThrees = threeitize(rest)
+  return [three, ...moreThrees]
+}
+
 export {
   queryBuilder,
   take,
@@ -393,4 +413,5 @@ export {
   textQuery,
   numberQuery,
   booleanQuery,
+  threeitize,
 }
