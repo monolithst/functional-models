@@ -33,7 +33,6 @@ import {
   DataDescription,
   ModelInstanceFetcher,
   ModelInstance,
-  ModelReference,
   ModelType,
   PrimaryKeyType,
   JsonifiedData,

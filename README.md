@@ -28,12 +28,12 @@ This framework was born out of the enjoyment and power of working with Django mo
 
 - Define models that have robust properties and are scoped to a namespace or app
 - Robust typing system for TypeScript goodness.
-- Same modeling code can be used on front end and backends.
-- Validate model data
-- ORM ready via the [functional-models-orm](https://github.com/monolithst/functional-models-orm) package. Available Datastores: DynamoDb, Mongo, in-memory, elastic/opensearch, Sqlite, Postgres, Mysql
-- Most common properties out of the box.
+- The same modeling code can be used on front end and backends.
+- Complete validation system for both properties and overall models.
+- ORM built-in with optional libraries that provide the database backends. Available Datastores: DynamoDb, Mongo, in-memory, elastic/opensearch, Sqlite, Postgres, Mysql
+- Most common properties provided out of the box.
 - Supports "foreign keys", 1 to 1 as well as 1 to many (via an Array).
-- Models support custom primary key name. (id is used by default)
+- Models support custom primary keys. (The key "id" is used by default)
 - Supports different model namings, (plural, singular, display), and the ability to customize them.
 - Add Api Information that can be used for auto-generating frontend and backend code as well as documentation.
 
@@ -43,6 +43,7 @@ This framework was born out of the enjoyment and power of working with Django mo
 - [Simple JavasScript Example](#simple-javascript-example-usage)
 - [Simple TypeScript Example](#simple-typescript-example-usage)
 - [Validation](#validation)
+- [ORM Backed Models](#orm-backed-models)
 - [Properties](#properties)
 - [List of Properties](#list-of-properties-out-of-the-box)
 
@@ -51,6 +52,7 @@ This framework was born out of the enjoyment and power of working with Django mo
 Version 3 is a major update that changes most of the primary interfaces from Version 2. This version should be simpler to extend (see the companion library [Functional Models Orm](https://github.com/monolithst/functional-models-orm)) making models much easier to reuse across front and back ends. Here is a non-exhaustive list.
 
 - Model/ModelInstance/ModelFactory types have been reworked, so that they are simpler and much easier to extend
+- ORM code from `functional-models-orm` is now included. No additional libraries needed!
 - Some "automagical" stuff has been removed, because experience has shown them to be more of a hassle than they were worth.
 - Interfaces for ModelType/ModelInstance/ModelDefinitions have been reworked
 - API Endpoint information can be added to a ModelDefinition
@@ -365,6 +367,36 @@ const checkForDuplicateValues = (
 }
 ```
 
+## Orm Backed Models
+
+You can add datastore functionality to models and their instances by simply swapping out the Model Factory that creates your model. <b>This is a key concept for supporting frontend as well as backend development with the same models.</b>
+
+Every model gets the following functions:
+
+```
+save() - Saves an instance passed in
+delete() - Deletes an instance with the given primary key
+retrieve() - Gets a saved instance by its primary key
+search() - Searches for instances
+searchOne() - Seaches for one instance
+createAndSave() - Creates and then saves an instance
+bulkInsert() - Bulk inserts many instances
+count() - Counts the number of saved instances
+```
+
+Every model instance gets the following functions:
+
+```
+save() - Saves this instance
+delete() - Deletes this instance
+```
+
+For additional information on the ORM system see:
+
+[How To Use the ORM](https://monolithst.github.io/functional-models/documents/How_to_Use_the_ORM.html)
+
+[How To Use a Model in a Frontend and Backend](https://monolithst.github.io/functional-models/documents/How_to_Use_a_model_in_a_Frontend_and_Backend.html)
+
 ## Properties
 
 There are numerous properties that are supported out of the box that cover most data modeling needs. It is also very easy to create custom properties that encapsulate unique choices
@@ -576,3 +608,11 @@ console.info(id)
 In this situation, the latinName for species is not passed in, but calculated from the two other properties. This becomes the primary key for this object, which is unique.
 
 [Documentation](https://monolithst.github.io/functional-models/functions/index.properties.NaturalIdProperty.html)
+
+### ORM Properties
+
+#### LastModifiedDateProperty
+
+A date property that automatically updates whenever the model instance is saved.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.orm.properties.LastModifiedDateProperty.html)
