@@ -8,7 +8,7 @@ import { isPromise } from '../../src/utils'
 
 import sinon from 'sinon'
 import { assert } from 'chai'
-import { Model, isNullRestInfo } from '../../src/models'
+import { Model, isNullRestInfo, noFetch } from '../../src/models'
 import {
   Property,
   TextProperty,
@@ -32,6 +32,13 @@ const TEST_MODEL_1 = Model<TEST_MODEL_TYPE>({
 })
 
 describe('/src/models.ts', () => {
+  describe('#noFetch()', () => {
+    it('should return Promise<undefined> when called', async () => {
+      // @ts-ignore
+      const actual = await noFetch()
+      assert.isUndefined(actual)
+    })
+  })
   describe('#isNullRestInfo()', () => {
     it('should return true, if the values are the null values', () => {
       const actual = isNullRestInfo({

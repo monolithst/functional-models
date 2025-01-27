@@ -20,6 +20,7 @@ import {
   PropertyValidators,
   RestInfo,
   ToObjectFunction,
+  ModelInstanceFetcher,
 } from './types'
 import {
   getModelName,
@@ -245,4 +246,11 @@ const isNullRestInfo = (restInfo: RestInfo): boolean => {
   return restInfo.method === NULL_METHOD && restInfo.endpoint === NULL_ENDPOINT
 }
 
-export { Model, isNullRestInfo }
+/**
+ * A ModelInstanceFetcher that does not do anything. It always returns undefined.
+ */
+const noFetch: ModelInstanceFetcher = () => {
+  return Promise.resolve(undefined)
+}
+
+export { Model, isNullRestInfo, noFetch }
