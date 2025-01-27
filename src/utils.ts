@@ -5,7 +5,6 @@ import AsyncLock from 'async-lock'
 const HEX = 16
 const FOUR = 4
 const FIFTEEN = 15
-const THREE = 3
 
 const getRandomValues = (): Uint8Array => {
   const array = new Uint8Array(1)
@@ -117,19 +116,6 @@ const memoizeAsync = <T, A extends Array<any>>(method: (...args: A) => T) => {
   /* eslint-enable functional/no-let */
 }
 
-const threeitize = <T>(data: T[]): T[][] => {
-  if (data.length === 0 || data.length === 1) {
-    return []
-  }
-  if (data.length % 2 === 0) {
-    throw new Error('Must be an odd number of 3 or greater.')
-  }
-  const three = data.slice(0, THREE)
-  const rest = data.slice(2)
-  const moreThrees = threeitize(rest)
-  return [three, ...moreThrees]
-}
-
 export {
   loweredTitleCase,
   toTitleCase,
@@ -140,5 +126,4 @@ export {
   flowFindFirst,
   memoizeSync,
   memoizeAsync,
-  threeitize,
 }
