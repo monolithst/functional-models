@@ -147,6 +147,10 @@ describe('/src/orm/query.ts', () => {
     })
   })
   describe('#isBooleanType()', () => {
+    it('should return false if value is an object', () => {
+      const actual = isALinkToken({})
+      assert.isFalse(actual)
+    })
     it('should return true if value is and', () => {
       const actual = isALinkToken('and')
       assert.isTrue(actual)

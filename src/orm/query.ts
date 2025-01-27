@@ -319,6 +319,9 @@ const isALinkToken = (value: any): value is BooleanQuery => {
   if (!value) {
     return false
   }
+  if (typeof value !== 'string') {
+    return false
+  }
   value = value.toLowerCase()
   return value === 'and' || value === 'or'
 }
