@@ -752,9 +752,7 @@ type InnerBuilderV2 = {
   datesAfter: (
     key: string,
     jsDate: Date | string,
-    options:
-      | { valueType?: DatastoreValueType; equalToAndAfter?: boolean }
-      | undefined
+    options?: { valueType?: DatastoreValueType; equalToAndAfter?: boolean }
   ) => BuilderV2Link
   /**
    * Searches for elements that are before the given date.
@@ -765,9 +763,7 @@ type InnerBuilderV2 = {
   datesBefore: (
     key: string,
     jsDate: Date | string,
-    options:
-      | { valueType?: DatastoreValueType; equalToAndBefore?: boolean }
-      | undefined
+    options?: { valueType?: DatastoreValueType; equalToAndBefore?: boolean }
   ) => BuilderV2Link
   /**
    * Search a value
