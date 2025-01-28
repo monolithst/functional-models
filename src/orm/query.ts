@@ -433,8 +433,9 @@ const _validateTokenStructure = (o: QueryTokens[]) => {
   if (totalLinks.length !== nonLinks.length - 1) {
     throw new Error('Must separate each statement with an AND or OR')
   }
-  const threes = threeitize(o)
-  threes.toReversed().forEach(([a, l, b]) => {
+  // @eslint-ignore-next-line
+  const threes = threeitize(o).reverse()
+  threes.forEach(([a, l, b]) => {
     if (l !== 'AND' && l !== 'OR') {
       // @ts-ignore
       if (isPropertyBasedQuery(l)) {

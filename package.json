@@ -16,6 +16,7 @@
     "build:watch": "nodemon -e '*' --watch ./src --exec npm run build",
     "build:docs": "npx typedoc --out ./buildDocs ./src/index.ts",
     "prettier": "prettier --write .",
+    "prettier:check": "prettier -c .",
     "eslint": "eslint . --fix",
     "dist": "npm run build && cd dist && npm publish"
   },
