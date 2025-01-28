@@ -433,7 +433,7 @@ const _validateTokenStructure = (o: QueryTokens[]) => {
   if (totalLinks.length !== nonLinks.length - 1) {
     throw new Error('Must separate each statement with an AND or OR')
   }
-  // @eslint-ignore-next-line
+  // eslint-disable-next-line functional/immutable-data
   const threes = threeitize(o).reverse()
   threes.forEach(([a, l, b]) => {
     if (l !== 'AND' && l !== 'OR') {
