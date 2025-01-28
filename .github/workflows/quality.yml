@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality:
-    name: Tests
+    name: Quality
     runs-on: ubuntu-latest
 
     strategy:
