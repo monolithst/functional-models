@@ -18,9 +18,148 @@ import {
   textQuery,
   booleanQuery,
   threeitize,
+  validateOrmSearch,
 } from '../../../src'
 
 describe('/src/orm/query.ts', () => {
+  describe('#validateQueryTokens()', () => {
+    it('should do nothing when query is empty', () => {
+      assert.doesNotThrow(() => {
+        validateOrmSearch({
+          query: [],
+        })
+      })
+    })
+    it('should throw an exception when query is not an array', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          // @ts-ignore
+          query: {},
+        })
+      }, 'Query must be an array')
+    })
+    it('should throw an exception when a query starts with OR', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: ['OR', 'AND'],
+        })
+      }, 'Cannot have AND or OR at the very start.')
+    })
+    it('should throw an exception when a query starts with AND', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: ['AND', 'AND'],
+        })
+      }, 'Cannot have AND or OR at the very start.')
+    })
+    it('should throw an exception when there is an OR at the last place', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [property('a', 'b'), 'AND', 'OR'],
+        })
+      }, 'Cannot have AND or OR at the very end.')
+    })
+    it('should throw an exception when there is an AND at the last place', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [property('a', 'b'), 'AND', 'AND'],
+        })
+      }, 'Cannot have AND or OR at the very end.')
+    })
+    it('should throw an exception when properties are not separated between links', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [
+            property('a', 'b'),
+            'AND',
+            'AND',
+            property('c', 'c'),
+            property('b', 'b'),
+          ],
+        })
+      }, 'Must have AND/OR between property queries')
+    })
+    it('should throw an exception when properties are not separated between links after a property', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [
+            property('a', 'b'),
+            'AND',
+            property('c', 'c'),
+            property('c', 'c'),
+            'AND',
+            'AND',
+            property('b', 'b'),
+          ],
+        })
+      }, 'Order of link tokens and queries invalid')
+    })
+    it('should throw an exception when there is an invalid path in a nested query', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [
+            [
+              property('a', 'b'),
+              'AND',
+              property('c', 'c'),
+              property('c', 'c'),
+              'AND',
+              'AND',
+              property('b', 'b'),
+            ],
+          ],
+        })
+      }, 'Order of link tokens and queries invalid')
+    })
+    it('should NOT throw an exception a nested query is correct', () => {
+      assert.doesNotThrow(() => {
+        validateOrmSearch({
+          query: [[property('a', 'b')], 'AND', [property('a', 'b')]],
+        })
+      })
+    })
+    it('should throw an exception when properties are not separated between links with an array', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [
+            property('a', 'b'),
+            'AND',
+            'AND',
+            [property('c', 'c')],
+            property('b', 'b'),
+          ],
+        })
+      }, 'Must have AND/OR between nested queries')
+    })
+    it('should throw an exception when properties are not separated between links and its something else', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [
+            property('a', 'b'),
+            'AND',
+            'AND',
+            // @ts-ignore
+            'whats-this',
+            property('b', 'b'),
+          ],
+        })
+      }, 'Unknown token type whats-this')
+    })
+    it('should throw an exception when there are too many ANDs to properties', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [property('a', 'b'), 'AND', 'AND', property('b', 'b')],
+        })
+      }, 'Must separate each statement with an AND or OR')
+    })
+    it('should throw an exception when there are too many ORs to properties', () => {
+      assert.throws(() => {
+        validateOrmSearch({
+          query: [property('a', 'b'), 'OR', 'OR', property('b', 'b')],
+        })
+      }, 'Must separate each statement with an AND or OR')
+    })
+  })
   describe('#threeitize()', () => {
     it('should throw an exception if there are 4 values', () => {
       assert.throws(() => {

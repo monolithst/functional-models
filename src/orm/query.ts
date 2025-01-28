@@ -401,6 +401,75 @@ const threeitize = <T>(data: T[]): T[][] => {
   return [three, ...moreThrees]
 }
 
+const _validateTokenTypes = (token: QueryTokens) => {
+  if (Array.isArray(token)) {
+    token.forEach(_validateTokenTypes)
+    return
+  }
+  if (isPropertyBasedQuery(token)) {
+    return
+  }
+  if (isALinkToken(token)) {
+    return
+  }
+  throw new Error(`Unknown token type ${token}`)
+}
+
+const _validateTokenStructure = (o: QueryTokens[]) => {
+  const first = o[0]
+  if (first === 'AND' || first === 'OR') {
+    throw new Error('Cannot have AND or OR at the very start.')
+  }
+  const last = o[o.length - 1]
+  if (last === 'AND' || last === 'OR') {
+    throw new Error('Cannot have AND or OR at the very end.')
+  }
+  if (o.every(x => x !== 'AND' && x !== 'OR')) {
+    o.every(_validateArrayOrQuery)
+    return
+  }
+  const totalLinks = o.filter(x => x === 'AND' || x === 'OR')
+  const nonLinks = o.filter(x => x !== 'AND' && x !== 'OR')
+  if (totalLinks.length !== nonLinks.length - 1) {
+    throw new Error('Must separate each statement with an AND or OR')
+  }
+  const threes = threeitize(o)
+  threes.toReversed().forEach(([a, l, b]) => {
+    if (l !== 'AND' && l !== 'OR') {
+      // @ts-ignore
+      if (isPropertyBasedQuery(l)) {
+        throw new Error('Must have AND/OR between property queries')
+      }
+      throw new Error('Must have AND/OR between nested queries')
+    }
+    _validateArrayOrQuery(a)
+    _validateArrayOrQuery(b)
+  })
+  return
+}
+
+const _validateArrayOrQuery = (o: QueryTokens) => {
+  if (Array.isArray(o)) {
+    _validateTokenStructure(o)
+    return
+  }
+  if (isPropertyBasedQuery(o)) {
+    return
+  }
+  throw new Error('Order of link tokens and queries invalid')
+}
+
+const validateOrmSearch = (search: OrmSearch) => {
+  if (Array.isArray(search.query) === false) {
+    throw new Error(`Query must be an array`)
+  }
+  if (search.query.length < 1) {
+    return
+  }
+  _validateTokenTypes(search.query)
+  _validateTokenStructure(search.query)
+}
+
 export {
   queryBuilder,
   take,
@@ -417,4 +486,5 @@ export {
   numberQuery,
   booleanQuery,
   threeitize,
+  validateOrmSearch,
 }
