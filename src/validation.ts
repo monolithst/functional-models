@@ -1,6 +1,7 @@
 import isEmpty from 'lodash/isEmpty'
 import merge from 'lodash/merge'
 import flatMap from 'lodash/flatMap'
+import get from 'lodash/get'
 import {
   DataDescription,
   ModelInstance,
@@ -436,16 +437,22 @@ const referenceTypeMatch = (
   }
 }
 
+/**
+ * A validator that can validate an entire object.
+ *
+ * @param required - If this object is required.
+ * @param keyToValidators - An object that has a dotted path key to the property to validate, and one or more validators for it.
+ */
 const objectValidator = <T extends object>({
   required,
   keyToValidators,
 }: {
   required?: boolean
-  keyToValidators: {
-    [s: string]:
-      | ValuePropertyValidatorComponent<any>
-      | ValuePropertyValidatorComponent<any>[]
-  }
+  keyToValidators: Record<
+    string,
+    | ValuePropertyValidatorComponent<any>
+    | ValuePropertyValidatorComponent<any>[]
+  >
 }): ValuePropertyValidatorComponent<T> => {
   return (obj: T) => {
     if (!obj) {
@@ -459,16 +466,13 @@ const objectValidator = <T extends object>({
       return isNotObj
     }
     return (
-      Object.entries(obj)
-        .reduce((acc, [key, value]) => {
-          const validators = keyToValidators[key]
-          if (!validators) {
-            return acc
-          }
-          const validator = Array.isArray(validators)
-            ? multiValidator(validators)
-            : validators
-          const error = validator(value)
+      Object.entries(keyToValidators)
+        .reduce((acc, [key, validator]) => {
+          const theValidator = Array.isArray(validator)
+            ? multiValidator(validator)
+            : (validator as ValuePropertyValidatorComponent<any>)
+          const value = get(obj, key)
+          const error = theValidator(value)
           if (error) {
             return acc.concat(`${key}: ${error}`)
           }
