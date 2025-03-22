@@ -418,8 +418,17 @@ const referenceTypeMatch = (
   any
 > => {
   return (value?: ModelInstance<any, any, any>) => {
-    if (!value) {
-      return 'Must include a value'
+    const theType = typeof value
+    switch (theType) {
+      case 'string':
+      case 'number':
+      case 'undefined':
+        return undefined
+      default:
+        break
+    }
+    if (value === null) {
+      return undefined
     }
     // This needs to stay here, as it delays the creation long enough for
     // self referencing types.
@@ -427,6 +436,7 @@ const referenceTypeMatch = (
       typeof referencedModel === 'function'
         ? referencedModel()
         : referencedModel
+    const hasGetModel = get(value, 'getModel')
     // Assumption: By the time this is received, value === a model instance.
     const eModel = model.getName()
     const aModel = value.getModel().getName()
