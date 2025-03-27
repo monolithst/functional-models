@@ -94,7 +94,7 @@ const _builderV2 = (data: OrmSearch): InnerBuilderV2 => {
   const thisDatesBefore = (
     key: string,
     jsDate: Date | string,
-    { valueType = DatastoreValueType.string, equalToAndBefore = true } = {}
+    { valueType = DatastoreValueType.date, equalToAndBefore = true } = {}
   ) => {
     const p = datesBefore(key, jsDate, { valueType, equalToAndBefore })
     return _link(merge(data, { query: data.query.concat(p) }))
@@ -103,7 +103,7 @@ const _builderV2 = (data: OrmSearch): InnerBuilderV2 => {
   const thisDatesAfter = (
     key: string,
     jsDate: Date | string,
-    { valueType = DatastoreValueType.string, equalToAndAfter = true } = {}
+    { valueType = DatastoreValueType.date, equalToAndAfter = true } = {}
   ) => {
     const p = datesAfter(key, jsDate, { valueType, equalToAndAfter })
     return _link(merge(data, { query: data.query.concat(p) }))
@@ -235,11 +235,11 @@ const datesAfter = (
   key: string,
   jsDate: Date | string,
   options: { valueType: DatastoreValueType; equalToAndAfter: boolean } = {
-    valueType: DatastoreValueType.string,
+    valueType: DatastoreValueType.date,
     equalToAndAfter: true,
   }
 ): DatesAfterQuery => {
-  const { valueType = DatastoreValueType.string, equalToAndAfter = true } =
+  const { valueType = DatastoreValueType.date, equalToAndAfter = true } =
     options
   return {
     type: 'datesAfter',
@@ -271,11 +271,11 @@ const datesBefore = (
   key: string,
   jsDate: Date | string,
   options: { valueType: DatastoreValueType; equalToAndBefore: boolean } = {
-    valueType: DatastoreValueType.string,
+    valueType: DatastoreValueType.date,
     equalToAndBefore: true,
   }
 ): DatesBeforeQuery => {
-  const { valueType = DatastoreValueType.string, equalToAndBefore = true } =
+  const { valueType = DatastoreValueType.date, equalToAndBefore = true } =
     options
   return {
     type: 'datesBefore',

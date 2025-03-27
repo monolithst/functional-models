@@ -192,7 +192,7 @@ type DatePropertyConfig<T extends Arrayable<DataValue>> = {
   formatFunction?: (date: Date, format?: string) => string
   /**
    * The format the date should be in. This is a framework agnostic format, and should be based on your format function.
-   * NOTE: If a formatFunction is not provided, this is completely ignored. For dates YYYY/MM/DD is the default and for Datetimes it is ISOString()
+   * NOTE: If a formatFunction is not provided, this is completely ignored. For dates YYYY-MM-DD is the default and for Datetimes it is ISOString()
    */
   format?: string
 } & PropertyConfig<T>

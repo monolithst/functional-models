@@ -745,6 +745,7 @@ type InnerBuilderV2 = {
   complex: (subBuilderFunc: SubBuilderFunction) => BuilderV2Link
   /**
    * Searches for elements that are after the given date.
+   * NOTE: It can be very important to set the valueType to either string or Date depending on what datastore you are using.
    * @param key - The property name/key to use.
    * @param jsDate - The date to search.
    * @param options - Additional options.
@@ -756,6 +757,7 @@ type InnerBuilderV2 = {
   ) => BuilderV2Link
   /**
    * Searches for elements that are before the given date.
+   * NOTE: It can be very important to set the valueType to either string or Date depending on what datastore you are using.
    * @param key - The property name/key to use.
    * @param jsDate - The date to search.
    * @param options - Additional options.
