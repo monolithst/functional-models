@@ -436,7 +436,6 @@ const referenceTypeMatch = (
       typeof referencedModel === 'function'
         ? referencedModel()
         : referencedModel
-    const hasGetModel = get(value, 'getModel')
     // Assumption: By the time this is received, value === a model instance.
     const eModel = model.getName()
     const aModel = value.getModel().getName()
