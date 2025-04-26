@@ -446,7 +446,7 @@ describe('/src/orm/query.ts', () => {
         type: 'datesBefore',
         key: 'my-key',
         date: '2025-01-01T00:00:00.000Z',
-        valueType: DatastoreValueType.string,
+        valueType: DatastoreValueType.date,
         options: {
           equalToAndBefore: true,
         },
@@ -497,7 +497,7 @@ describe('/src/orm/query.ts', () => {
         type: 'datesAfter',
         key: 'my-key',
         date: '2025-01-01T00:00:00.000Z',
-        valueType: DatastoreValueType.string,
+        valueType: DatastoreValueType.date,
         options: {
           equalToAndAfter: true,
         },
@@ -725,7 +725,7 @@ describe('/src/orm/query.ts', () => {
               type: 'datesBefore',
               key: 'my-key',
               date: '2020-01-01',
-              valueType: 'string',
+              valueType: 'date',
               options: {
                 equalToAndBefore: true,
               },
@@ -746,7 +746,7 @@ describe('/src/orm/query.ts', () => {
               type: 'datesAfter',
               key: 'my-key',
               date: '2020-01-01',
-              valueType: 'string',
+              valueType: 'date',
               options: {
                 equalToAndAfter: true,
               },

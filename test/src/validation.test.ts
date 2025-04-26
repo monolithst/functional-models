@@ -769,7 +769,7 @@ describe('/src/validation.ts', () => {
     })
   })
   describe('#referenceTypeMatch()', () => {
-    it('should return an error if undefined is passed as a value', () => {
+    it('should return undefined if undefined is passed as a value', () => {
       const myModel = TestModel1.create({})
       const actual = referenceTypeMatch(TestModel1)(
         // @ts-ignore
@@ -778,9 +778,9 @@ describe('/src/validation.ts', () => {
         {},
         {}
       )
-      assert.isOk(actual)
+      assert.isUndefined(actual)
     })
-    it('should return an error if null is passed as a value', () => {
+    it('should return undefined if null is passed as a value', () => {
       const myModel = TestModel1.create({})
       const actual = referenceTypeMatch(TestModel1)(
         // @ts-ignore
@@ -789,7 +789,7 @@ describe('/src/validation.ts', () => {
         {},
         {}
       )
-      assert.isOk(actual)
+      assert.isUndefined(actual)
     })
     it('should allow a function for a model', async () => {
       const myModel = EMPTY_MODEL.create({})

@@ -29,7 +29,7 @@ type Arrayable<T> = T | readonly T[]
  * A JSON compliant object.
  */
 type JsonObj = Readonly<{
-  [s: string]: JsonAble | null
+  [s: string]: JsonAble | null | undefined
 }>
 
 /**
@@ -42,6 +42,7 @@ type JsonAble =
   | string
   | boolean
   | null
+  | undefined
 
 /**
  * This is a fully Json compliant version of a DataDescription
