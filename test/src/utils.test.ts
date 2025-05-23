@@ -14,7 +14,7 @@ describe('/src/utils.ts', () => {
   describe('#memoizeAsync()', () => {
     it('should only call the method passed in once even after two calls', async () => {
       const method = sinon.stub().returns('hello-world')
-      const instance = memoizeAsync(method)
+      const instance = memoizeAsync<any, any>(method)
       await instance()
       await instance()
       sinon.assert.calledOnce(method)

@@ -4,7 +4,10 @@ import {
   PropertyValidatorComponent,
   unique,
   ormPropertyConfig,
+  ForeignKeyProperty,
+  LastModifiedDateProperty,
 } from '../../../src'
+import { PropertyType } from '../../../src/types'
 
 describe('/src/orm/properties.ts', () => {
   describe('#ormPropertyConfig()', () => {
@@ -40,6 +43,73 @@ describe('/src/orm/properties.ts', () => {
       const actual = ormPropertyConfig()?.validators?.length
       const expected = 0
       assert.equal(actual, expected)
+    })
+  })
+
+  describe('#ForeignKeyProperty()', () => {
+    // Minimal valid ModelType mock
+    const DummyModel: OrmModel<any> = {
+      getName: () => 'Dummy',
+      getModelDefinition: () => ({
+        pluralName: 'Dummies',
+        namespace: 'test',
+        properties: {},
+        primaryKeyName: 'id',
+        modelValidators: [],
+        singularName: 'Dummy',
+        displayName: 'Dummy',
+        description: 'A dummy model',
+      }),
+      getPrimaryKey: () => 'id',
+      getApiInfo: () => ({
+        noPublish: false,
+        onlyPublish: [],
+        // @ts-ignore
+        rest: {},
+        createOnlyOne: false,
+      }),
+      create: () => ({}),
+    }
+    const DummyModelFn = () => DummyModel
+
+    it('should use UuidProperty when dataType is uuid', () => {
+      const prop = ForeignKeyProperty(DummyModel, { dataType: 'uuid' })
+      assert.equal(prop.getPropertyType(), PropertyType.UniqueId)
+      // @ts-ignore
+      assert.equal(prop.getConfig().dataType, 'uuid')
+    })
+
+    it('should use IntegerProperty when dataType is integer', () => {
+      const prop = ForeignKeyProperty(DummyModel, { dataType: 'integer' })
+      assert.equal(prop.getPropertyType(), PropertyType.Integer)
+      // @ts-ignore
+      assert.equal(prop.getConfig().dataType, 'integer')
+    })
+
+    it('should use TextProperty when dataType is string', () => {
+      const prop = ForeignKeyProperty(DummyModel, { dataType: 'string' })
+      assert.equal(prop.getPropertyType(), PropertyType.Text)
+      // @ts-ignore
+      assert.equal(prop.getConfig().dataType, 'string')
+    })
+
+    it('should resolve model if passed as a function', () => {
+      const prop = ForeignKeyProperty(DummyModelFn, { dataType: 'uuid' })
+      assert.deepEqual(prop.getReferencedModel(), DummyModel)
+    })
+
+    it('getReferencedId should return the instance value', () => {
+      const prop = ForeignKeyProperty(DummyModel, { dataType: 'uuid' })
+      assert.equal(prop.getReferencedId('abc-123'), 'abc-123')
+    })
+  })
+
+  describe('#LastModifiedDateProperty()', () => {
+    it('should return a property with lastModifiedUpdateMethod', () => {
+      const prop = LastModifiedDateProperty()
+      assert.isFunction(prop.lastModifiedUpdateMethod)
+      const date = prop.lastModifiedUpdateMethod()
+      assert.instanceOf(date, Date)
     })
   })
 })

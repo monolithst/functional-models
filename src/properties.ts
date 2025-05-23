@@ -8,6 +8,7 @@ import {
   maxNumber,
   meetsRegex,
   minNumber,
+  optionalValidator,
   referenceTypeMatch,
 } from './validation'
 import {
@@ -521,6 +522,37 @@ const PrimaryKeyUuidProperty = (
   )
 
 /**
+ * A property that has a uuid.
+ * This property has required on it.
+ * If you want it to automatically create a uuid add { autoNow: true } to the config.
+ * @param config - Additional configurations.
+ * @param additionalMetadata - Any additional metadata.
+ */
+const UuidProperty = (
+  config: PropertyConfig<string> = {},
+  additionalMetadata = {}
+) =>
+  Property<string>(
+    PropertyType.UniqueId,
+    merge(config, {
+      isString: true,
+      validators: mergeValidators(
+        config,
+        config.required ? isValidUuid : optionalValidator(isValidUuid)
+      ),
+      lazyLoadMethod: (value: Arrayable<DataValue>) => {
+        if (!value) {
+          if (config.autoNow) {
+            return createUuid()
+          }
+        }
+        return value
+      },
+    }),
+    additionalMetadata
+  )
+
+/**
  * A property that has a reference to another model instance. A "Foreign Key" if you will.
  * For full functionality a {@link ModelInstanceFetcher} must be provided in the config.
  * This property has complex functionalities.
@@ -871,4 +903,5 @@ export {
   YearProperty,
   PrimaryKeyUuidProperty,
   SingleTypeArrayProperty,
+  UuidProperty,
 }
