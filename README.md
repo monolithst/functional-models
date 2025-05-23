@@ -502,6 +502,18 @@ A property that holds a uuid as a primary key. It is automatically created if no
 
 [Documentation](https://monolithst.github.io/functional-models/functions/index.properties.PrimaryKeyUuidProperty.html)
 
+#### UuidProperty
+
+A property that holds a uuid value. Can be used for any uuid field, not just primary keys. If `autoNow` is set to true, a uuid will be automatically generated if not provided. Validates the value as a uuid if required, or allows undefined if not required.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.properties.UuidProperty.html)
+
+#### ForeignKeyProperty
+
+A property for representing a foreign key to another model in ORM-backed models. By default, it uses a uuid type, but can be configured to use a string or integer type via the `dataType` config. Provides utility methods to get the referenced id and model. Useful for defining foreign key relationships in a database-agnostic way.
+
+[Documentation](https://monolithst.github.io/functional-models/functions/index.orm.properties.ForeignKeyProperty.html)
+
 #### ModelReferenceProperty
 
 A property that holds a reference to another model instance. (In database-speak a foreign key). When code requests the value for this property, it is fetched and returns an object. However, when `.toObj()` is called on the model, this reference turns into a id. (number or string)

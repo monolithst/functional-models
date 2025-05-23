@@ -1,13 +1,13 @@
 {
   "name": "functional-models",
-  "version": "3.0.16",
+  "version": "3.1.0",
   "description": "Functional models is ooey gooey framework for building and using awesome models EVERYWHERE.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "mocha": "mocha -r tsx",
     "test": "mocha -r tsx --extensions ts,tsx 'test/**/*.{ts,tsx}'",
-    "test:coverage": "TS_NODE_PROJECT=tsconfig.test.json nyc npm run test",
+    "test:coverage": "c8 --all --reporter cobertura --reporter text --reporter lcov --reporter html npm run test",
     "test:watch": "nodemon -e '*' --watch test --watch src --exec npm run test:coverage",
     "commit": "cz",
     "feature-tests": "./node_modules/.bin/cucumber-js -p default",
@@ -45,34 +45,6 @@
     }
   },
   "homepage": "https://github.com/monolithst/functional-models#readme",
-  "nyc": {
-    "branches": 90,
-    "lines": 100,
-    "functions": 100,
-    "statements": 100,
-    "extends": "@istanbuljs/nyc-config-typescript",
-    "check-coverage": true,
-    "all": true,
-    "include": [
-      "src/**/!(*.test.*).[tj]s?(x)"
-    ],
-    "exclude": [
-      "src/_tests_/**/*.*",
-      "node_modules",
-      ".nyc_output",
-      "coverage",
-      ".git",
-      ".github",
-      "features"
-    ],
-    "reporter": [
-      "html",
-      "lcov",
-      "text",
-      "text-summary"
-    ],
-    "report-dir": "coverage"
-  },
   "devDependencies": {
     "@cucumber/cucumber": "^11.0.0",
     "@date-fns/utc": "^1.2.0",
@@ -84,12 +56,13 @@
     "@types/chai": "^5.0.1",
     "@types/chai-as-promised": "^7.1.4",
     "@types/lodash": "^4.14.176",
-    "@types/mocha": "^9.0.0",
+    "@types/mocha": "^9.1.1",
     "@types/node": "^22.10.7",
     "@types/proxyquire": "^1.3.28",
     "@types/sinon": "^10.0.6",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",
+    "c8": "^10.1.3",
     "chai": "^5.1.2",
     "chai-as-promised": "^7.1.1",
     "cz-conventional-changelog": "^3.3.0",

@@ -20,6 +20,7 @@ import {
   threeitize,
   validateOrmSearch,
 } from '../../../src'
+import flow from 'lodash/flow'
 
 describe('/src/orm/query.ts', () => {
   describe('#validateQueryTokens()', () => {
@@ -755,6 +756,83 @@ describe('/src/orm/query.ts', () => {
         }
         assert.deepEqual(actual, expected)
       })
+    })
+    it('should build a query with four ORed string properties and .take(20) at the end, with no trailing OR', () => {
+      const search = 'search-value'
+      const searchProps = ['firstName', 'lastName', 'email', 'displayName']
+      // Compose the query using the same pattern as the bug report
+      const query = searchProps.reduce((qb, prop, i) => {
+        const isLast = i === searchProps.length - 1
+        const q = qb.property(prop, search, { caseSensitive: false })
+        return isLast ? q : q.or()
+      }, queryBuilder())
+      const compiled = query.take(20).compile()
+      // The expected query array
+      const expectedQuery = [
+        property('firstName', search, { caseSensitive: false }),
+        'OR',
+        property('lastName', search, { caseSensitive: false }),
+        'OR',
+        property('email', search, { caseSensitive: false }),
+        'OR',
+        property('displayName', search, { caseSensitive: false }),
+      ]
+      // Should not have a trailing OR
+      assert.deepEqual(compiled.query, expectedQuery)
+      // Should have take: 20
+      assert.equal(compiled.take, 20)
+    })
+    it('should build a query with .take(20) directly on queryBuilder() and get an empty query with take', () => {
+      const compiled = queryBuilder().take(20).compile()
+      assert.deepEqual(compiled, { query: [], take: 20 })
+    })
+    it('should build a query with .take(20) at the end (flow pattern)', () => {
+      const search = 'search-value'
+      const searchProps = ['firstName', 'lastName', 'email', 'displayName']
+      const expectedQuery = [
+        property('firstName', search, { caseSensitive: false }),
+        'OR',
+        property('lastName', search, { caseSensitive: false }),
+        'OR',
+        property('email', search, { caseSensitive: false }),
+        'OR',
+        property('displayName', search, { caseSensitive: false }),
+      ]
+
+      const query = flow(
+        searchProps.map((prop, i) => qb => {
+          const isLast = i === searchProps.length - 1
+          const q = qb.property(prop, search, { caseSensitive: false })
+          return isLast ? q : q.or()
+        })
+      )(queryBuilder())
+        .take(20)
+        .compile()
+      assert.deepEqual(query.query, expectedQuery)
+      assert.equal(query.take, 20)
+    })
+
+    it('should build a query with .take(20) at the start (flow pattern)', () => {
+      const search = 'search-value'
+      const searchProps = ['firstName', 'lastName', 'email', 'displayName']
+      const expectedQuery = [
+        property('firstName', search, { caseSensitive: false }),
+        'OR',
+        property('lastName', search, { caseSensitive: false }),
+        'OR',
+        property('email', search, { caseSensitive: false }),
+        'OR',
+        property('displayName', search, { caseSensitive: false }),
+      ]
+      const query = flow(
+        searchProps.map((prop, i) => qb => {
+          const isLast = i === searchProps.length - 1
+          const q = qb.property(prop, search, { caseSensitive: false })
+          return isLast ? q : q.or()
+        })
+      )(queryBuilder().take(20)).compile()
+      assert.deepEqual(query.query, expectedQuery)
+      assert.equal(query.take, 20)
     })
   })
 })
