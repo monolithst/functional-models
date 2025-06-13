@@ -214,6 +214,17 @@ type OrmModelExtensions<
     >[]
   ) => Promise<void>
   /**
+   * Deletes multiple instances at once.
+   * @param instances
+   */
+  bulkDelete: <TData extends DataDescription>(
+    instances: readonly OrmModelInstance<
+      TData,
+      TModelExtensions,
+      TModelInstanceExtensions
+    >[]
+  ) => Promise<void>
+  /**
    * Counts the number of models saved in the database.
    */
   count: () => Promise<number>
@@ -390,6 +401,23 @@ type DatastoreAdapter = Readonly<{
    * @param instances
    */
   bulkInsert?: <
+    TData extends DataDescription,
+    TModelExtensions extends object = object,
+    TModelInstanceExtensions extends object = object,
+  >(
+    model: OrmModel<TData, TModelExtensions, TModelInstanceExtensions>,
+    instances: readonly ModelInstance<
+      TData,
+      TModelExtensions,
+      TModelInstanceExtensions
+    >[]
+  ) => Promise<void>
+  /**
+   * Optional: An optimized bulkDelete function. (Highly recommended)
+   * @param model
+   * @param instances
+   */
+  bulkDelete?: <
     TData extends DataDescription,
     TModelExtensions extends object = object,
     TModelInstanceExtensions extends object = object,

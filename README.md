@@ -381,6 +381,7 @@ search() - Searches for instances
 searchOne() - Seaches for one instance
 createAndSave() - Creates and then saves an instance
 bulkInsert() - Bulk inserts many instances
+bulkDelete() - Bulk deletes many instances
 count() - Counts the number of saved instances
 ```
 
