@@ -145,14 +145,21 @@ const createOrm = ({
     }
 
     const bulkDelete = async <TOverride extends DataDescription>(
-      instances: readonly OrmModelInstance<TOverride>[]
+      keysOrInstances:
+        | readonly OrmModelInstance<TOverride>[]
+        | readonly PrimaryKeyType[]
     ) => {
+      const ids: readonly PrimaryKeyType[] =
+        typeof keysOrInstances[0] === 'object'
+          ? keysOrInstances.map(x =>
+              (x as OrmModelInstance<TOverride>).getPrimaryKey()
+            )
+          : (keysOrInstances as readonly PrimaryKeyType[])
       if (datastoreAdapter.bulkDelete) {
-        // @ts-ignore
-        await datastoreAdapter.bulkDelete<TOverride>(model, instances)
+        await datastoreAdapter.bulkDelete(model, ids)
         return undefined
       }
-      await asyncMap(instances, x => x.delete())
+      await asyncMap(ids, id => model.delete(id))
       return undefined
     }
 
