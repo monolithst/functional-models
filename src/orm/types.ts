@@ -28,6 +28,8 @@ enum EqualitySymbol {
   gt = '>',
   // Equal to or greater than
   gte = '>=',
+  // Not equal to
+  ne = '!=',
 }
 
 /**
@@ -453,21 +455,17 @@ type PropertyQuery = Readonly<{
   /**
    * Options for additional matching.
    */
-  options: {
-    /**
-     * Should this be a case sensitive search. (for text)
-     */
-    caseSensitive?: boolean
-    /**
-     * Indicates that the value is a "startsWith" query.
-     */
-    startsWith?: boolean
-    /**
-     * Indicates that the value is a "endsWith" query.
-     */
-    endsWith?: boolean
-  }
+  options: PropertyOptions
 }>
+
+/**
+ * A property search for a string value.
+ */
+type StringPropertyQuery = PropertyQuery & {
+  valueType: DatastoreValueType.string
+  equalitySymbol: EqualitySymbol.eq | EqualitySymbol.nq
+  options: PropertyOptions
+}
 
 /**
  * A search that looks at dated objects after the given date.
@@ -576,6 +574,10 @@ type PropertyOptions = {
    */
   endsWith?: boolean
   /**
+   * Is the value a includes query?
+   */
+  includes?: boolean
+  /**
    * The type of value
    */
   type?: DatastoreValueType
@@ -660,7 +662,11 @@ type OrmSearch = {
 /**
  * Statements that make up the meat of QueryTokens
  */
-type Query = PropertyQuery | DatesAfterQuery | DatesBeforeQuery
+type Query =
+  | PropertyQuery
+  | DatesAfterQuery
+  | DatesBeforeQuery
+  | StringPropertyQuery
 
 /**
  * A token type that links two queries together.
@@ -815,4 +821,5 @@ export {
   QueryTokens,
   InnerBuilderV2,
   SortOrder,
+  StringPropertyQuery,
 }

@@ -159,6 +159,7 @@ const property = (
     caseSensitive,
     startsWith,
     endsWith,
+    includes,
     type,
   } = options
   const typeToUse = type || DatastoreValueType.string
@@ -167,6 +168,7 @@ const property = (
   }
   if (
     equalitySymbol !== EqualitySymbol.eq &&
+    equalitySymbol !== EqualitySymbol.ne &&
     typeToUse === DatastoreValueType.string
   ) {
     throw new Error(`Cannot use a non = symbol for a string type`)
@@ -182,6 +184,7 @@ const property = (
       ..._objectize('caseSensitive', caseSensitive),
       ..._objectize('startsWith', startsWith),
       ..._objectize('endsWith', endsWith),
+      ..._objectize('includes', includes),
     },
   }
   return propertyEntry
