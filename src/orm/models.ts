@@ -1,4 +1,5 @@
 import merge from 'lodash/merge'
+import { asyncMap } from 'modern-async'
 import {
   ModelFactory,
   ModelInstanceFetcher,
@@ -139,7 +140,26 @@ const createOrm = ({
         await datastoreAdapter.bulkInsert<TOverride>(model, instances)
         return undefined
       }
-      await Promise.all(instances.map(x => x.save()))
+      await asyncMap(instances, x => x.save())
+      return undefined
+    }
+
+    const bulkDelete = async <TOverride extends DataDescription>(
+      keysOrInstances:
+        | readonly OrmModelInstance<TOverride>[]
+        | readonly PrimaryKeyType[]
+    ) => {
+      const ids: readonly PrimaryKeyType[] =
+        typeof keysOrInstances[0] === 'object'
+          ? keysOrInstances.map(x =>
+              (x as OrmModelInstance<TOverride>).getPrimaryKey()
+            )
+          : (keysOrInstances as readonly PrimaryKeyType[])
+      if (datastoreAdapter.bulkDelete) {
+        await datastoreAdapter.bulkDelete(model, ids)
+        return undefined
+      }
+      await asyncMap(ids, id => model.delete(id))
       return undefined
     }
 
@@ -324,6 +344,7 @@ const createOrm = ({
       searchOne,
       createAndSave,
       bulkInsert,
+      bulkDelete,
       count,
     })
     return model
