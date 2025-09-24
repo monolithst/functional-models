@@ -425,6 +425,13 @@ describe('/src/orm/query.ts', () => {
         })
       }, 'blah is not a valid symbol')
     })
+    it('should NOT throw an exception if the type is string and equalitySymbol is ne', () => {
+      assert.doesNotThrow(() => {
+        property('my-name', 'my-value', {
+          equalitySymbol: EqualitySymbol.ne,
+        })
+      })
+    })
   })
   describe('#and()', () => {
     it('should return AND', () => {
