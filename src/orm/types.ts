@@ -463,7 +463,7 @@ type PropertyQuery = Readonly<{
  */
 type StringPropertyQuery = PropertyQuery & {
   valueType: DatastoreValueType.string
-  equalitySymbol: EqualitySymbol.eq | EqualitySymbol.nq
+  equalitySymbol: EqualitySymbol.eq | EqualitySymbol.ne
   options: PropertyOptions
 }
 
