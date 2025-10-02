@@ -1,4 +1,5 @@
 import merge from 'lodash/merge'
+import z, { ZodObject, ZodType } from 'zod'
 import { toJsonAble } from './serialization'
 import { createModelValidator } from './validation'
 import {
@@ -43,6 +44,27 @@ const _convertOptions = <T extends DataDescription>(
   return r
 }
 
+const _createZod = <T extends DataDescription>(
+  modelDefinition: MinimalModelDefinition<T>
+): ZodObject<DataDescription> => {
+  if (modelDefinition.schema) {
+    if (modelDefinition.description) {
+      return modelDefinition.schema.describe(modelDefinition.description)
+    }
+    return modelDefinition.schema
+  }
+  const properties = Object.entries(modelDefinition.properties).reduce(
+    (acc, [key, property]) => {
+      const asProp = property as PropertyInstance<any>
+      return merge(acc, {
+        [key]: asProp.getZod(),
+      })
+    },
+    {} as Record<string, ZodType>
+  )
+  return z.object(properties) as ZodObject<DataDescription>
+}
+
 const _toModelDefinition = <T extends DataDescription>(
   minimal: MinimalModelDefinition<T>
 ): ModelDefinition<T> => {
@@ -52,6 +74,7 @@ const _toModelDefinition = <T extends DataDescription>(
     description: '',
     primaryKeyName: 'id',
     modelValidators: [],
+    schema: _createZod(minimal),
     ...minimal,
   }
 }

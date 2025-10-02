@@ -1,5 +1,6 @@
 import merge from 'lodash/merge'
 import get from 'lodash/get'
+import { ZodType } from 'zod'
 import {
   arrayType,
   createPropertyValidator,
@@ -47,6 +48,7 @@ import {
   getCommonNumberValidators,
   mergeValidators,
   isModelInstance,
+  createZodForProperty,
 } from './lib'
 
 const MAX_YEAR = 3000
@@ -162,6 +164,17 @@ const Property = <
     return _propertyValidatorWrapper
   }
 
+  // Build a zod schema for this property. If a zod schema is provided in the
+  // config it will be used as an override.
+  const getZod = (): ZodType<TValue> => {
+    const provided = (config as any)?.zod
+    if (provided) {
+      return provided as ZodType<TValue>
+    }
+
+    return createZodForProperty(propertyType, config)()
+  }
+
   const propertyInstance: PropertyInstance<
     TValue,
     TData,
@@ -175,6 +188,7 @@ const Property = <
     getConstantValue,
     getPropertyType: () => propertyType,
     createGetter,
+    getZod,
     getValidator,
   }
   return propertyInstance
