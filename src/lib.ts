@@ -319,7 +319,20 @@ const createZodForProperty =
           ? s.default(myConfig.defaultValue)
           : s,
       s => (myConfig.required ? s : s.optional()),
-      s => (myConfig.description ? s.describe(myConfig.description) : s),
+      // Attach description for Zod consumers and OpenAPI generators.
+      s => {
+        if (myConfig.description) {
+          // zod's describe helps Zod introspection; some zod-openapi versions expect metadata via .meta or .openapi
+          // Use .describe and also attach .meta with openapi description if available.
+          if (typeof s.openapi === 'function') {
+            return s.openapi({ description: myConfig.description })
+          }
+          return s.meta
+            ? s.meta({ description: myConfig.description })
+            : s.describe(myConfig.description)
+        }
+        return s
+      },
     ])(schemaFromChoices)
 
     return finalSchema as ZodType<any>
