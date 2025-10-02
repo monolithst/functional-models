@@ -1,7 +1,9 @@
 import { OpenAPIV3 } from 'openapi-types'
 import kebabCase from 'lodash/kebabCase'
+import flow from 'lodash/flow'
 import merge from 'lodash/merge'
 import get from 'lodash/get'
+import { z, ZodType } from 'zod'
 import {
   ApiInfo,
   ApiInfoPartialRest,
@@ -255,6 +257,74 @@ const populateApiInformation = (
   return _fillOutRestInfo(pluralName, namespace, partial, nullRest)
 }
 
+/**
+ * Create a zod schema generator for a property given its type and config.
+ * Returns a function that when called produces the zod schema.
+ */
+const createZodForProperty =
+  (propertyType: any, config?: PropertyConfig<any>) => () => {
+    const myConfig: PropertyConfig<any> = config || {}
+    const provided = myConfig.zod
+    if (provided) {
+      return provided as ZodType<any>
+    }
+
+    const _getZodForPropertyType = (pt: any) => {
+      switch (pt) {
+        case 'UniqueId':
+          return z.string()
+        case 'Date':
+        case 'Datetime':
+          return z.union([z.string(), z.date()])
+        case 'Integer':
+          return z.number().int()
+        case 'Number':
+          return z.number()
+        case 'Boolean':
+          return z.boolean()
+        case 'Array':
+          return z.array(z.any())
+        case 'Object':
+          return z.object()
+        case 'Email':
+          return z.email()
+        case 'Text':
+        case 'BigText':
+          return z.string()
+        case 'ModelReference':
+          return z.union([z.string(), z.number()])
+        default:
+          return z.any()
+      }
+    }
+
+    const baseSchema = _getZodForPropertyType(propertyType)
+    const choices = (config as any)?.choices
+    const schemaFromChoices =
+      choices && Array.isArray(choices) && choices.length > 0
+        ? z.union(choices.map((c: any) => z.literal(c)) as any)
+        : baseSchema
+
+    const finalSchema = flow([
+      s =>
+        typeof myConfig.minValue === 'number' ? s.min(myConfig.minValue) : s,
+      s =>
+        typeof myConfig.maxValue === 'number' ? s.max(myConfig.maxValue) : s,
+      s =>
+        typeof myConfig.minLength === 'number' ? s.min(myConfig.minLength) : s,
+      s =>
+        typeof myConfig.maxLength === 'number' ? s.max(myConfig.maxLength) : s,
+      s =>
+        myConfig.defaultValue !== undefined
+          ? s.default(myConfig.defaultValue)
+          : s,
+      s => (myConfig.required ? s : s.optional()),
+      s => (myConfig.description ? s.describe(myConfig.description) : s),
+    ])(schemaFromChoices)
+
+    return finalSchema as ZodType<any>
+  }
+
 export {
   isReferencedProperty,
   getValueForModelInstance,
@@ -269,4 +339,5 @@ export {
   populateApiInformation,
   NULL_ENDPOINT,
   NULL_METHOD,
+  createZodForProperty,
 }

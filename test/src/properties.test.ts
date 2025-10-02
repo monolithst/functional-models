@@ -25,6 +25,7 @@ import {
   SingleTypeArrayProperty,
   YearProperty,
   PrimaryKeyUuidProperty,
+  UuidProperty,
 } from '../../src/properties'
 import { arrayType } from '../../src/validation'
 import { Model } from '../../src/models'
@@ -39,6 +40,7 @@ import {
   PropertyType,
   PrimitiveValueType,
 } from '../../src/types'
+import { z } from 'zod'
 
 chai.use(asPromised)
 
@@ -1286,6 +1288,22 @@ describe('/src/properties.ts', () => {
         assert.equal(actual, expected)
       })
     })
+    describe('#getZod()', () => {
+      it('should use the zod that is passed in via config', () => {
+        const schema = z.string()
+        const instance = Property('OverrideMe', {
+          zod: schema,
+        })
+        const actual = instance.getZod()
+        const expected = schema
+        assert.equal(actual, expected)
+      })
+      it('should create a zod schema for the property type if no zod is passed in', () => {
+        const instance = Property('Text')
+        const actual = instance.getZod()
+        assert.isOk(actual.safeParse('test').success)
+      })
+    })
     describe('#getConfig()', () => {
       it('should provide the config that is passed in ', () => {
         // @ts-ignore
@@ -1374,6 +1392,30 @@ describe('/src/properties.ts', () => {
         const expected = 'my-value'
         assert.deepEqual(actual, expected)
       })
+    })
+  })
+  describe('#UuidProperty()', () => {
+    it('should create a uuid if not provided and autoNow is set', async () => {
+      const instance = UuidProperty({ autoNow: true })
+      const getter = instance.createGetter(
+        // @ts-ignore
+        undefined,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = await getter()
+      assert.isString(actual)
+    })
+    it('should NOT create a uuid if not provided and autoNow is not set', async () => {
+      const instance = UuidProperty()
+      const getter = instance.createGetter(
+        // @ts-ignore
+        undefined,
+        {},
+        {} as unknown as ModelInstance<DataDescription>
+      )
+      const actual = await getter()
+      assert.isUndefined(actual)
     })
   })
   describe('#PrimaryKeyUuidProperty()', () => {

@@ -1,4 +1,5 @@
 import * as openapi from 'openapi-types'
+import { ZodObject, ZodType } from 'zod'
 
 /**
  * A function that returns the value, or just the value
@@ -343,6 +344,10 @@ type PropertyInstance<
     >
   ) => ValueGetter<TValue, TData, TModelExtensions, TModelInstanceExtensions>
   /**
+   * Function that exposes a zod schema for this property.
+   */
+  getZod: () => ZodType<TValue>
+  /**
    * Gets a validator for the property. This is not normally used.
    * Instead for validation look at {@link ModelInstance.validate}
    * @param valueGetter - The getter for the value.
@@ -499,6 +504,15 @@ type PropertyConfigOptions<TValue extends Arrayable<DataValue>> = Readonly<
      * Additional validators for the property.
      */
     validators: readonly PropertyValidatorComponent<any>[]
+    /**
+     * An optional zod schema for this property. If provided, it will be used as an
+     * override for the generated schema.
+     */
+    zod?: ZodType<any>
+    /**
+     * A short human readable description of the property for documentation.
+     */
+    description?: string
     /**
      * The maximum length of the value. (Drives validation)
      */
@@ -733,6 +747,10 @@ type ModelDefinition<TData extends DataDescription> = Readonly<{
    * look at {@link ModelType.getApiInfo}
    */
   api?: Partial<ApiInfoPartialRest>
+  /**
+   * A zod schema for the model.
+   */
+  schema: ZodObject<DataDescription>
 }>
 
 /**

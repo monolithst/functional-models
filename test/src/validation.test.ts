@@ -769,6 +769,11 @@ describe('/src/validation.ts', () => {
     })
   })
   describe('#referenceTypeMatch()', () => {
+    it('should return undefined if a number is passed as a value', () => {
+      // @ts-ignore
+      const actual = referenceTypeMatch(TestModel1)(123)
+      assert.isUndefined(actual)
+    })
     it('should return undefined if undefined is passed as a value', () => {
       const myModel = TestModel1.create({})
       const actual = referenceTypeMatch(TestModel1)(
