@@ -731,6 +731,7 @@ const modelToOpenApi = <
 
     const out: any = {
       type: 'object',
+      // @ts-ignore
       properties: reduced.properties,
       additionalProperties: false,
     }
@@ -745,7 +746,9 @@ const modelToOpenApi = <
       out,
       objectDesc ? { description: objectDesc } : {},
       _checkAB(
+        // @ts-ignore
         reduced.required.length && depth === 0,
+        // @ts-ignore
         { required: reduced.required },
         {}
       )
