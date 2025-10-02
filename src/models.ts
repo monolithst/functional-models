@@ -62,7 +62,11 @@ const _createZod = <T extends DataDescription>(
     },
     {} as Record<string, ZodType>
   )
-  return z.object(properties) as ZodObject<DataDescription>
+  const obj = z.object(properties) as ZodObject<DataDescription>
+  if (modelDefinition.description) {
+    return obj.describe(modelDefinition.description)
+  }
+  return obj
 }
 
 const _toModelDefinition = <T extends DataDescription>(
