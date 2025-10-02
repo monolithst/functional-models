@@ -18,7 +18,7 @@ If so this is the framework for you.
 
 Functional Models empowers the creation of pure TypeScript/JavaScript function based models that can be used on a client, a web frontend, and/or a backend all the same time. Use this library to create models that can be reused <b>EVERYWHERE</b>.
 
-Write validation code, metadata, property descriptions, and more! Functional Models is fully supportive of both TypeScript and JavaScript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete!
+Write validation code, metadata, property descriptions, and more! Functional Models is fully supportive of both TypeScript and JavaScript. In fact, the typescript empowers some really sweet dynamic type checking, and autocomplete! Now features Zod implementation for the model and properties.
 
 This framework was born out of the enjoyment and power of working with Django models, but, restricting their "god-like abilities" which can cause developers to make a spaghetti system that is nearly impossible to optimize or improve without starting from scratch.
 
@@ -76,6 +76,7 @@ const {
 const Trucks = Model({
   pluralName: 'Trucks',
   namespace: '@my-package/cars',
+  description: 'This is an optional description of my Trucks model.',
   properties: {
     id: PrimaryKeyUuidProperty(),
     make: TextProperty({ maxLength: 20, minLength: 3, required: true }),
@@ -89,6 +90,10 @@ const Trucks = Model({
     lastModified: DatetimeProperty({ autoNow: true }),
   },
 })
+
+// Get a Zod Schema for the Truck, automatically built!
+const zodSchema = Trucks.getModelDefinition().schema
+// Conver to OpenAPI with zod.
 
 // Create an instance of the model. In this case, you don't need 'id', because it gets created automatically with UniquePropertyId()
 const myTruck = Trucks.create({
@@ -157,9 +162,11 @@ import {
   Model,
   DatetimeProperty,
   NumberProperty,
+  ObjectProperty,
   TextProperty,
   PrimaryKeyUuidProperty,
 } from 'functional-models'
+import { z } from 'zod'
 
 // Create an object type. NOTE: Singular Uppercase
 type VehicleMake = {
@@ -188,6 +195,10 @@ const VehicleMakes = Model<VehicleMake>({
   },
 })
 
+type ToolChest = Readonly<{
+  toolCount: number
+}>
+
 // Create a model for the Vehicle type
 const Vehicles = Model<Vehicle>({
   pluralName: 'Vehicles',
@@ -210,6 +221,14 @@ const Vehicles = Model<Vehicle>({
     }),
     make: ModelReferenceProperty<VehicleMake>(VehicleMakes, { required: true }),
     history: BigTextProperty({ required: false }),
+    // This overrides the automatic zod creation. Useful for complex properties, like objects.
+    toolChest: ObjectProperty<ToolChest>({
+      zod: z
+        .Object<ToolChest>({
+          toolCount: z.number().int(),
+        })
+        .describe('An optional tool chest for the vehicle'),
+    }),
     lastModified: DatetimeProperty({ autoNow: true }),
   },
 })
@@ -402,6 +421,8 @@ For additional information on the ORM system see:
 
 There are numerous properties that are supported out of the box that cover most data modeling needs. It is also very easy to create custom properties that encapsulate unique choices
 validation requirements, etc.
+
+NOTE: While a simple zod is automatically built for each property, this can be overrided and any zod can be provided. Just a "zod" field to a property that you want to override.
 
 ## List of Properties Out-Of-The-Box
 
