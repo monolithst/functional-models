@@ -44,14 +44,28 @@ const _convertOptions = <T extends DataDescription>(
   return r
 }
 
+const _addDescription = (
+  schema: ZodObject<DataDescription>,
+  description?: string
+) => {
+  if (!description) {
+    return schema
+  }
+  // @ts-ignore
+  if (typeof schema.openapi === 'function') {
+    // @ts-ignore
+    return schema.openapi({ description: description })
+  }
+  return schema.meta
+    ? schema.meta({ description: description })
+    : schema.describe(description)
+}
+
 const _createZod = <T extends DataDescription>(
   modelDefinition: MinimalModelDefinition<T>
 ): ZodObject<DataDescription> => {
   if (modelDefinition.schema) {
-    if (modelDefinition.description) {
-      return modelDefinition.schema.describe(modelDefinition.description)
-    }
-    return modelDefinition.schema
+    return _addDescription(modelDefinition.schema, modelDefinition.description)
   }
   const properties = Object.entries(modelDefinition.properties).reduce(
     (acc, [key, property]) => {
@@ -63,10 +77,7 @@ const _createZod = <T extends DataDescription>(
     {} as Record<string, ZodType>
   )
   const obj = z.object(properties) as ZodObject<DataDescription>
-  if (modelDefinition.description) {
-    return obj.describe(modelDefinition.description)
-  }
-  return obj
+  return _addDescription(obj, modelDefinition.description)
 }
 
 const _toModelDefinition = <T extends DataDescription>(
