@@ -285,7 +285,7 @@ const createZodForProperty =
         case 'Array':
           return z.array(z.any())
         case 'Object':
-          return z.object()
+          return z.object().loose()
         case 'Email':
           return z.email()
         case 'Text':
