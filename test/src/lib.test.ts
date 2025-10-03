@@ -6,7 +6,7 @@ import {
   createZodForProperty,
 } from '../../src/lib'
 import { ApiInfo, ApiMethod } from '../../src/index'
-import z from 'zod'
+import { z } from 'zod'
 
 describe('/src/lib.ts', () => {
   describe('#populateApiInformation', () => {
