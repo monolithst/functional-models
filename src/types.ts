@@ -784,7 +784,7 @@ type ModelType<
    * pluralName=MyModels
    * namespace=@my-package/namespace
    *
-   * Return: '@my-package/namespace-my-models'
+   * Return: '@my-package/namespace/MyModels'
    */
   getName: () => string
   /**

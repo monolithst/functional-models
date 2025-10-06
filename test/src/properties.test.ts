@@ -492,13 +492,13 @@ describe('/src/properties.ts', () => {
         model: TModel,
         primaryKey: PrimaryKeyType
       ) => {
-        if (model.getName() === 'functional-models-model-1') {
+        if (model.getName() === 'functional-models/Model1') {
           return Model1.create({
             id: 5,
             name: 'fake-model-data',
           })
         }
-        if (model.getName() === 'functional-models-model-2') {
+        if (model.getName() === 'functional-models/Model2') {
           return Model2.create({
             id: 10,
             name: 'fake-model-data-2',
@@ -562,13 +562,13 @@ describe('/src/properties.ts', () => {
         model: TModel,
         primaryKey: PrimaryKeyType
       ) => {
-        if (model.getName() === 'functional-models-model-1') {
+        if (model.getName() === 'functional-models/Model1') {
           return Model1.create({
             id: 5,
             name: 'fake-model-data',
           })
         }
-        if (model.getName() === 'functional-models-model-2') {
+        if (model.getName() === 'functional-models/Model2') {
           return Model2.create({
             id: 10,
             name: 'fake-model-data-2',
@@ -647,7 +647,7 @@ describe('/src/properties.ts', () => {
         model: TModel,
         primaryKey: PrimaryKeyType
       ) => {
-        if (model.getName() === 'functional-models-model-1') {
+        if (model.getName() === 'functional-models/Model1') {
           return {
             id: 5,
             data: {
