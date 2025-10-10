@@ -1,5 +1,6 @@
 import * as openapi from 'openapi-types'
 import { ZodObject, ZodType } from 'zod'
+import { OrmSearch } from './orm'
 
 /**
  * A function that returns the value, or just the value
@@ -39,6 +40,7 @@ type JsonObj = Readonly<{
 type JsonAble =
   | Arrayable<JsonObj>
   | readonly (number | string | boolean)[]
+  | readonly JsonAble[]
   | number
   | string
   | boolean
