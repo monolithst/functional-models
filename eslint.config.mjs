@@ -23,6 +23,7 @@ export default [
     ignores: [
       'buildDocs',
       'eslint.config.mjs',
+      'knowledge-mcp/',
       'dist/',
       'node_modules/',
       'test/',
