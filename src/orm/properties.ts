@@ -34,11 +34,11 @@ const LastModifiedDateProperty = (
 }
 
 /**
- * A property that represents a foreign key to another model.
+ * A property that represents a key in a database.
  * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
  * @interface
  */
-type ForeignKeyPropertyConfig<TValue extends string | number> =
+type DatabaseKeyPropertyConfig<TValue extends string | number> =
   PropertyConfig<TValue> &
     Readonly<{
       /**
@@ -46,11 +46,17 @@ type ForeignKeyPropertyConfig<TValue extends string | number> =
        * @default 'uuid'
        */
       dataType?: 'uuid' | 'string' | 'integer'
+      /**
+       * If true, the key will be automatically generated if not provided. Only applies to uuids.
+       * @default true
+       */
+      auto?: boolean
     }>
 
 /**
  * A property that represents a foreign key to another model in a database.
  * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
+ * NOTE: auto is ignored in config.
  * @param config - Additional configurations.
  */
 const ForeignKeyProperty = <
@@ -58,7 +64,7 @@ const ForeignKeyProperty = <
   TModel extends DataDescription,
 >(
   model: MaybeFunction<ModelType<TModel>>,
-  config: ForeignKeyPropertyConfig<TValue> = {}
+  config: DatabaseKeyPropertyConfig<TValue> = {}
 ) => {
   const _getModel = () => {
     if (typeof model === 'function') {
@@ -70,15 +76,15 @@ const ForeignKeyProperty = <
   const _getProperty = () => {
     if (config.dataType === 'uuid') {
       return UuidProperty(
-        merge(config as ForeignKeyPropertyConfig<string>, {
+        merge(config as DatabaseKeyPropertyConfig<string>, {
           autoNow: false,
         })
       )
     }
     if (config.dataType === 'integer') {
-      return IntegerProperty(config as ForeignKeyPropertyConfig<number>)
+      return IntegerProperty(config as DatabaseKeyPropertyConfig<number>)
     }
-    return TextProperty(config as ForeignKeyPropertyConfig<string>)
+    return TextProperty(config as DatabaseKeyPropertyConfig<string>)
   }
   const property = _getProperty()
   return merge(property, {
@@ -87,6 +93,26 @@ const ForeignKeyProperty = <
     },
     getReferencedModel: _getModel,
   })
+}
+
+const PrimaryKeyProperty = <TValue extends string | number>(
+  config: DatabaseKeyPropertyConfig<TValue> = {}
+) => {
+  const _getProperty = () => {
+    const auto = config.auto === undefined ? true : config.auto ? true : false
+    if (config.dataType === 'uuid') {
+      return UuidProperty(
+        merge(config as DatabaseKeyPropertyConfig<string>, {
+          autoNow: auto,
+        })
+      )
+    }
+    if (config.dataType === 'integer') {
+      return IntegerProperty(config as DatabaseKeyPropertyConfig<number>)
+    }
+    return TextProperty(config as DatabaseKeyPropertyConfig<string>)
+  }
+  return _getProperty()
 }
 
 /**
@@ -104,4 +130,9 @@ const ormPropertyConfig = <T extends Arrayable<DataValue>>(
   })
 }
 
-export { ormPropertyConfig, LastModifiedDateProperty, ForeignKeyProperty }
+export {
+  ormPropertyConfig,
+  LastModifiedDateProperty,
+  ForeignKeyProperty,
+  PrimaryKeyProperty,
+}
