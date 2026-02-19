@@ -1,4 +1,4 @@
-import { PropertyType } from '../types.js'
+import { PropertyType, PrimaryKeyType } from '../types.js'
 import { createUuid, getRandomValues } from '../utils.js'
 import {
   DatabaseKeyPropertyConfig,
@@ -12,7 +12,7 @@ const _getModelIdPropertyType = (
   return config.dataType || PropertyType.UniqueId
 }
 
-export const getPrimaryKeyGenerator = <TValue extends string | number>(
+export const getPrimaryKeyGenerator = <TValue extends PrimaryKeyType>(
   config: DatabaseKeyPropertyConfig<TValue> = {}
 ): PrimaryKeyGenerator => {
   const custom = config.primaryKeyGenerator

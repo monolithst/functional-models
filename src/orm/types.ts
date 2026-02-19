@@ -829,7 +829,7 @@ export type PrimaryKeyPropertyType =
  * @returns A promise that resolves to the primary key.
  */
 export type PrimaryKeyGenerator = <
-  TValue extends string | number,
+  TValue extends PrimaryKeyType,
   TData extends DataDescription,
 >(
   value: TValue,
@@ -842,7 +842,7 @@ export type PrimaryKeyGenerator = <
  * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
  * @interface
  */
-export type DatabaseKeyPropertyConfig<TValue extends string | number> =
+export type DatabaseKeyPropertyConfig<TValue extends PrimaryKeyType> =
   PropertyConfig<TValue> &
     Readonly<{
       /**
