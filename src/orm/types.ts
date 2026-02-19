@@ -12,12 +12,14 @@ import {
   ToObjectResult,
   ModelInstanceFetcher,
   ModelFactoryOptions,
+  CreateParams,
+  PropertyType,
 } from '../types'
 
 /**
  * Equals symbols for doing database matching
  */
-enum EqualitySymbol {
+export enum EqualitySymbol {
   // Equals
   eq = '=',
   // Less than
@@ -35,7 +37,7 @@ enum EqualitySymbol {
 /**
  * The value types that map to database types.
  */
-enum DatastoreValueType {
+export enum DatastoreValueType {
   string = 'string',
   number = 'number',
   date = 'date',
@@ -46,7 +48,7 @@ enum DatastoreValueType {
 /**
  * A list of allowable equality symbols.
  */
-const AllowableEqualitySymbols = Object.values(EqualitySymbol)
+export const AllowableEqualitySymbols = Object.values(EqualitySymbol)
 
 /**
  * A function that can save.
@@ -76,7 +78,7 @@ type DeleteMethod<
 /**
  * A function that allows overriding the save functionality for a specific model.
  */
-type SaveOverride<
+export type SaveOverride<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = <TData extends DataDescription>(
@@ -89,7 +91,7 @@ type SaveOverride<
 /**
  * A function that allows overriding the delete functionality for a specific model.
  */
-type DeleteOverride<
+export type DeleteOverride<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = <TData extends DataDescription>(
@@ -101,7 +103,7 @@ type DeleteOverride<
  * A result of an ORM search.
  * @interface
  */
-type OrmSearchResult<
+export type OrmSearchResult<
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
@@ -124,7 +126,7 @@ type OrmSearchResult<
  * ORM based ModelFactory extensions.
  * @interface
  */
-type OrmModelFactoryOptionsExtensions<
+export type OrmModelFactoryOptionsExtensions<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = Readonly<{
@@ -142,7 +144,7 @@ type OrmModelFactoryOptionsExtensions<
  * Extensions to the Model type
  * @interface
  */
-type OrmModelExtensions<
+export type OrmModelExtensions<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = Readonly<{
@@ -238,7 +240,7 @@ type OrmModelExtensions<
  * Instance overrides that give it ORM functions.
  * @interface
  */
-type OrmModelInstanceExtensions<
+export type OrmModelInstanceExtensions<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = Readonly<{
@@ -272,14 +274,14 @@ type OrmModelConfigurations = Readonly<{
  * A minimum orm model definition
  * @interface
  */
-type MinimumOrmModelDefinition<TData extends DataDescription> =
+export type MinimumOrmModelDefinition<TData extends DataDescription> =
   MinimalModelDefinition<TData> & OrmModelConfigurations
 
 /**
  * A model factory that produces ORM based models.
  *
  */
-type OrmModelFactory<
+export type OrmModelFactory<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
   TModelOptionsExtensions extends object = object,
@@ -305,7 +307,7 @@ type OrmModelFactory<
  * A search result from a datastore
  * @interface
  */
-type DatastoreSearchResult<T extends DataDescription> = Readonly<{
+export type DatastoreSearchResult<T extends DataDescription> = Readonly<{
   /**
    * An array of objects that represent the data from the datastore.
    */
@@ -320,7 +322,7 @@ type DatastoreSearchResult<T extends DataDescription> = Readonly<{
  * A model that has ORM functions attached.
  * @interface
  */
-type OrmModel<
+export type OrmModel<
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
@@ -334,7 +336,7 @@ type OrmModel<
  * A Model Instance with ORM functions attached.
  * @interface
  */
-type OrmModelInstance<
+export type OrmModelInstance<
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
@@ -348,7 +350,7 @@ type OrmModelInstance<
  * An interface that describes a datastore. By implementing this interface, databases can be swapped.
  * @interface
  */
-type DatastoreAdapter = Readonly<{
+export type DatastoreAdapter = Readonly<{
   /**
    * Saving a model.
    * @param instance
@@ -457,7 +459,7 @@ type DatastoreAdapter = Readonly<{
  * A search that describes a property and its value.
  * @interface
  */
-type PropertyQuery = Readonly<{
+export type PropertyQuery = Readonly<{
   /**
    * Distinguishes this as a property  query.
    */
@@ -487,7 +489,7 @@ type PropertyQuery = Readonly<{
 /**
  * A property search for a string value.
  */
-type StringPropertyQuery = PropertyQuery & {
+export type StringPropertyQuery = PropertyQuery & {
   valueType: DatastoreValueType.string
   equalitySymbol: EqualitySymbol.eq | EqualitySymbol.ne
   options: PropertyOptions
@@ -497,7 +499,7 @@ type StringPropertyQuery = PropertyQuery & {
  * A search that looks at dated objects after the given date.
  * @interface
  */
-type DatesAfterQuery = Readonly<{
+export type DatesAfterQuery = Readonly<{
   /**
    * Distinguishes this query
    */
@@ -529,7 +531,7 @@ type DatesAfterQuery = Readonly<{
  * A search query that looks at dates before the given date.
  * @interface
  */
-type DatesBeforeQuery = Readonly<{
+export type DatesBeforeQuery = Readonly<{
   /**
    * Distinguishes this query
    */
@@ -561,20 +563,21 @@ type DatesBeforeQuery = Readonly<{
  * Additional configurations for ORM based properties.
  * @interface
  */
-type OrmPropertyConfig<T extends Arrayable<DataValue>> = PropertyConfig<T> &
-  Readonly<{
-    /**
-     * Validator: Checks to make sure that there is only one instance in a datastore that has this property's value.
-     * NOTE: The value is a property KEY. Not true or false.
-     */
-    unique?: string
-  }>
+export type OrmPropertyConfig<T extends Arrayable<DataValue>> =
+  PropertyConfig<T> &
+    Readonly<{
+      /**
+       * Validator: Checks to make sure that there is only one instance in a datastore that has this property's value.
+       * NOTE: The value is a property KEY. Not true or false.
+       */
+      unique?: string
+    }>
 
 /**
  * Additional context that is provided for ORM based instance.
  * @interface
  */
-type OrmValidatorContext = Readonly<{
+export type OrmValidatorContext = Readonly<{
   /**
    * IMPORTANT: Sometimes you do not want to do any ORM based validation because of speed.
    * This disables any orm based validation, and only runs non-orm validation.
@@ -586,7 +589,7 @@ type OrmValidatorContext = Readonly<{
 /**
  * Options for a property query.
  */
-type PropertyOptions = {
+export type PropertyOptions = {
   /**
    * Is this a case sensitive search?
    */
@@ -618,7 +621,7 @@ type PropertyOptions = {
  * that can retrieve referenced models as needed. See {@see "functional-models.ModelReference"}
  * @interface
  */
-type Orm = {
+export type Orm = {
   /**
    * A model factory that can produce {@link OrmModel}
    */
@@ -632,7 +635,7 @@ type Orm = {
 /**
  * The sort order.
  */
-enum SortOrder {
+export enum SortOrder {
   asc = 'asc',
   dsc = 'dsc',
 }
@@ -640,13 +643,13 @@ enum SortOrder {
 /**
  * The number of instances to receive back from a query.
  */
-type MaxMatchStatement = number
+export type MaxMatchStatement = number
 
 /**
  * Defines how a sort should happen. Which column and what order.
  * @interface
  */
-type SortStatement = {
+export type SortStatement = {
   /**
    * The property's key/name. Also could be a "column"
    */
@@ -660,13 +663,13 @@ type SortStatement = {
 /**
  * Pagination can be anything.
  */
-type PaginationQuery = any
+export type PaginationQuery = any
 
 /**
  * A query to a search function.
  * @interface
  */
-type OrmSearch = {
+export type OrmSearch = {
   /**
    * Optional: A number of max records to return.
    */
@@ -688,7 +691,7 @@ type OrmSearch = {
 /**
  * Statements that make up the meat of QueryTokens
  */
-type Query =
+export type Query =
   | PropertyQuery
   | DatesAfterQuery
   | DatesBeforeQuery
@@ -697,12 +700,12 @@ type Query =
 /**
  * A token type that links two queries together.
  */
-type BooleanQuery = 'AND' | 'OR'
+export type BooleanQuery = 'AND' | 'OR'
 
 /**
  * A generic structure of querys.
  */
-type QueryTokens =
+export type QueryTokens =
   | readonly QueryTokens[][]
   | readonly QueryTokens[]
   | BooleanQuery
@@ -739,7 +742,7 @@ type NonQueryBuilder = Readonly<{
  * An in between or ending type to a builder creating a SearchQuery
  * @interface
  */
-type BuilderV2Link = NonQueryBuilder &
+export type BuilderV2Link = NonQueryBuilder &
   Readonly<{
     /**
      * Links together two or more {@link Query} or complex queries.
@@ -755,7 +758,7 @@ type BuilderV2Link = NonQueryBuilder &
  * A function that can either take a builder or raw QueryTokens[] and create a sub-query.
  * @param builder - Can be either a BuilderV2 or a hand written Query
  **/
-type SubBuilderFunction = (
+export type SubBuilderFunction = (
   builder: QueryBuilder
 ) => Omit<OrmSearch, 'take' | 'sort' | 'page'> | (QueryBuilder | BuilderV2Link)
 
@@ -763,13 +766,13 @@ type SubBuilderFunction = (
  * A search builder is a structured way to create a complex query.
  * @interface
  */
-type QueryBuilder = InnerBuilderV2 & NonQueryBuilder
+export type QueryBuilder = InnerBuilderV2 & NonQueryBuilder
 
 /**
  * A builder for version 3.0 search queries.
  * @interface
  */
-type InnerBuilderV2 = {
+export type InnerBuilderV2 = {
   /**
    * Creates a query that has nested property queries.
    * @param subBuilderFunc - A function that can return a Builder
@@ -812,40 +815,49 @@ type InnerBuilderV2 = {
   ) => BuilderV2Link
 }
 
-export {
-  PropertyQuery,
-  SortStatement,
-  DatesAfterQuery,
-  DatesBeforeQuery,
-  PaginationQuery,
-  MaxMatchStatement,
-  OrmModel,
-  OrmModelInstance,
-  DatastoreAdapter,
-  OrmModelFactory,
-  SaveOverride,
-  DeleteOverride,
-  OrmPropertyConfig,
-  DatastoreSearchResult,
-  OrmValidatorContext,
-  OrmSearchResult,
-  EqualitySymbol,
-  DatastoreValueType,
-  AllowableEqualitySymbols,
-  PropertyOptions,
-  Orm,
-  OrmModelExtensions,
-  OrmModelInstanceExtensions,
-  OrmModelFactoryOptionsExtensions,
-  MinimumOrmModelDefinition,
-  QueryBuilder,
-  BuilderV2Link,
-  SubBuilderFunction,
-  OrmSearch,
-  Query,
-  BooleanQuery,
-  QueryTokens,
-  InnerBuilderV2,
-  SortOrder,
-  StringPropertyQuery,
-}
+/**
+ * The types of primary key properties.
+ */
+export type PrimaryKeyPropertyType =
+  | PropertyType.UniqueId
+  | PropertyType.Text
+  | PropertyType.Integer
+
+/**
+ * A function that can generate a primary key for a model.
+ * @param model - The model to generate a primary key for.
+ * @returns A promise that resolves to the primary key.
+ */
+export type PrimaryKeyGenerator = <
+  TValue extends string | number,
+  TData extends DataDescription,
+>(
+  value: TValue,
+  modelData: CreateParams<TData>,
+  instance: ModelInstance<TData>
+) => Promise<PrimaryKeyType>
+
+/**
+ * A property that represents a key in a database.
+ * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
+ * @interface
+ */
+export type DatabaseKeyPropertyConfig<TValue extends string | number> =
+  PropertyConfig<TValue> &
+    Readonly<{
+      /**
+       * Sets the type of the key.
+       * @default PrimaryKeyDataType.Uuid
+       */
+      dataType?: PrimaryKeyPropertyType
+      /**
+       * If true, the key will be automatically generated if not provided. Only applies to uuids and integers
+       * @default true
+       */
+      auto?: boolean
+      /**
+       * Optional: A custom primary key generator function to use for models. If the property type is UniqueId (default) then this will produce random UUID. If the property type is a number, a random number will be generated.
+       * If using a SQL-like database that uses numbers, its HIGHLY recommended to get a number from the database itself.
+       */
+      primaryKeyGenerator?: PrimaryKeyGenerator
+    }>

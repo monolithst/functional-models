@@ -8,6 +8,9 @@ import {
   MaybeFunction,
   ModelType,
   DataDescription,
+  ModelInstance,
+  CreateParams,
+  PropertyType,
 } from '../types'
 import {
   DatetimeProperty,
@@ -16,7 +19,8 @@ import {
   UuidProperty,
 } from '../properties'
 import { unique } from './validation'
-import { OrmPropertyConfig } from './types'
+import { OrmPropertyConfig, DatabaseKeyPropertyConfig } from './types'
+import { getPrimaryKeyGenerator } from './internal-libs'
 
 const _defaultPropertyConfig = {
   unique: undefined,
@@ -26,7 +30,7 @@ const _defaultPropertyConfig = {
  * A property that automatically updates whenever the model instance is saved.
  * @param config
  */
-const LastModifiedDateProperty = (
+export const LastModifiedDateProperty = (
   config: PropertyConfig<DateValueType> = {}
 ) => {
   const additionalMetadata = { lastModifiedUpdateMethod: () => new Date() }
@@ -34,37 +38,20 @@ const LastModifiedDateProperty = (
 }
 
 /**
- * A property that represents a key in a database.
- * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
- * @interface
- */
-type DatabaseKeyPropertyConfig<TValue extends string | number> =
-  PropertyConfig<TValue> &
-    Readonly<{
-      /**
-       * Sets the type of the foreign key.
-       * @default 'uuid'
-       */
-      dataType?: 'uuid' | 'string' | 'integer'
-      /**
-       * If true, the key will be automatically generated if not provided. Only applies to uuids.
-       * @default true
-       */
-      auto?: boolean
-    }>
-
-/**
  * A property that represents a foreign key to another model in a database.
  * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
  * NOTE: auto is ignored in config.
  * @param config - Additional configurations.
  */
-const ForeignKeyProperty = <
+export const ForeignKeyProperty = <
   TValue extends string | number,
   TModel extends DataDescription,
 >(
   model: MaybeFunction<ModelType<TModel>>,
-  config: DatabaseKeyPropertyConfig<TValue> = {}
+  config: Omit<
+    DatabaseKeyPropertyConfig<TValue>,
+    'auto' | 'primaryKeyGenerator'
+  > = {}
 ) => {
   const _getModel = () => {
     if (typeof model === 'function') {
@@ -74,14 +61,14 @@ const ForeignKeyProperty = <
   }
 
   const _getProperty = () => {
-    if (config.dataType === 'uuid') {
+    if (config.dataType === PropertyType.UniqueId) {
       return UuidProperty(
         merge(config as DatabaseKeyPropertyConfig<string>, {
           autoNow: false,
         })
       )
     }
-    if (config.dataType === 'integer') {
+    if (config.dataType === PropertyType.Integer) {
       return IntegerProperty(config as DatabaseKeyPropertyConfig<number>)
     }
     return TextProperty(config as DatabaseKeyPropertyConfig<string>)
@@ -95,22 +82,52 @@ const ForeignKeyProperty = <
   })
 }
 
-const PrimaryKeyProperty = <TValue extends string | number>(
+/**
+ * A property that represents a primary key in a database.
+ * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
+ * Includes an optional primaryKeyGenerator function that can be used to generate a primary key. This can allow primary keys that are generated at runtime, or grabbed from a database.
+ * @param config - Additional configurations.
+ * @returns
+ */
+export const PrimaryKeyProperty = <TValue extends string | number>(
   config: DatabaseKeyPropertyConfig<TValue> = {}
 ) => {
   const _getProperty = () => {
     const auto = config.auto === undefined ? true : config.auto ? true : false
-    if (config.dataType === 'uuid') {
+    const lazyLoadMethod = (
+      value: TValue,
+      modelData: CreateParams<any>,
+      instance: ModelInstance<any>
+    ) => {
+      if (config.primaryKeyGenerator) {
+        return config.primaryKeyGenerator(value, modelData, instance)
+      }
+      if (auto) {
+        return getPrimaryKeyGenerator(config)(value, modelData, instance)
+      }
+      return value
+    }
+
+    if (config.dataType === PropertyType.UniqueId) {
       return UuidProperty(
         merge(config as DatabaseKeyPropertyConfig<string>, {
           autoNow: auto,
+          lazyLoadMethod,
         })
       )
     }
-    if (config.dataType === 'integer') {
-      return IntegerProperty(config as DatabaseKeyPropertyConfig<number>)
+    if (config.dataType === PropertyType.Integer) {
+      return IntegerProperty(
+        merge(config as DatabaseKeyPropertyConfig<number>, {
+          lazyLoadMethod,
+        })
+      )
     }
-    return TextProperty(config as DatabaseKeyPropertyConfig<string>)
+    return TextProperty(
+      merge(config as DatabaseKeyPropertyConfig<string>, {
+        lazyLoadMethod,
+      })
+    )
   }
   return _getProperty()
 }
@@ -119,7 +136,7 @@ const PrimaryKeyProperty = <TValue extends string | number>(
  * Creates an orm based property config.
  * @param config - Additional configurations.
  */
-const ormPropertyConfig = <T extends Arrayable<DataValue>>(
+export const ormPropertyConfig = <T extends Arrayable<DataValue>>(
   config: OrmPropertyConfig<T> = _defaultPropertyConfig
 ): PropertyConfig<T> => {
   return merge(config, {
@@ -128,11 +145,4 @@ const ormPropertyConfig = <T extends Arrayable<DataValue>>(
       config.unique ? unique(config.unique) : null,
     ].filter(identity),
   })
-}
-
-export {
-  ormPropertyConfig,
-  LastModifiedDateProperty,
-  ForeignKeyProperty,
-  PrimaryKeyProperty,
 }

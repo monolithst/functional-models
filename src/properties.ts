@@ -65,7 +65,7 @@ const EMAIL_REGEX =
  * @typeParam TModelExtensions - Any additional model extensions
  * @typeParam TModelInstanceExtensions - Any additional model instance extensions
  */
-const Property = <
+export const Property = <
   TValue extends Arrayable<DataValue>,
   TData extends DataDescription = DataDescription,
   TModelExtensions extends object = object,
@@ -229,7 +229,7 @@ const isDate = (value: any): value is Date => {
  * @param config - A configuration that enables overriding of date formatting
  * @param additionalMetadata
  */
-const DateProperty = (
+export const DateProperty = (
   config: DatePropertyConfig<DateValueType> = {},
   additionalMetadata = {}
 ) =>
@@ -264,7 +264,7 @@ const DateProperty = (
  * @param config - A configuration that enables overriding of date and time formatting
  * @param additionalMetadata
  */
-const DatetimeProperty = (
+export const DatetimeProperty = (
   config: DatePropertyConfig<DateValueType> = {},
   additionalMetadata = {}
 ) =>
@@ -299,7 +299,7 @@ const DatetimeProperty = (
  * @param config
  * @param additionalMetadata
  */
-const ArrayProperty = <T extends DataValue>(
+export const ArrayProperty = <T extends DataValue>(
   config = {},
   additionalMetadata = {}
 ) =>
@@ -319,7 +319,7 @@ const ArrayProperty = <T extends DataValue>(
  * @param config
  * @param additionalMetadata
  */
-const SingleTypeArrayProperty = <
+export const SingleTypeArrayProperty = <
   TValue extends Omit<PrimitiveValueType, 'object'>,
 >(
   valueType: TValue,
@@ -346,7 +346,9 @@ const SingleTypeArrayProperty = <
  * @param config
  * @param additionalMetadata
  */
-const ObjectProperty = <TObject extends Readonly<Record<string, JsonAble>>>(
+export const ObjectProperty = <
+  TObject extends Readonly<Record<string, JsonAble>>,
+>(
   config = {},
   additionalMetadata = {}
 ) =>
@@ -363,7 +365,7 @@ const ObjectProperty = <TObject extends Readonly<Record<string, JsonAble>>>(
  * @param config - Additional Configurations
  * @param additionalMetadata - Additional Metadata
  */
-const TextProperty = (
+export const TextProperty = (
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
@@ -381,7 +383,7 @@ const TextProperty = (
  * @param config - Additional configurations
  * @param additionalMetadata - Additional metadata
  */
-const BigTextProperty = (
+export const BigTextProperty = (
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
@@ -399,7 +401,7 @@ const BigTextProperty = (
  * @param config
  * @param additionalMetadata
  */
-const IntegerProperty = (
+export const IntegerProperty = (
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
 ) =>
@@ -418,7 +420,7 @@ const IntegerProperty = (
  * @param config
  * @param additionalMetadata
  */
-const YearProperty = (
+export const YearProperty = (
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
 ) =>
@@ -441,7 +443,7 @@ const YearProperty = (
  * @param config
  * @param additionalMetadata
  */
-const NumberProperty = (
+export const NumberProperty = (
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
 ) =>
@@ -461,7 +463,7 @@ const NumberProperty = (
  * @param config
  * @param additionalMetadata
  */
-const ConstantValueProperty = <TDataValue extends Arrayable<DataValue>>(
+export const ConstantValueProperty = <TDataValue extends Arrayable<DataValue>>(
   valueType: PropertyType | string,
   value: TDataValue,
   config: PropertyConfig<TDataValue> = {},
@@ -480,7 +482,7 @@ const ConstantValueProperty = <TDataValue extends Arrayable<DataValue>>(
  * @param config
  * @param additionalMetadata
  */
-const EmailProperty = (
+export const EmailProperty = (
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
@@ -497,7 +499,7 @@ const EmailProperty = (
  * @param config
  * @param additionalMetadata
  */
-const BooleanProperty = (
+export const BooleanProperty = (
   config: PropertyConfig<boolean> = {},
   additionalMetadata = {}
 ) =>
@@ -515,7 +517,7 @@ const BooleanProperty = (
  * @param config - Additional configurations. NOTE: required is ALWAYS true.
  * @param additionalMetadata - Any additional metadata.
  */
-const PrimaryKeyUuidProperty = (
+export const PrimaryKeyUuidProperty = (
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
@@ -542,7 +544,7 @@ const PrimaryKeyUuidProperty = (
  * @param config - Additional configurations.
  * @param additionalMetadata - Any additional metadata.
  */
-const UuidProperty = (
+export const UuidProperty = (
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
 ) =>
@@ -583,7 +585,7 @@ const UuidProperty = (
  * @param config
  * @param additionalMetadata
  */
-const ModelReferenceProperty = <T extends DataDescription>(
+export const ModelReferenceProperty = <T extends DataDescription>(
   model: MaybeFunction<ModelType<T>>,
   config: PropertyConfig<ModelReferenceType<T>> = {},
   additionalMetadata = {}
@@ -596,7 +598,7 @@ const ModelReferenceProperty = <T extends DataDescription>(
  * @param config
  * @param additionalMetadata
  */
-const AdvancedModelReferenceProperty = <
+export const AdvancedModelReferenceProperty = <
   T extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
@@ -752,7 +754,7 @@ const AdvancedModelReferenceProperty = <
  * @param config - A Config
  * @param additionalMetadata _ Any additional metadata.
  */
-const DenormalizedProperty = <
+export const DenormalizedProperty = <
   TValue extends DataValue,
   T extends DataDescription,
 >(
@@ -789,7 +791,7 @@ const DenormalizedProperty = <
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
  */
-const DenormalizedTextProperty = <T extends DataDescription>(
+export const DenormalizedTextProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<string, T>,
   config: PropertyConfig<string> = {},
   additionalMetadata = {}
@@ -810,7 +812,7 @@ const DenormalizedTextProperty = <T extends DataDescription>(
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
  */
-const DenormalizedNumberProperty = <T extends DataDescription>(
+export const DenormalizedNumberProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<number, T>,
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
@@ -831,7 +833,7 @@ const DenormalizedNumberProperty = <T extends DataDescription>(
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
  */
-const DenormalizedIntegerProperty = <T extends DataDescription>(
+export const DenormalizedIntegerProperty = <T extends DataDescription>(
   calculate: CalculateDenormalization<number, T>,
   config: PropertyConfig<number> = {},
   additionalMetadata = {}
@@ -860,7 +862,7 @@ const DenormalizedIntegerProperty = <T extends DataDescription>(
  * @param config
  * @param additionalMetadata
  */
-const NaturalIdProperty = (
+export const NaturalIdProperty = (
   propertyKeys: readonly string[],
   joiner: string,
   config: PropertyConfig<string> = {},
@@ -893,29 +895,3 @@ const NaturalIdProperty = (
     }),
     additionalMetadata
   )
-
-export {
-  Property,
-  NaturalIdProperty,
-  DateProperty,
-  DatetimeProperty,
-  ArrayProperty,
-  ModelReferenceProperty,
-  AdvancedModelReferenceProperty,
-  IntegerProperty,
-  TextProperty,
-  ConstantValueProperty,
-  NumberProperty,
-  ObjectProperty,
-  EmailProperty,
-  BooleanProperty,
-  DenormalizedProperty,
-  DenormalizedIntegerProperty,
-  DenormalizedNumberProperty,
-  DenormalizedTextProperty,
-  BigTextProperty,
-  YearProperty,
-  PrimaryKeyUuidProperty,
-  SingleTypeArrayProperty,
-  UuidProperty,
-}

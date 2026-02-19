@@ -117,6 +117,7 @@ const memoizeAsync = <T, A extends Array<any>>(method: (...args: A) => T) => {
 }
 
 export {
+  getRandomValues,
   loweredTitleCase,
   toTitleCase,
   createUuid,
