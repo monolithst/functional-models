@@ -1,6 +1,7 @@
 import merge from 'lodash/merge'
 import identity from 'lodash/identity'
 import {
+  PrimaryKeyType,
   DateValueType,
   PropertyConfig,
   Arrayable,
@@ -44,7 +45,7 @@ export const LastModifiedDateProperty = (
  * @param config - Additional configurations.
  */
 export const ForeignKeyProperty = <
-  TValue extends string | number,
+  TValue extends PrimaryKeyType,
   TModel extends DataDescription,
 >(
   model: MaybeFunction<ModelType<TModel>>,
@@ -89,7 +90,7 @@ export const ForeignKeyProperty = <
  * @param config - Additional configurations.
  * @returns
  */
-export const PrimaryKeyProperty = <TValue extends string | number>(
+export const PrimaryKeyProperty = <TValue extends PrimaryKeyType>(
   config: DatabaseKeyPropertyConfig<TValue> = {}
 ) => {
   const _getProperty = () => {
