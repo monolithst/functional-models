@@ -158,7 +158,7 @@ type ModelErrors<TData extends DataDescription> = {
 /**
  * The most flexible representation of a Property Validator.
  * @param value - The raw value being evaluated
- * @param instance - The model instance for context.
+ * @param model - The model (e.g. for datastore lookups). Use model.create(data) if you need an instance.
  * @param instanceData - An already JSONified version of the model. This is a convenience so toObj() does not need to be called so frequently.
  * @param context - Additional outside context to help with validation. (Most cases this is unused)
  */
@@ -169,7 +169,7 @@ type PropertyValidatorComponentTypeAdvanced<
   TModelInstanceExtensions extends object = object,
 > = (
   value: TValue,
-  instance: ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>,
+  model: ModelType<TData, TModelExtensions, TModelInstanceExtensions>,
   instanceData: ToObjectResult<TData>,
   context: ValidatorContext
 ) => ComponentValidationErrorResponse
@@ -199,7 +199,7 @@ type ValuePropertyValidatorComponent<TValue extends Arrayable<DataValue>> = (
 /**
  * A property validator that returns a promise.
  * @param value - The value to validate
- * @param instance - The instance the value comes from
+ * @param model - The model (e.g. for datastore lookups). Use model.create(data) if you need an instance.
  * @param instanceData - The jsonified version of the data
  * @param context - Additional context to validate against.
  */
@@ -209,7 +209,7 @@ type PropertyValidatorComponentAsync<
   TModelInstanceExtensions extends object,
 > = (
   value: Arrayable<DataValue>,
-  instance: ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>,
+  model: ModelType<TData, TModelExtensions, TModelInstanceExtensions>,
   instanceData: ToObjectResult<TData>,
   context: ValidatorContext
 ) => Promise<ComponentValidationErrorResponse>
@@ -235,17 +235,19 @@ type PropertyValidatorComponent<
 
 /**
  * The validator for an entire property. This is composed of multiple underlying validators that all get executed and then assembled together.
+ * @param model - The model (the instance's model). Use model.create(data) if you need an instance.
  * @param instanceData - The instance data to compare
  * @param context - Additional context for validating.
  */
 type PropertyValidator<TData extends DataDescription> = (
+  model: ModelType<TData>,
   instanceData: ToObjectResult<TData>,
   context: ValidatorContext
 ) => Promise<ValidationErrors>
 
 /**
  * The component of a Model Validator. These are combined to create a single model validator.
- * @param instance - The instance of the model.
+ * @param model - The model. Use model.create(data) if you need an instance.
  * @param instanceData - The JSONified version of the model.
  * @param context - Additional context to assist with validating.
  */
@@ -254,7 +256,7 @@ type ModelValidatorComponent<
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,
 > = (
-  instance: ModelInstance<TData, TModelExtensions, TModelInstanceExtensions>,
+  model: ModelType<TData, TModelExtensions, TModelInstanceExtensions>,
   instanceData: ToObjectResult<TData>,
   context: ValidatorContext
 ) => Promise<ComponentValidationErrorResponse>

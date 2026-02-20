@@ -245,12 +245,13 @@ const aggregateValidator = <T extends DataDescription>(
     : [methodOrMethods]
 
   const _aggregativeValidator: PropertyValidator<T> = async (
+    model: ModelType<T>,
     instanceData: ToObjectResult<T>,
-    propertyConfiguration
+    propertyConfiguration: ValidatorContext
   ) => {
     const values = await Promise.all(
       toDo.map(method => {
-        return method(value, instanceData, propertyConfiguration)
+        return method(value, model, instanceData, propertyConfiguration)
       })
     )
     return filterEmpty(values)
@@ -319,7 +320,8 @@ const createPropertyValidator = <
   >,
   config: PropertyConfig<TValue>
 ): PropertyValidator<T> => {
-  const _propertyValidator = async <T extends DataDescription>(
+  const _propertyValidator = async (
+    model: ModelType<T>,
     instanceData: ToObjectResult<T>,
     propertyConfiguration: ValidatorContext
   ): Promise<ValidationErrors> => {
@@ -345,8 +347,8 @@ const createPropertyValidator = <
       if (!value && !isRequiredValue) {
         return []
       }
-      const validator = aggregateValidator<T>(value, validators)
-      const errors = await validator(instanceData, propertyConfiguration)
+      const validator = aggregateValidator(value, validators)
+      const errors = await validator(model, instanceData, propertyConfiguration)
       return [...new Set(flatMap(errors))]
     })
   }
@@ -373,18 +375,22 @@ const createModelValidator = <
       if (!instance) {
         throw new Error(`Instance cannot be empty`)
       }
+      const model = instance.getModel()
       const keysAndFunctions = Object.entries(validators)
       const instanceData = await instance.toObj<T>()
       const propertyValidationErrors = await Promise.all(
         keysAndFunctions.map(async ([key, validator]) => {
-          return [key, await validator(instanceData, propertyConfiguration)]
+          return [
+            key,
+            await validator(model, instanceData, propertyConfiguration),
+          ]
         })
       )
       const modelValidationErrors = (
         await Promise.all(
           modelValidators
             ? modelValidators.map(validator => {
-                return validator(instance, instanceData, propertyConfiguration)
+                return validator(model, instanceData, propertyConfiguration)
               })
             : []
         )

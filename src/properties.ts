@@ -158,8 +158,8 @@ export const Property = <
     const _propertyValidatorWrapper: PropertyValidator<
       TData
       // eslint-disable-next-line functional/prefer-tacit
-    > = async (instanceData, propertyConfiguration) => {
-      return validator(instanceData, propertyConfiguration)
+    > = async (model, instanceData, propertyConfiguration) => {
+      return validator(model, instanceData, propertyConfiguration)
     }
     return _propertyValidatorWrapper
   }

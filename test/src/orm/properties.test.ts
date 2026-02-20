@@ -6,6 +6,7 @@ import {
   ormPropertyConfig,
   ForeignKeyProperty,
   LastModifiedDateProperty,
+  PrimaryKeyProperty,
 } from '../../../src'
 import { PropertyType } from '../../../src/types'
 
@@ -73,33 +74,43 @@ describe('/src/orm/properties.ts', () => {
     const DummyModelFn = () => DummyModel
 
     it('should use UuidProperty when dataType is uuid', () => {
-      const prop = ForeignKeyProperty(DummyModel, { dataType: 'uuid' })
+      const prop = ForeignKeyProperty(DummyModel, {
+        dataType: PropertyType.UniqueId,
+      })
       assert.equal(prop.getPropertyType(), PropertyType.UniqueId)
       // @ts-ignore
-      assert.equal(prop.getConfig().dataType, 'uuid')
+      assert.equal(prop.getConfig().dataType, PropertyType.UniqueId)
     })
 
     it('should use IntegerProperty when dataType is integer', () => {
-      const prop = ForeignKeyProperty(DummyModel, { dataType: 'integer' })
+      const prop = ForeignKeyProperty(DummyModel, {
+        dataType: PropertyType.Integer,
+      })
       assert.equal(prop.getPropertyType(), PropertyType.Integer)
       // @ts-ignore
-      assert.equal(prop.getConfig().dataType, 'integer')
+      assert.equal(prop.getConfig().dataType, PropertyType.Integer)
     })
 
     it('should use TextProperty when dataType is string', () => {
-      const prop = ForeignKeyProperty(DummyModel, { dataType: 'string' })
+      const prop = ForeignKeyProperty(DummyModel, {
+        dataType: PropertyType.Text,
+      })
       assert.equal(prop.getPropertyType(), PropertyType.Text)
       // @ts-ignore
-      assert.equal(prop.getConfig().dataType, 'string')
+      assert.equal(prop.getConfig().dataType, PropertyType.Text)
     })
 
     it('should resolve model if passed as a function', () => {
-      const prop = ForeignKeyProperty(DummyModelFn, { dataType: 'uuid' })
+      const prop = ForeignKeyProperty(DummyModelFn, {
+        dataType: PropertyType.UniqueId,
+      })
       assert.deepEqual(prop.getReferencedModel(), DummyModel)
     })
 
     it('getReferencedId should return the instance value', () => {
-      const prop = ForeignKeyProperty(DummyModel, { dataType: 'uuid' })
+      const prop = ForeignKeyProperty(DummyModel, {
+        dataType: PropertyType.UniqueId,
+      })
       assert.equal(prop.getReferencedId('abc-123'), 'abc-123')
     })
   })
@@ -110,6 +121,67 @@ describe('/src/orm/properties.ts', () => {
       assert.isFunction(prop.lastModifiedUpdateMethod)
       const date = prop.lastModifiedUpdateMethod()
       assert.instanceOf(date, Date)
+    })
+  })
+
+  describe('#PrimaryKeyProperty()', () => {
+    it('should return UuidProperty when dataType is UniqueId', () => {
+      const prop = PrimaryKeyProperty({ dataType: PropertyType.UniqueId })
+      assert.equal(prop.getPropertyType(), PropertyType.UniqueId)
+    })
+
+    it('should return IntegerProperty when dataType is Integer', () => {
+      const prop = PrimaryKeyProperty({ dataType: PropertyType.Integer })
+      assert.equal(prop.getPropertyType(), PropertyType.Integer)
+    })
+
+    it('should return TextProperty when dataType is Text or unspecified', () => {
+      const propText = PrimaryKeyProperty({ dataType: PropertyType.Text })
+      assert.equal(propText.getPropertyType(), PropertyType.Text)
+      const propDefault = PrimaryKeyProperty()
+      assert.equal(propDefault.getPropertyType(), PropertyType.Text)
+    })
+
+    it('should use custom primaryKeyGenerator when provided (Integer type)', async () => {
+      const customGenerator = async () => 42
+      const prop = PrimaryKeyProperty({
+        dataType: PropertyType.Integer,
+        primaryKeyGenerator: customGenerator,
+      })
+      const getter = prop.createGetter(undefined, {}, {} as any)
+      const value = await getter()
+      assert.equal(value, 42)
+    })
+
+    it('should respect auto: false and return value when no generator', async () => {
+      const prop = PrimaryKeyProperty({
+        dataType: PropertyType.Text,
+        auto: false,
+      })
+      const getter = prop.createGetter('existing-id', {}, {} as any)
+      const value = await getter()
+      assert.equal(value, 'existing-id')
+    })
+
+    it('should generate uuid when auto and dataType UniqueId', async () => {
+      const prop = PrimaryKeyProperty({
+        dataType: PropertyType.UniqueId,
+        auto: true,
+      })
+      const getter = prop.createGetter(undefined, {}, {} as any)
+      const value = await getter()
+      assert.isString(value)
+      assert.match(value, /^[0-9a-f-]{36}$/i)
+    })
+
+    it('should generate integer when auto and dataType Integer', async () => {
+      const prop = PrimaryKeyProperty({
+        dataType: PropertyType.Integer,
+        auto: true,
+      })
+      const getter = prop.createGetter(undefined, {}, {} as any)
+      const value = await getter()
+      assert.isNumber(value)
     })
   })
 })

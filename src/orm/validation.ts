@@ -11,18 +11,17 @@ import { queryBuilder } from './query'
 import {
   OrmSearch,
   OrmValidatorContext,
-  OrmModelInstance,
+  OrmModel,
   OrmModelExtensions,
   OrmModelInstanceExtensions,
 } from './types'
 
 const _doUniqueCheck = async <T extends DataDescription>(
   query: OrmSearch,
-  instance: OrmModelInstance<T>,
+  model: OrmModel<T>,
   instanceData: T | JsonAble,
   buildErrorMessage: () => ComponentValidationErrorResponse
 ): Promise<ComponentValidationErrorResponse> => {
-  const model = instance.getModel()
   const results = await model.search(query)
   const resultsLength = results.instances.length
   // There is nothing stored with this value.
@@ -60,7 +59,7 @@ const uniqueTogether = <T extends DataDescription>(
   OrmModelInstanceExtensions
 > => {
   const _uniqueTogether = async (
-    instance: OrmModelInstance<T>,
+    model: OrmModel<T>,
     instanceData: T | JsonAble,
     options: OrmValidatorContext
   ) => {
@@ -82,7 +81,7 @@ const uniqueTogether = <T extends DataDescription>(
         }
       })
     )(queryBuilder().take(2)).compile()
-    return _doUniqueCheck<T>(query, instance, instanceData, () => {
+    return _doUniqueCheck<T>(query, model, instanceData, () => {
       return propertyKeyArray.length > 1
         ? `${propertyKeyArray.join(
             ','
@@ -109,8 +108,8 @@ const unique = <T extends DataDescription>(
     T,
     OrmModelExtensions,
     OrmModelInstanceExtensions
-  > = (value, instance, instanceData, options) => {
-    return uniqueTogether<T>([propertyKey])(instance, instanceData, options)
+  > = (value, model, instanceData, options) => {
+    return uniqueTogether<T>([propertyKey])(model, instanceData, options)
   }
   return _unique
 }
