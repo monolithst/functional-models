@@ -64,7 +64,7 @@ const uniqueTogether = <T extends DataDescription>(
     instanceData: T | JsonAble,
     options: OrmValidatorContext
   ) => {
-    if (options.noOrmValidation) {
+    if (options?.noOrmValidation) {
       return undefined
     }
     const properties = propertyKeyArray.map(key => {
