@@ -15,7 +15,7 @@ const isModelInstance = (obj: any): obj is ModelInstance<any> => {
 
 const _getValue = async (value: any): Promise<JsonAble | null> => {
   if (value === undefined) {
-    return null
+    return undefined
   }
   if (value === null) {
     return null
@@ -47,6 +47,9 @@ const toJsonAble =
     return Object.entries(keyToFunc).reduce(async (acc, [key, value]) => {
       const realAcc = await acc
       const trueValue = await _getValue(await value)
+      if (trueValue === undefined) {
+        return realAcc
+      }
       return merge(realAcc, { [key]: trueValue })
     }, Promise.resolve({})) as Promise<ToObjectResult<R>>
   }
