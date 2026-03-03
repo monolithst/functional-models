@@ -1,5 +1,23 @@
 import AsyncLock from 'async-lock'
 import { v4 as uuidv4 } from 'uuid'
+// @ts-ignore
+import getRandomValuesFunc from 'get-random-values'
+
+const getRandomValues = (): Uint8Array => {
+  const array = new Uint8Array(1)
+  if (typeof window !== 'undefined') {
+    if (window.crypto) {
+      return window.crypto.getRandomValues(array)
+    }
+    // @ts-ignore
+    if (window.msCrypto) {
+      // @ts-ignore
+      return window.msCrypto.getRandomValues(array)
+    }
+  }
+
+  return getRandomValuesFunc(array)
+}
 
 const toTitleCase = (string: string) => {
   return `${string.slice(0, 1).toUpperCase()}${string.slice(1)}`
@@ -86,7 +104,10 @@ const memoizeAsync = <T, A extends Array<any>>(method: (...args: A) => T) => {
   /* eslint-enable functional/no-let */
 }
 
+const createUuid = uuidv4
+
 export {
+  getRandomValues,
   loweredTitleCase,
   toTitleCase,
   isPromise,
@@ -95,4 +116,5 @@ export {
   flowFindFirst,
   memoizeSync,
   memoizeAsync,
+  createUuid,
 }

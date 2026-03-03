@@ -21,6 +21,7 @@ const compat = new FlatCompat({
 export default [
   {
     ignores: [
+      'knowledge-mcp/dist',
       'buildDocs',
       'eslint.config.mjs',
       'knowledge-mcp/',

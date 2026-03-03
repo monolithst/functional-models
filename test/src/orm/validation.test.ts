@@ -50,7 +50,7 @@ describe('/src/orm/validation.js', () => {
         name: 'my-name',
       })
       const instanceData = await instance.toObj<TestType1>()
-      await unique<TestType1>('name')('my-name', instance, instanceData, {})
+      await unique<TestType1>('name')('my-name', model, instanceData, {})
       // @ts-ignore
       sinon.assert.calledOnce(model.search)
     })
@@ -74,7 +74,7 @@ describe('/src/orm/validation.js', () => {
       const instanceData = await instance.toObj<TestType1>()
       const actual = await unique<TestType1>('name')(
         'my-name',
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -100,7 +100,7 @@ describe('/src/orm/validation.js', () => {
       const instanceData = await instance.toObj<TestType1>()
       const actual = await unique<TestType1>('name')(
         'name',
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -130,7 +130,7 @@ describe('/src/orm/validation.js', () => {
       const instanceData = await instance.toObj<TestType1>()
       const actual = await unique<TestType1>('name')(
         'name',
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -160,7 +160,7 @@ describe('/src/orm/validation.js', () => {
       const instanceData = await instance.toObj<TestType1>()
       const actual = await unique<TestType1>('name')(
         'name',
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -177,7 +177,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       await uniqueTogether<TestType1>(['name', 'description'])(
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -195,7 +195,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       await uniqueTogether<TestType1>(['name', 'description'])(
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -227,7 +227,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       await uniqueTogether<TestType1>(['name', 'description'])(
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -248,7 +248,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       await uniqueTogether<TestType1>(['name', 'description'])(
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -269,7 +269,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       await uniqueTogether<TestType1>(['name', 'description'])(
-        instance,
+        model,
         instanceData,
         { noOrmValidation: true }
       )
@@ -296,7 +296,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       const actual = await uniqueTogether<TestType1>(['name'])(
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -323,7 +323,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       const actual = await uniqueTogether<TestType1>(['name'])(
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -355,7 +355,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       const actual = await uniqueTogether<TestType1>(['name'])(
-        instance,
+        model,
         instanceData,
         {}
       )
@@ -387,7 +387,7 @@ describe('/src/orm/validation.js', () => {
       })
       const instanceData = await instance.toObj<TestType1>()
       const actual = await uniqueTogether<TestType1>(['name', 'description'])(
-        instance,
+        model,
         instanceData,
         {}
       )

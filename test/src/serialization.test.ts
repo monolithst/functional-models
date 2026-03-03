@@ -45,14 +45,13 @@ describe('/src/serialization.ts', () => {
       }
       assert.deepEqual(actual, expected)
     })
-    it('should set an undefined property to null', async () => {
+    it('should not include undefined property', async () => {
       const actual = await toJsonAble<{ key: string; key2?: string }>({
         key: () => 'value',
         key2: () => undefined,
       })()
       const expected = {
         key: 'value',
-        key2: null,
       }
       assert.deepEqual(actual, expected)
     })

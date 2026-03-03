@@ -583,7 +583,7 @@ describe('/src/validation.ts', () => {
       })
       sinon.assert.calledOnce(modelValidator)
     })
-    it('should pass the instance into the validator as the first argument', async () => {
+    it('should pass the model into the validator as the first argument', async () => {
       const modelValidator = sinon.stub().returns(undefined)
       const testModel3 = createTestModel3([modelValidator])
       const properties = {
@@ -601,7 +601,7 @@ describe('/src/validation.ts', () => {
       await validator(instance, {})
 
       const actual = modelValidator.getCall(0).args[0]
-      const expected = instance
+      const expected = instance.getModel()
       assert.deepEqual(actual, expected)
     })
     it('should pass the instance data into the validator as the second argument', async () => {
