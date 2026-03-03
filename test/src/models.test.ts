@@ -439,9 +439,9 @@ describe('/src/models.ts', () => {
           .properties.myProperty
         assert.isOk(actual)
       })
-      it('should return an object that contains .getModel().getName()===functional-models-test-the-name', () => {
+      it('should return an object that contains .getModel().getName()===functional-models/TestTheNames', () => {
         const input = {
-          pluralName: 'test-the-name',
+          pluralName: 'TestTheNames',
           namespace: 'functional-models',
           properties: {
             id: PrimaryKeyUuidProperty(),
@@ -451,7 +451,7 @@ describe('/src/models.ts', () => {
         const model = Model<{ myProperty: string }>(input)
         const instance = model.create({ myProperty: 'value' })
         const actual = instance.getModel().getName()
-        const expected = 'functional-models-test-the-name'
+        const expected = 'functional-models/TestTheNames'
         assert.deepEqual(actual, expected)
       })
       it('should use the value passed in when Property.defaultValue and Property.value are not set', () => {

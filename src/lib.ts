@@ -119,7 +119,15 @@ const isModelInstance = (obj: any): obj is ModelInstance<any, any> => {
 }
 
 const getModelName = (namespace: string, pluralName: string) => {
-  return kebabCase(`${namespace}-${pluralName}`).toLowerCase()
+  return `${namespace}/${pluralName}`
+}
+
+const parseModelName = (modelName: string) => {
+  const parts = modelName.split('/')
+  // eslint-disable-next-line functional/immutable-data
+  const pluralName = parts.pop()
+  const namespace = parts.join('/')
+  return { namespace, pluralName }
 }
 
 const buildValidEndpoint = (...components: readonly string[]) => {
@@ -356,4 +364,5 @@ export {
   NULL_ENDPOINT,
   NULL_METHOD,
   createZodForProperty,
+  parseModelName,
 }

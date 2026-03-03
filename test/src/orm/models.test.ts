@@ -46,7 +46,7 @@ describe('/src/orm/models.ts', () => {
           {}
         )
         const actual = model.getName()
-        const expected = 'functional-models-orm-my-models'
+        const expected = 'functional-models-orm/MyModels'
         assert.deepEqual(actual, expected)
       })
       describe('#delete()', () => {
