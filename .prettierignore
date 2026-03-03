@@ -1,4 +1,5 @@
 node_modules/
+knowledge-mcp/src/knowledge/entries.json
 *.json
 dist/
 *.html

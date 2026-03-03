@@ -650,3 +650,24 @@ In this situation, the latinName for species is not passed in, but calculated fr
 A date property that automatically updates whenever the model instance is saved.
 
 [Documentation](https://monolithst.github.io/functional-models/functions/index.orm.properties.LastModifiedDateProperty.html)
+
+# MCP Development Server
+
+Functional Models has an MCP server for AI based development. It provides knowledge entries for the AI to have specific examples of how to work with and manipulate models in a system. This GREATLY increases the accuracy and understanding of AI working with these systems, making it really easy to add new features, refactor, and make the best use of features.
+
+## Quick Start
+
+You can setup the server by setting up Cursor (or similar) with this configuration.
+
+```json
+{
+  "mcpServers": {
+    "node-in-layers-core": {
+      "command": "npx",
+      "args": ["-y", "@functional-models/knowledge-mcp"]
+    }
+  }
+}
+```
+
+You can learn more about this here [Knowledge MCP](./knowledge-mcp/README.md)

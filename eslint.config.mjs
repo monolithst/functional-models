@@ -24,6 +24,7 @@ export default [
       'knowledge-mcp/dist',
       'buildDocs',
       'eslint.config.mjs',
+      'knowledge-mcp/',
       'dist/',
       'node_modules/',
       'test/',

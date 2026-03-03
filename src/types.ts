@@ -39,6 +39,7 @@ type JsonObj = Readonly<{
 type JsonAble =
   | Arrayable<JsonObj>
   | readonly (number | string | boolean)[]
+  | readonly JsonAble[]
   | number
   | string
   | boolean

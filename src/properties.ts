@@ -1,5 +1,6 @@
 import merge from 'lodash/merge'
 import get from 'lodash/get'
+import { v4 as uuidv4 } from 'uuid'
 import { ZodType } from 'zod'
 import {
   arrayType,
@@ -12,12 +13,7 @@ import {
   optionalValidator,
   referenceTypeMatch,
 } from './validation'
-import {
-  createHeadAndTail,
-  createUuid,
-  memoizeAsync,
-  memoizeSync,
-} from './utils'
+import { createHeadAndTail, memoizeAsync, memoizeSync } from './utils'
 import {
   ModelReferenceType,
   ModelInstance,
@@ -529,7 +525,7 @@ export const PrimaryKeyUuidProperty = (
       validators: mergeValidators(config, isValidUuid),
       lazyLoadMethod: (value: Arrayable<DataValue>) => {
         if (!value) {
-          return createUuid()
+          return uuidv4()
         }
         return value
       },
@@ -559,7 +555,7 @@ export const UuidProperty = (
       lazyLoadMethod: (value: Arrayable<DataValue>) => {
         if (!value) {
           if (config.autoNow) {
-            return createUuid()
+            return uuidv4()
           }
         }
         return value
