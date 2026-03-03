@@ -35,7 +35,7 @@ export const create = (
         knowledge: z.array(KnowledgeEntrySchema),
       }),
     },
-    () => ({
+    () => Promise.resolve({
       knowledge: entries,
     })
   )
