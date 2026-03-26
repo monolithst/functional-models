@@ -14,7 +14,11 @@ export default async () => {
       ]),
       layerOrder: ['services', 'features', ['entries', 'mcp']],
       logging: {
-        logLevel: LogLevelNames.trace,
+        // IMPORTANT for MCP over stdio:
+        // - `trace` maps to `console.trace()` which prints stacks and can flood output
+        // - `info`/`debug` often write to stdout which can corrupt the MCP protocol stream
+        // Default to `error` so logs go to stderr and stay minimal.
+        logLevel: LogLevelNames.error,
         logFormat: LogFormat.json,
         // @ts-ignore
         //customLogger: createCustomLogger(),
