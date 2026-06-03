@@ -1,6 +1,12 @@
 import * as openapi from 'openapi-types'
 import { ZodObject, ZodType } from 'zod'
 
+export type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never }
+
+export type XOR<T, U> = T | U extends object
+  ? (Without<T, U> & U) | (Without<U, T> & T)
+  : T | U
+
 /**
  * A function that returns the value, or just the value
  */
@@ -121,6 +127,11 @@ type DataDescription = Readonly<{
     | ModelReferenceType<any>
     | Arrayable<JsonAble>
 }>
+
+export type CanBeNullableType<T extends DataValue> = XOR<
+  T | undefined | null,
+  T
+>
 
 /**
  * These are the allowable types for setting a property of data to.
@@ -916,7 +927,7 @@ type ModelFactoryOptions<
  * @param modelInstance - The instance that the model corresponds with
  */
 type CalculateDenormalization<
-  TValue extends DataValue,
+  TValue extends CanBeNullableType<DataValue>,
   TData extends DataDescription,
   TModelExtensions extends object = object,
   TModelInstanceExtensions extends object = object,

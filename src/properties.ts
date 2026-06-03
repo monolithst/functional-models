@@ -35,6 +35,7 @@ import {
   PropertyType,
   DateValueType,
   PrimitiveValueType,
+  CanBeNullableType,
 } from './types'
 import {
   getValueForModelInstance,
@@ -225,11 +226,13 @@ const isDate = (value: any): value is Date => {
  * @param config - A configuration that enables overriding of date formatting
  * @param additionalMetadata
  */
-export const DateProperty = (
-  config: DatePropertyConfig<DateValueType> = {},
+export const DateProperty = <
+  T extends CanBeNullableType<DateValueType> = DateValueType,
+>(
+  config: DatePropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<DateValueType>(
+  Property<T>(
     PropertyType.Date,
     merge(
       {
@@ -260,11 +263,13 @@ export const DateProperty = (
  * @param config - A configuration that enables overriding of date and time formatting
  * @param additionalMetadata
  */
-export const DatetimeProperty = (
-  config: DatePropertyConfig<DateValueType> = {},
+export const DatetimeProperty = <
+  T extends CanBeNullableType<DateValueType> = DateValueType,
+>(
+  config: DatePropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<DateValueType>(
+  Property<T>(
     PropertyType.Datetime,
     merge(
       {
@@ -295,7 +300,9 @@ export const DatetimeProperty = (
  * @param config
  * @param additionalMetadata
  */
-export const ArrayProperty = <T extends DataValue>(
+export const ArrayProperty = <
+  T extends CanBeNullableType<DataValue> = DataValue,
+>(
   config = {},
   additionalMetadata = {}
 ) =>
@@ -343,7 +350,9 @@ export const SingleTypeArrayProperty = <
  * @param additionalMetadata
  */
 export const ObjectProperty = <
-  TObject extends Readonly<Record<string, JsonAble>>,
+  TObject extends CanBeNullableType<
+    Readonly<Record<string, JsonAble>>
+  > = Readonly<Record<string, JsonAble>>,
 >(
   config = {},
   additionalMetadata = {}
@@ -361,14 +370,15 @@ export const ObjectProperty = <
  * @param config - Additional Configurations
  * @param additionalMetadata - Additional Metadata
  */
-export const TextProperty = (
-  config: PropertyConfig<string> = {},
+export const TextProperty = <T extends CanBeNullableType<string> = string>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<string>(
+  Property<T>(
     PropertyType.Text,
     merge(config, {
       isString: true,
+      // @ts-ignore
       validators: mergeValidators(config, ...getCommonTextValidators(config)),
     }),
     additionalMetadata
@@ -379,15 +389,18 @@ export const TextProperty = (
  * @param config - Additional configurations
  * @param additionalMetadata - Additional metadata
  */
-export const BigTextProperty = (
-  config: PropertyConfig<string> = {},
+export const BigTextProperty = <T extends CanBeNullableType<string> = string>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<string>(
+  Property<T>(
     PropertyType.BigText,
     merge(config, {
       isString: true,
-      validators: mergeValidators(config, ...getCommonTextValidators(config)),
+      validators: mergeValidators(
+        config,
+        ...getCommonTextValidators<T>(config)
+      ),
     }),
     additionalMetadata
   )
@@ -397,15 +410,18 @@ export const BigTextProperty = (
  * @param config
  * @param additionalMetadata
  */
-export const IntegerProperty = (
-  config: PropertyConfig<number> = {},
+export const IntegerProperty = <T extends CanBeNullableType<number> = number>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<number>(
+  Property<T>(
     PropertyType.Integer,
     merge(config, {
       isInteger: true,
-      validators: mergeValidators(config, ...getCommonNumberValidators(config)),
+      validators: mergeValidators(
+        config,
+        ...getCommonNumberValidators<T>(config)
+      ),
     }),
     additionalMetadata
   )
@@ -416,11 +432,11 @@ export const IntegerProperty = (
  * @param config
  * @param additionalMetadata
  */
-export const YearProperty = (
-  config: PropertyConfig<number> = {},
+export const YearProperty = <T extends CanBeNullableType<number> = number>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<number>(
+  Property<T>(
     PropertyType.Integer,
     merge(config, {
       isInteger: true,
@@ -439,11 +455,11 @@ export const YearProperty = (
  * @param config
  * @param additionalMetadata
  */
-export const NumberProperty = (
-  config: PropertyConfig<number> = {},
+export const NumberProperty = <T extends CanBeNullableType<number> = number>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<number>(
+  Property<T>(
     PropertyType.Number,
     merge(config, {
       isNumber: true,
@@ -459,7 +475,11 @@ export const NumberProperty = (
  * @param config
  * @param additionalMetadata
  */
-export const ConstantValueProperty = <TDataValue extends Arrayable<DataValue>>(
+export const ConstantValueProperty = <
+  TDataValue extends CanBeNullableType<
+    Arrayable<DataValue>
+  > = Arrayable<DataValue>,
+>(
   valueType: PropertyType | string,
   value: TDataValue,
   config: PropertyConfig<TDataValue> = {},
@@ -478,11 +498,11 @@ export const ConstantValueProperty = <TDataValue extends Arrayable<DataValue>>(
  * @param config
  * @param additionalMetadata
  */
-export const EmailProperty = (
-  config: PropertyConfig<string> = {},
+export const EmailProperty = <T extends CanBeNullableType<string> = string>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  TextProperty(
+  TextProperty<T>(
     merge(config, {
       type: PropertyType.Email,
       validators: mergeValidators(config, meetsRegex(EMAIL_REGEX)),
@@ -495,11 +515,11 @@ export const EmailProperty = (
  * @param config
  * @param additionalMetadata
  */
-export const BooleanProperty = (
-  config: PropertyConfig<boolean> = {},
+export const BooleanProperty = <T extends CanBeNullableType<boolean> = boolean>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<boolean>(
+  Property<T>(
     PropertyType.Boolean,
     merge(config, {
       isBoolean: true,
@@ -513,11 +533,13 @@ export const BooleanProperty = (
  * @param config - Additional configurations. NOTE: required is ALWAYS true.
  * @param additionalMetadata - Any additional metadata.
  */
-export const PrimaryKeyUuidProperty = (
-  config: PropertyConfig<string> = {},
+export const PrimaryKeyUuidProperty = <
+  T extends CanBeNullableType<string> = string,
+>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<string>(
+  Property<T>(
     PropertyType.UniqueId,
     merge(config, {
       required: true,
@@ -540,11 +562,11 @@ export const PrimaryKeyUuidProperty = (
  * @param config - Additional configurations.
  * @param additionalMetadata - Any additional metadata.
  */
-export const UuidProperty = (
-  config: PropertyConfig<string> = {},
+export const UuidProperty = <T extends CanBeNullableType<string> = string>(
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<string>(
+  Property<T>(
     PropertyType.UniqueId,
     merge(config, {
       isString: true,
@@ -751,7 +773,7 @@ export const AdvancedModelReferenceProperty = <
  * @param additionalMetadata _ Any additional metadata.
  */
 export const DenormalizedProperty = <
-  TValue extends DataValue,
+  TValue extends CanBeNullableType<DataValue>,
   T extends DataDescription,
 >(
   propertyType: string,
@@ -787,17 +809,23 @@ export const DenormalizedProperty = <
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
  */
-export const DenormalizedTextProperty = <T extends DataDescription>(
-  calculate: CalculateDenormalization<string, T>,
-  config: PropertyConfig<string> = {},
+export const DenormalizedTextProperty = <
+  T extends DataDescription,
+  TData extends CanBeNullableType<string> = string,
+>(
+  calculate: CalculateDenormalization<TData, T>,
+  config: PropertyConfig<TData> = {},
   additionalMetadata = {}
 ) =>
-  DenormalizedProperty<string, T>(
+  DenormalizedProperty<TData, T>(
     PropertyType.Text,
     calculate,
     merge(config, {
       isString: true,
-      validators: mergeValidators(config, ...getCommonTextValidators(config)),
+      validators: mergeValidators<TData>(
+        config,
+        ...getCommonTextValidators<TData>(config)
+      ),
     }),
     additionalMetadata
   )
@@ -808,12 +836,15 @@ export const DenormalizedTextProperty = <T extends DataDescription>(
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
  */
-export const DenormalizedNumberProperty = <T extends DataDescription>(
-  calculate: CalculateDenormalization<number, T>,
-  config: PropertyConfig<number> = {},
+export const DenormalizedNumberProperty = <
+  T extends DataDescription,
+  TData extends CanBeNullableType<number> = number,
+>(
+  calculate: CalculateDenormalization<TData, T>,
+  config: PropertyConfig<TData> = {},
   additionalMetadata = {}
 ) =>
-  DenormalizedProperty<number, T>(
+  DenormalizedProperty<TData, T>(
     PropertyType.Number,
     calculate,
     merge(config, {
@@ -829,12 +860,15 @@ export const DenormalizedNumberProperty = <T extends DataDescription>(
  * @param config - Any configs
  * @param additionalMetadata - Optional Metadata
  */
-export const DenormalizedIntegerProperty = <T extends DataDescription>(
-  calculate: CalculateDenormalization<number, T>,
-  config: PropertyConfig<number> = {},
+export const DenormalizedIntegerProperty = <
+  T extends DataDescription,
+  TData extends CanBeNullableType<number> = number,
+>(
+  calculate: CalculateDenormalization<TData, T>,
+  config: PropertyConfig<TData> = {},
   additionalMetadata = {}
 ) =>
-  DenormalizedProperty<number, T>(
+  DenormalizedProperty<TData, T>(
     PropertyType.Integer,
     calculate,
     merge(config, {
@@ -858,13 +892,13 @@ export const DenormalizedIntegerProperty = <T extends DataDescription>(
  * @param config
  * @param additionalMetadata
  */
-export const NaturalIdProperty = (
+export const NaturalIdProperty = <T extends CanBeNullableType<string> = string>(
   propertyKeys: readonly string[],
   joiner: string,
-  config: PropertyConfig<string> = {},
+  config: PropertyConfig<T> = {},
   additionalMetadata = {}
 ) =>
-  Property<string>(
+  Property<T>(
     PropertyType.Text,
     merge(config, {
       isString: true,

@@ -14,6 +14,7 @@ import {
   ModelInstance,
   PrimaryKeyType,
   PropertyConfig,
+  CanBeNullableType,
   PropertyValidatorComponent,
   PropertyValidatorComponentTypeAdvanced,
   RestInfo,
@@ -70,8 +71,8 @@ const isReferencedProperty = (
   return modelInstance.getReferences()[key]
 }
 
-const getCommonTextValidators = (
-  config: PropertyConfig<string>
+const getCommonTextValidators = <T extends CanBeNullableType<string> = string>(
+  config: PropertyConfig<T>
 ): readonly PropertyValidatorComponent<any>[] => {
   return [
     getValidatorFromConfigElseEmpty(config?.maxLength, maxTextLength),
@@ -94,8 +95,10 @@ const getValidatorFromConfigElseEmpty = <
   return emptyValidator
 }
 
-const getCommonNumberValidators = (
-  config: PropertyConfig<number>
+const getCommonNumberValidators = <
+  T extends CanBeNullableType<number> = number,
+>(
+  config: PropertyConfig<T>
 ): readonly PropertyValidatorComponent<any>[] => {
   return [
     getValidatorFromConfigElseEmpty(config?.minValue, minNumber),
@@ -103,7 +106,9 @@ const getCommonNumberValidators = (
   ]
 }
 
-const mergeValidators = <TValue extends Arrayable<DataValue>>(
+const mergeValidators = <
+  TValue extends Arrayable<CanBeNullableType<DataValue>> = Arrayable<DataValue>,
+>(
   config: PropertyConfig<TValue> | undefined,
   ...validators: readonly (
     | PropertyValidatorComponent<any>

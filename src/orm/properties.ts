@@ -12,6 +12,7 @@ import {
   ModelInstance,
   CreateParams,
   PropertyType,
+  CanBeNullableType,
 } from '../types'
 import {
   DatetimeProperty,
@@ -31,11 +32,13 @@ const _defaultPropertyConfig = {
  * A property that automatically updates whenever the model instance is saved.
  * @param config
  */
-export const LastModifiedDateProperty = (
-  config: PropertyConfig<DateValueType> = {}
+export const LastModifiedDateProperty = <
+  T extends CanBeNullableType<DateValueType> = DateValueType,
+>(
+  config: PropertyConfig<T> = {}
 ) => {
   const additionalMetadata = { lastModifiedUpdateMethod: () => new Date() }
-  return DatetimeProperty(config, additionalMetadata)
+  return DatetimeProperty<T>(config, additionalMetadata)
 }
 
 /**
@@ -90,7 +93,9 @@ export const ForeignKeyProperty = <
  * @param config - Additional configurations.
  * @returns
  */
-export const PrimaryKeyProperty = <TValue extends PrimaryKeyType>(
+export const PrimaryKeyProperty = <
+  TValue extends CanBeNullableType<PrimaryKeyType> = PrimaryKeyType,
+>(
   config: DatabaseKeyPropertyConfig<TValue> = {}
 ) => {
   const _getProperty = () => {
@@ -101,9 +106,11 @@ export const PrimaryKeyProperty = <TValue extends PrimaryKeyType>(
       instance: ModelInstance<any>
     ) => {
       if (config.primaryKeyGenerator) {
+        // @ts-ignore
         return config.primaryKeyGenerator(value, modelData, instance)
       }
       if (auto) {
+        // @ts-ignore
         return getPrimaryKeyGenerator(config)(value, modelData, instance)
       }
       return value

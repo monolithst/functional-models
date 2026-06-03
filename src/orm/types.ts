@@ -14,6 +14,7 @@ import {
   ModelFactoryOptions,
   CreateParams,
   PropertyType,
+  CanBeNullableType,
 } from '../types'
 
 /**
@@ -842,22 +843,23 @@ export type PrimaryKeyGenerator = <
  * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
  * @interface
  */
-export type DatabaseKeyPropertyConfig<TValue extends PrimaryKeyType> =
-  PropertyConfig<TValue> &
-    Readonly<{
-      /**
-       * Sets the type of the key.
-       * @default PrimaryKeyDataType.Uuid
-       */
-      dataType?: PrimaryKeyPropertyType
-      /**
-       * If true, the key will be automatically generated if not provided. Only applies to uuids and integers
-       * @default true
-       */
-      auto?: boolean
-      /**
-       * Optional: A custom primary key generator function to use for models. If the property type is UniqueId (default) then this will produce random UUID. If the property type is a number, a random number will be generated.
-       * If using a SQL-like database that uses numbers, its HIGHLY recommended to get a number from the database itself.
-       */
-      primaryKeyGenerator?: PrimaryKeyGenerator
-    }>
+export type DatabaseKeyPropertyConfig<
+  TValue extends CanBeNullableType<PrimaryKeyType> = PrimaryKeyType,
+> = PropertyConfig<TValue> &
+  Readonly<{
+    /**
+     * Sets the type of the key.
+     * @default PrimaryKeyDataType.Uuid
+     */
+    dataType?: PrimaryKeyPropertyType
+    /**
+     * If true, the key will be automatically generated if not provided. Only applies to uuids and integers
+     * @default true
+     */
+    auto?: boolean
+    /**
+     * Optional: A custom primary key generator function to use for models. If the property type is UniqueId (default) then this will produce random UUID. If the property type is a number, a random number will be generated.
+     * If using a SQL-like database that uses numbers, its HIGHLY recommended to get a number from the database itself.
+     */
+    primaryKeyGenerator?: PrimaryKeyGenerator
+  }>
