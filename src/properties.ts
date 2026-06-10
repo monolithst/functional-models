@@ -1,5 +1,5 @@
-import merge from 'lodash/merge'
-import get from 'lodash/get'
+import merge from 'lodash/merge.js'
+import get from 'lodash/get.js'
 import { v4 as uuidv4 } from 'uuid'
 import { ZodType } from 'zod'
 import {
@@ -12,8 +12,8 @@ import {
   minNumber,
   optionalValidator,
   referenceTypeMatch,
-} from './validation'
-import { createHeadAndTail, memoizeAsync, memoizeSync } from './utils'
+} from './validation.js'
+import { createHeadAndTail, memoizeAsync, memoizeSync } from './utils.js'
 import {
   ModelReferenceType,
   ModelInstance,
@@ -36,7 +36,7 @@ import {
   DateValueType,
   PrimitiveValueType,
   CanBeNullableType,
-} from './types'
+} from './types.js'
 import {
   getValueForModelInstance,
   getValueForReferencedModel,
@@ -46,7 +46,7 @@ import {
   mergeValidators,
   isModelInstance,
   createZodForProperty,
-} from './lib'
+} from './lib.js'
 
 const MAX_YEAR = 3000
 const EMAIL_REGEX =

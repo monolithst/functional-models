@@ -1,4 +1,4 @@
-import flow from 'lodash/flow'
+import flow from 'lodash/flow.js'
 import {
   PropertyValidatorComponentAsync,
   DataDescription,
@@ -6,15 +6,15 @@ import {
   ComponentValidationErrorResponse,
   JsonAble,
   ModelValidatorComponent,
-} from '../types'
-import { queryBuilder } from './query'
+} from '../types.js'
+import { queryBuilder } from './query.js'
 import {
   OrmSearch,
   OrmValidatorContext,
   OrmModel,
   OrmModelExtensions,
   OrmModelInstanceExtensions,
-} from './types'
+} from './types.js'
 
 const _doUniqueCheck = async <T extends DataDescription>(
   query: OrmSearch,

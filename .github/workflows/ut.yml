@@ -25,6 +25,8 @@ jobs:
         run: npm install
       - name: Run Unit Tests
         run: npm test
+      - name: Run Dist Smoke Tests
+        run: npm run test:dist
       - run: npm run coverage
 
       - name: Coveralls

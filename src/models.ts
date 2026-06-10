@@ -1,7 +1,7 @@
-import merge from 'lodash/merge'
+import merge from 'lodash/merge.js'
 import z, { ZodObject, ZodType } from 'zod'
-import { toJsonAble } from './serialization'
-import { createModelValidator } from './validation'
+import { toJsonAble } from './serialization.js'
+import { createModelValidator } from './validation.js'
 import {
   CreateParams,
   DataDescription,
@@ -22,14 +22,14 @@ import {
   RestInfo,
   ToObjectFunction,
   ModelInstanceFetcher,
-} from './types'
+} from './types.js'
 import {
   getModelName,
   NULL_ENDPOINT,
   NULL_METHOD,
   populateApiInformation,
-} from './lib'
-import { memoizeAsync, memoizeSync, singularize, toTitleCase } from './utils'
+} from './lib.js'
+import { memoizeAsync, memoizeSync, singularize, toTitleCase } from './utils.js'
 
 const _defaultOptions = <
   T extends DataDescription,

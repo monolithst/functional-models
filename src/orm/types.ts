@@ -15,7 +15,7 @@ import {
   CreateParams,
   PropertyType,
   CanBeNullableType,
-} from '../types'
+} from '../types.js'
 
 /**
  * Equals symbols for doing database matching

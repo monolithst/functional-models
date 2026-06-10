@@ -1,5 +1,5 @@
-import merge from 'lodash/merge'
-import identity from 'lodash/identity'
+import merge from 'lodash/merge.js'
+import identity from 'lodash/identity.js'
 import {
   PrimaryKeyType,
   DateValueType,
@@ -13,16 +13,16 @@ import {
   CreateParams,
   PropertyType,
   CanBeNullableType,
-} from '../types'
+} from '../types.js'
 import {
   DatetimeProperty,
   IntegerProperty,
   TextProperty,
   UuidProperty,
-} from '../properties'
-import { unique } from './validation'
-import { OrmPropertyConfig, DatabaseKeyPropertyConfig } from './types'
-import { getPrimaryKeyGenerator } from './internal-libs'
+} from '../properties.js'
+import { unique } from './validation.js'
+import { OrmPropertyConfig, DatabaseKeyPropertyConfig } from './types.js'
+import { getPrimaryKeyGenerator } from './internal-libs.js'
 
 const _defaultPropertyConfig = {
   unique: undefined,

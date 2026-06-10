@@ -1,5 +1,5 @@
-import merge from 'lodash/merge'
-import omit from 'lodash/omit'
+import merge from 'lodash/merge.js'
+import omit from 'lodash/omit.js'
 import {
   AllowableEqualitySymbols,
   BooleanQuery,
@@ -20,7 +20,7 @@ import {
   SortOrder,
   SortStatement,
   SubBuilderFunction,
-} from './types'
+} from './types.js'
 
 const THREE = 3
 

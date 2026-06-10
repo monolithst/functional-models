@@ -56,7 +56,7 @@ export default [
         ...globals.mocha,
       },
       ecmaVersion: 2020,
-      sourceType: 'commonjs',
+      sourceType: 'module',
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
@@ -259,7 +259,7 @@ export default [
     languageOptions: {
       parser: tsParser,
       ecmaVersion: 2020,
-      sourceType: 'script',
+      sourceType: 'module',
       parserOptions: {
         ecmaFeatures: {
           jsx: true,

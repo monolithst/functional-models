@@ -1,4 +1,4 @@
-import merge from 'lodash/merge'
+import merge from 'lodash/merge.js'
 import {
   PropertyGetters,
   JsonAble,
@@ -7,7 +7,7 @@ import {
   JsonifiedData,
   ModelInstance,
   ToObjectResult,
-} from './types'
+} from './types.js'
 
 const isModelInstance = (obj: any): obj is ModelInstance<any> => {
   return Boolean(obj.toObj)

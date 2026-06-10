@@ -1,4 +1,4 @@
-import merge from 'lodash/merge'
+import merge from 'lodash/merge.js'
 import { asyncMap } from 'modern-async'
 import {
   ModelFactory,
@@ -10,10 +10,10 @@ import {
   PropertyInstance,
   ToObjectResult,
   ModelFactoryOptions,
-} from '../types'
-import { Model as functionalModel } from '../models'
-import { ValidationError } from '../errors'
-import { uniqueTogether } from './validation'
+} from '../types.js'
+import { Model as functionalModel } from '../models.js'
+import { ValidationError } from '../errors.js'
+import { uniqueTogether } from './validation.js'
 import {
   OrmModelInstance,
   OrmModel,
@@ -26,8 +26,8 @@ import {
   OrmModelFactoryOptionsExtensions,
   OrmSearchResult,
   MinimumOrmModelDefinition,
-} from './types'
-import { queryBuilder } from './query'
+} from './types.js'
+import { queryBuilder } from './query.js'
 
 /**
  * Creates a structure that has an OrmModel and a fetcher

@@ -1,7 +1,7 @@
-import isEmpty from 'lodash/isEmpty'
-import merge from 'lodash/merge'
-import flatMap from 'lodash/flatMap'
-import get from 'lodash/get'
+import isEmpty from 'lodash/isEmpty.js'
+import merge from 'lodash/merge.js'
+import flatMap from 'lodash/flatMap.js'
+import get from 'lodash/get.js'
 import {
   DataDescription,
   ModelInstance,
@@ -23,8 +23,8 @@ import {
   PropertyValidatorComponentTypeAdvanced,
   PrimitiveValueType,
   ToObjectResult,
-} from './types'
-import { flowFindFirst } from './utils'
+} from './types.js'
+import { flowFindFirst } from './utils.js'
 
 const multiValidator = <T extends Arrayable<DataValue>>(
   validators: ValuePropertyValidatorComponent<T>[]

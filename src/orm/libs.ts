@@ -1,5 +1,5 @@
 import flow from 'lodash/flow.js'
-import { QueryBuilder, DatastoreValueType, PropertyOptions } from './types'
+import { QueryBuilder, DatastoreValueType, PropertyOptions } from './types.js'
 
 /**
  * Creates multiple property OR queries added to the passed in query builder.

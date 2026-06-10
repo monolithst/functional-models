@@ -1,8 +1,8 @@
 import { OpenAPIV3 } from 'openapi-types'
-import kebabCase from 'lodash/kebabCase'
-import flow from 'lodash/flow'
-import merge from 'lodash/merge'
-import get from 'lodash/get'
+import kebabCase from 'lodash/kebabCase.js'
+import flow from 'lodash/flow.js'
+import merge from 'lodash/merge.js'
+import get from 'lodash/get.js'
 import { z, ZodType } from 'zod'
 import {
   ApiInfo,
@@ -19,15 +19,15 @@ import {
   PropertyValidatorComponentTypeAdvanced,
   RestInfo,
   RestInfoMinimum,
-} from './types'
-import { createHeadAndTail } from './utils'
+} from './types.js'
+import { createHeadAndTail } from './utils.js'
 import {
   emptyValidator,
   maxNumber,
   maxTextLength,
   minNumber,
   minTextLength,
-} from './validation'
+} from './validation.js'
 import HttpMethods = OpenAPIV3.HttpMethods
 
 const NULL_ENDPOINT = 'NULL'

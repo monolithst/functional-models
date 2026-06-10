@@ -1,6 +1,5 @@
 import { assert } from 'chai'
 import sinon from 'sinon'
-import proxyquire from 'proxyquire'
 import {
   loweredTitleCase,
   toTitleCase,
