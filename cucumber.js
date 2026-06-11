@@ -5,6 +5,6 @@ const common = [
   '--format progress-bar',
 ].join(' ')
 
-module.exports = {
+export default {
   default: common,
 }

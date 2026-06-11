@@ -1,4 +1,5 @@
-dist/
+/dist/
+/knowledge-mcp/dist/
 buildDocs/
 .coverage/
 coverage/
