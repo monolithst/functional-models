@@ -27,8 +27,8 @@ jobs:
         run: npm test
       - name: Run Dist Smoke Tests
         run: npm run test:dist
-      - run: npm run coverage
-
+      - name: Run test coverage
+        run: npm run test:coverage
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
