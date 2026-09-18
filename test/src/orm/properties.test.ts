@@ -7,6 +7,7 @@ import {
   ForeignKeyProperty,
   LastModifiedDateProperty,
   PrimaryKeyProperty,
+  TtlProperty,
 } from '../../../src'
 import { PropertyType } from '../../../src/types'
 
@@ -121,6 +122,15 @@ describe('/src/orm/properties.ts', () => {
       assert.isFunction(prop.lastModifiedUpdateMethod)
       const date = prop.lastModifiedUpdateMethod()
       assert.instanceOf(date, Date)
+    })
+  })
+
+  describe('#TtlProperty()', () => {
+    it('should return an integer property with ttl metadata', () => {
+      const prop = TtlProperty()
+      assert.equal(prop.getPropertyType(), PropertyType.Integer)
+      // @ts-ignore
+      assert.isTrue(prop.ttlProperty)
     })
   })
 

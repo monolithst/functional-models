@@ -269,6 +269,11 @@ type OrmModelConfigurations = Readonly<{
    * This will make sure that there can only be a single row in the database that has a unique combination of name and text.
    */
   uniqueTogether?: readonly string[]
+  /**
+   * Optional property name that stores the model's expiry as a Unix timestamp in minutes.
+   * Datastores can use this to prune expired records.
+   */
+  ttlPropertyName?: string
 }>
 
 /**
@@ -331,7 +336,10 @@ export type OrmModel<
   TData,
   OrmModelExtensions<TModelExtensions, TModelInstanceExtensions>,
   OrmModelInstanceExtensions<TModelExtensions, TModelInstanceExtensions>
->
+> & {
+  getModelDefinition: () => ReturnType<ModelType<TData>['getModelDefinition']> &
+    OrmModelConfigurations
+}
 
 /**
  * A Model Instance with ORM functions attached.

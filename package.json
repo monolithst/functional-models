@@ -1,6 +1,6 @@
 {
   "name": "functional-models",
-  "version": "3.11.0",
+  "version": "3.12.0",
   "description": "Functional models is ooey gooey framework for building and using awesome models EVERYWHERE.",
   "type": "module",
   "main": "index.js",

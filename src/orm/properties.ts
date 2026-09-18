@@ -42,6 +42,18 @@ export const LastModifiedDateProperty = <
 }
 
 /**
+ * A property that marks the model's expiry as a Unix timestamp in minutes.
+ * Datastores can inspect this marker and infer the model ttlPropertyName.
+ * @param config
+ */
+export const TtlProperty = <T extends CanBeNullableType<number> = number>(
+  config: PropertyConfig<T> = {}
+) => {
+  const additionalMetadata = { ttlProperty: true }
+  return IntegerProperty<T>(config, additionalMetadata)
+}
+
+/**
  * A property that represents a foreign key to another model in a database.
  * By default it is a "uuid" type, but if you want to use an arbitrary string, or an integer type you can set the `dataType` property.
  * NOTE: auto is ignored in config.

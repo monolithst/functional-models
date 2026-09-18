@@ -1,6 +1,10 @@
 import { assert } from 'chai'
 import sinon from 'sinon'
-import { LastModifiedDateProperty, createOrm as orm } from '../../../src'
+import {
+  LastModifiedDateProperty,
+  TtlProperty,
+  createOrm as orm,
+} from '../../../src'
 import {
   Model,
   NumberProperty,
@@ -131,6 +135,42 @@ describe('/src/orm/models.ts', () => {
         }
         // @ts-ignore
         assert.deepEqual(actual, expected)
+      })
+      it('should infer ttlPropertyName from TtlProperty()', () => {
+        const datastoreProvider = createDatastore()
+        const instance = orm({ datastoreAdapter: datastoreProvider, Model })
+        const model = instance.Model({
+          pluralName: 'Test',
+          namespace: 'functional-models-orm',
+          properties: {
+            id: PrimaryKeyUuidProperty(),
+            expiresAt: TtlProperty(),
+          },
+        })
+
+        const actual = (
+          model.getModelDefinition() as {
+            ttlPropertyName?: string
+          }
+        ).ttlPropertyName
+
+        assert.equal(actual, 'expiresAt')
+      })
+      it('should throw when ttlPropertyName disagrees with TtlProperty()', () => {
+        const datastoreProvider = createDatastore()
+        const instance = orm({ datastoreAdapter: datastoreProvider, Model })
+
+        assert.throws(() => {
+          instance.Model({
+            pluralName: 'Test',
+            namespace: 'functional-models-orm',
+            ttlPropertyName: 'wrongField',
+            properties: {
+              id: PrimaryKeyUuidProperty(),
+              expiresAt: TtlProperty(),
+            },
+          })
+        }, 'ttlPropertyName "wrongField" does not match TtlProperty "expiresAt"')
       })
       describe('#createAndSave()', () => {
         it('should call create() and then call save() when createAndSave() is not available on the datastoreProvider', async () => {

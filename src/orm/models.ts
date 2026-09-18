@@ -177,8 +177,31 @@ const createOrm = ({
         )
       : modelDefinition.modelValidators
 
+    const ttlProperties = Object.entries(modelDefinition.properties).filter(
+      propertyEntry => {
+        const property = propertyEntry[1] as PropertyInstance<any>
+        return Boolean('ttlProperty' in property)
+      }
+    )
+    if (ttlProperties.length > 1) {
+      throw new Error(`Only one TtlProperty() can be configured on a model`)
+    }
+
+    const inferredTtlPropertyName = ttlProperties[0]?.[0]
+    if (
+      modelDefinition.ttlPropertyName &&
+      inferredTtlPropertyName &&
+      modelDefinition.ttlPropertyName !== inferredTtlPropertyName
+    ) {
+      throw new Error(
+        `ttlPropertyName "${modelDefinition.ttlPropertyName}" does not match TtlProperty "${inferredTtlPropertyName}"`
+      )
+    }
+
     const ormModelDefinition = merge({}, modelDefinition, {
       modelValidators,
+      ttlPropertyName:
+        modelDefinition.ttlPropertyName || inferredTtlPropertyName,
     })
 
     const _updateLastModifiedIfExistsReturnNewObj = async <
