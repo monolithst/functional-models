@@ -261,7 +261,7 @@ export type OrmModelInstanceExtensions<
  * ORM based configurations for a model.
  * @interface
  */
-type OrmModelConfigurations = Readonly<{
+export type OrmModelConfigurations = Readonly<{
   /**
    * Validator that there is only a single value in the datastore that has the properties given.
    * Example:
